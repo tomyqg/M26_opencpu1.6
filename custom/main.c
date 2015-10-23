@@ -29,38 +29,21 @@
 #include "custom_feature_def.h"
 #include "ril.h"
 #include "ril_util.h"
+#include "ril_network.h"
 #include "ril_telephony.h"
 #include "ql_stdlib.h"
 #include "ql_error.h"
 #include "ql_trace.h"
-#include "ql_uart.h"
 #include "ql_system.h"
-
-
-
-#define DEBUG_ENABLE 1
-#if DEBUG_ENABLE > 0
-#define DEBUG_PORT  UART_PORT1
-#define DBG_BUF_LEN   512
-static char DBG_BUFFER[DBG_BUF_LEN];
-#define APP_DEBUG(FORMAT,...) {\
-    Ql_memset(DBG_BUFFER, 0, DBG_BUF_LEN);\
-    Ql_sprintf(DBG_BUFFER,FORMAT,##__VA_ARGS__); \
-    if (UART_PORT2 == (DEBUG_PORT)) \
-    {\
-        Ql_Debug_Trace(DBG_BUFFER);\
-    } else {\
-        Ql_UART_Write((Enum_SerialPort)(DEBUG_PORT), (u8*)(DBG_BUFFER), Ql_strlen((const char *)(DBG_BUFFER)));\
-    }\
-}
-#else
-#define APP_DEBUG(FORMAT,...) 
-#endif
+#include "ql_timer.h"
+#include "ql_gprs.h"
+#include "ql_socket.h"
+#include "ql_uart.h"
+#include "app_com.h"
+#include "app_socket.h"
 
 
 #define SERIAL_RX_BUFFER_LEN  2048
-
-
 
 // Define the UART port and the receive data buffer
 static Enum_SerialPort m_myUartPort  = UART_PORT1;
@@ -68,6 +51,12 @@ static u8 m_RxBuf_Uart1[SERIAL_RX_BUFFER_LEN];
 static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, bool level, void* customizedPara);
 static s32 ATResponse_Handler(char* line, u32 len, void* userData);
 
+
+/************************************************************************/
+/*                                                                      */
+/* The entrance to application, which is called by bottom system.       */
+/*                                                                      */
+/************************************************************************/
 void proc_main_task(s32 taskId)
 {
     s32 ret;
@@ -90,28 +79,97 @@ void proc_main_task(s32 taskId)
     // START MESSAGE LOOP OF THIS TASK
     while(TRUE)
     {
+        // Retrieve a message from the message queue of this task. 
+        // This task will pend here if no message in the message queue, till a new message arrives.
         Ql_OS_GetMessage(&msg);
+        // Handle the received message
         switch(msg.message)
         {
+            // Application will receive this message when OpenCPU RIL starts up.
+            // Then application needs to call Ql_RIL_Initialize to launch the initialization of RIL.
         case MSG_ID_RIL_READY:
             APP_DEBUG("<-- RIL is ready -->\r\n");
             Ql_RIL_Initialize();
+            //
+            // After RIL initialization, developer may call RIL-related APIs in the .h files in the directory of SDK\ril\inc
+            // RIL-related APIs may simplify programming, and quicken the development.
+            //
             break;
+
+            // Handle URC messages.
+            // URC messages include "module init state", "CFUN state", "SIM card state(change)",
+            // "GSM network state(change)", "GPRS network state(change)" and other user customized URC.
         case MSG_ID_URC_INDICATION:
             //APP_DEBUG("<-- Received URC: type: %d, -->\r\n", msg.param1);
             switch (msg.param1)
             {
+                // URC for module initialization state
             case URC_SYS_INIT_STATE_IND:
                 APP_DEBUG("<-- Sys Init Status %d -->\r\n", msg.param2);
+                if (SYS_STATE_SMSOK == msg.param2)
+                {
+                    // SMS option has been initialized, and application can program SMS
+                    APP_DEBUG("<-- Application can program SMS -->\r\n");
+                }
                 break;
+                // URC for SIM card state(change)
             case URC_SIM_CARD_STATE_IND:
-                APP_DEBUG("<-- SIM Card Status:%d -->\r\n", msg.param2);
+                if (SIM_STAT_READY == msg.param2)
+                {
+                    APP_DEBUG("<-- SIM card is ready -->\r\n");
+                }else{
+                    APP_DEBUG("<-- SIM card is not available, cause:%d -->\r\n", msg.param2);
+                    /* cause: 0 = SIM card not inserted
+                     *        2 = Need to input PIN code
+                     *        3 = Need to input PUK code
+                     *        9 = SIM card is not recognized
+                     */
+                }
                 break;
+
+                // URC for GSM network state(change).
+                // Application receives this URC message when GSM network state changes, such as register to 
+                // GSM network during booting, GSM drops down.
             case URC_GSM_NW_STATE_IND:
-                APP_DEBUG("<-- GSM Network Status:%d -->\r\n", msg.param2);
+                if (NW_STAT_REGISTERED == msg.param2 || NW_STAT_REGISTERED_ROAMING == msg.param2)
+                {
+                    APP_DEBUG("<-- Module has registered to GSM network -->\r\n");
+                }else{
+                    APP_DEBUG("<-- GSM network status:%d -->\r\n", msg.param2);
+                    /* status: 0 = Not registered, module not currently search a new operator
+                     *         2 = Not registered, but module is currently searching a new operator
+                     *         3 = Registration denied 
+                     */
+                }
                 break;
+
+                // URC for GPRS network state(change).
+                // Application receives this URC message when GPRS network state changes, such as register to 
+                // GPRS network during booting, GSM drops down.
             case URC_GPRS_NW_STATE_IND:
-                APP_DEBUG("<-- GPRS Network Status:%d -->\r\n", msg.param2);
+                if (NW_STAT_REGISTERED == msg.param2 || NW_STAT_REGISTERED_ROAMING == msg.param2)
+                {
+                    APP_DEBUG("<-- Module has registered to GPRS network -->\r\n");
+
+					
+                    // Module has registered to GPRS network, and app may start to activate PDP and program TCP
+                    GPRS_TCP_Program();
+                }else{
+                    APP_DEBUG("<-- GPRS network status:%d -->\r\n", msg.param2);
+                    /* status: 0 = Not registered, module not currently search a new operator
+                     *         2 = Not registered, but module is currently searching a new operator
+                     *         3 = Registration denied 
+                     */
+                    // If GPRS drops down and currently socket connection is on line, app should close socket
+                    // and check signal strength. And try to reset the module.
+                    if (NW_STAT_NOT_REGISTERED == msg.param2 /*&& m_GprsActState*/)
+                    {// GPRS drops down
+                        u32 rssi;
+                        u32 ber;
+                        s32 nRet = RIL_NW_GetSignalQuality(&rssi, &ber);
+                        APP_DEBUG("<-- Signal strength:%d, BER:%d -->\r\n", rssi, ber);
+                    }
+                }
                 break;
             case URC_CFUN_STATE_IND:
                 APP_DEBUG("<-- CFUN Status:%d -->\r\n", msg.param2);

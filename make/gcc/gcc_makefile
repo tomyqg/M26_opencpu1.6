@@ -37,6 +37,7 @@ INCS += -I ./           \
         -I ril/inc      \
         -I custom/config   \
         -I custom/fota/inc \
+        -I custom/app/inc \
 
 
 #-------------------------------------------------------------------------------
@@ -46,6 +47,7 @@ SRC_DIRS=example    \
 		 custom     \
 		 custom\config     \
          custom\fota\src   \
+		 custom\app\src   \
 		 ril\src    \
 
 
@@ -57,6 +59,7 @@ SRC_SYS_RIL=$(wildcard ril/src/*.c)
 SRC_EXAMPLE=$(wildcard example/*.c)
 SRC_CUS=$(wildcard custom/*.c)
 SRC_FOTA=$(wildcard custom/fota/src/*.c)
+SRC_APP=$(wildcard custom/app/src/*.c)
 
 OBJS=\
 	 $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_SYS))        \
@@ -64,6 +67,7 @@ OBJS=\
 	 $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_EXAMPLE))    \
 	 $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_CUS))        \
 	 $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_FOTA))      \
+	 $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_APP))      \
 
 
 #-------------------------------------------------------------------------------
