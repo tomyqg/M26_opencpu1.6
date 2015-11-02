@@ -1,4 +1,27 @@
-
+/*****************************************************************************
+ *
+ * Filename:
+ * ---------
+ *   app_socket.c
+ *
+ * Project:
+ * --------
+ * -------- 
+ *
+ * Description:
+ * ------------
+ * ------------
+ *
+ * Author:
+ * -------
+ * -------
+ *
+ *============================================================================
+ *             HISTORY
+ *----------------------------------------------------------------------------
+ * 
+ ****************************************************************************/
+ 
 #include "ril.h"
 #include "ril_util.h"
 #include "ril_network.h"
@@ -9,8 +32,9 @@
 #include "ql_timer.h"
 #include "ql_socket.h"
 #include "ql_gprs.h"
-#include "app_com.h"
+#include "app_debug.h"
 #include "app_socket.h"
+#include "app_server.h"
 
 
 #define  SOC_RECV_BUFFER_LEN  1460
@@ -33,11 +57,13 @@ static ST_GprsConfig m_GprsConfig = {
 /************************************************************************/
 /* Definition for Server IP Address and Socket Port Number              */
 /************************************************************************/
-static u8  m_SrvADDR[20] = "113.92.149.117\0";
-static u32 m_SrvPort = 6800;
+//pan
+static u8  m_SrvADDR[20] = "54.223.223.222\0";
+static u32 m_SrvPort = 5605;
+//static u8  m_SrvADDR[20] = "113.92.228.197\0";
+//static u32 m_SrvPort = 6800;
 
 static s32 m_GprsActState    = 0;   // GPRS PDP activation state, 0= not activated, 1=activated
-static s32 m_SocketId        = -1;  // Store socket Id that returned by Ql_SOC_Create()
 static s32 m_SocketConnState = 0;   // Socket connection state, 0= disconnected, 1=connected
 static u8  m_SocketRcvBuf[SOC_RECV_BUFFER_LEN];
 static u8 m_send_buf[SEND_BUFFER_LEN];
@@ -47,6 +73,8 @@ static u8  m_ipaddress[5];  //only save the number of server ip, remove the comm
 static s32 m_remain_len = 0;     // record the remaining number of bytes in send buffer.
 static char *m_pCurrentPos = NULL; 
 static u8 m_tcp_state = STATE_NW_GET_SIMSTATE;
+
+s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
 
 static ST_PDPContxt_Callback     callback_gprs_func = 
 {
@@ -69,13 +97,13 @@ void GPRS_TCP_Program(void)
 {
     s32 ret;
     s32 pdpCntxtId;
-
+	
     //1. Register GPRS callback
     pdpCntxtId = Ql_GPRS_GetPDPContextId();
     if (GPRS_PDP_ERROR == pdpCntxtId)
     {
         APP_DEBUG("No PDP context is available\r\n");
-        return ret;
+        return;
     }
     ret = Ql_GPRS_Register(pdpCntxtId, &callback_gprs_func, NULL);
     if (GPRS_PDP_SUCCESS == ret)
@@ -119,12 +147,12 @@ void GPRS_TCP_Program(void)
     }
 
     //5. Create socket
-    m_SocketId = Ql_SOC_Create(pdpCntxtId, SOC_TYPE_TCP);
-    if (m_SocketId >= 0)
+    g_SocketId = Ql_SOC_Create(pdpCntxtId, SOC_TYPE_TCP);
+    if (g_SocketId >= 0)
     {
-        APP_DEBUG("<-- Create socket successfully, socket id=%d. -->\r\n", m_SocketId);
+        APP_DEBUG("<-- Create socket successfully, socket id=%d. -->\r\n", g_SocketId);
     }else{
-        APP_DEBUG("<-- Fail to create socket, cause=%d. -->\r\n", m_SocketId);
+        APP_DEBUG("<-- Fail to create socket, cause=%d. -->\r\n", g_SocketId);
         return;
     }		
 
@@ -144,7 +172,7 @@ void GPRS_TCP_Program(void)
 
         //6.2 Connect to server
         APP_DEBUG("<-- Connecting to server(IP:%d.%d.%d.%d, port:%d)... -->\r\n", m_ipAddress[0],m_ipAddress[1],m_ipAddress[2],m_ipAddress[3], m_SrvPort);
-        ret = Ql_SOC_ConnectEx(m_SocketId,(u32) m_ipAddress, m_SrvPort, TRUE);
+        ret = Ql_SOC_ConnectEx(g_SocketId,(u32) m_ipAddress, m_SrvPort, TRUE);
         if (SOC_SUCCESS == ret)
         {
             m_SocketConnState = 1;
@@ -152,12 +180,12 @@ void GPRS_TCP_Program(void)
         }else{
             APP_DEBUG("<-- Fail to connect to server, cause=%d -->\r\n", ret);
             APP_DEBUG("<-- Close socket.-->\r\n");
-            Ql_SOC_Close(m_SocketId);
-            m_SocketId = -1;
+            Ql_SOC_Close(g_SocketId);
+            g_SocketId = -1;
             return;
         }
     }
-
+#if 0
     //7. Send data to socket
     {
         //7.1 Send data
@@ -167,36 +195,46 @@ void GPRS_TCP_Program(void)
         Ql_memset(pchData, 0x0, sizeof(pchData));
         dataLen = Ql_sprintf(pchData + dataLen, "%s", "A B C D E F G");
         APP_DEBUG("<-- Sending data(len=%d): %s-->\r\n", dataLen, pchData);
-        ret = Ql_SOC_Send(m_SocketId, (u8*)pchData, dataLen);
+        ret = Ql_SOC_Send(g_SocketId, (u8*)pchData, dataLen);
         if (ret == dataLen)
         {
             APP_DEBUG("<-- Send socket data successfully. --> \r\n");
         }else{
             APP_DEBUG("<-- Fail to send socket data. --> \r\n");
-            Ql_SOC_Close(m_SocketId);
+            Ql_SOC_Close(g_SocketId);
             return;
         }
 
         //7.2 Check ACK number
         do 
         {
-            ret = Ql_SOC_GetAckNumber(m_SocketId, &ackNum);
+            ret = Ql_SOC_GetAckNumber(g_SocketId, &ackNum);
             APP_DEBUG("<-- Current ACK Number:%llu/%d --> \r\n", ackNum, dataLen);
             Ql_Sleep(500);
         } while (ackNum != dataLen);
         APP_DEBUG("<-- Server has received all data --> \r\n");
+
     }
+#endif
+    App_Server_Register();
+    u64  ackNum = 0;
+    do 
+    {
+    	ret = Ql_SOC_GetAckNumber(g_SocketId, &ackNum);
+       	APP_DEBUG("<-- Current ACK Number:%llu/%d --> \r\n", ackNum, 55);
+       	Ql_Sleep(500);
+    } while (ackNum != 55);
+     APP_DEBUG("<-- Server has received all data --> \r\n");
 /*
     //8. Close socket
-    ret = Ql_SOC_Close(m_SocketId);
-    APP_DEBUG("<-- Close socket[%d], cause=%d --> \r\n", m_SocketId, ret);
+    ret = Ql_SOC_Close(g_SocketId);
+    APP_DEBUG("<-- Close socket[%d], cause=%d --> \r\n", g_SocketId, ret);
 
     //9. Deactivate GPRS
     APP_DEBUG("<-- Deactivating GPRS... -->\r\n");
     ret = Ql_GPRS_DeactivateEx(pdpCntxtId, TRUE);
     APP_DEBUG("<-- Deactivated GPRS, cause=%d -->\r\n\r\n", ret);
 */
-    APP_DEBUG("< Finish >\r\n");
 }
 
 void Callback_GPRS_Actived(u8 contexId, s32 errCode, void* customParam)
@@ -275,7 +313,7 @@ void Callback_Socket_Read(s32 socketId, s32 errCode, void* customParam )
         APP_DEBUG("<--CallBack: socket read failure,(sock=%d,error=%d)-->\r\n",socketId,errCode);
         APP_DEBUG("<-- Close socket.-->\r\n");
         Ql_SOC_Close(socketId);
-        m_SocketId = -1;
+        g_SocketId = -1;
         if(errCode == SOC_BEARER_FAIL)  
         {
             m_tcp_state = STATE_GPRS_DEACTIVATE;
@@ -298,7 +336,7 @@ void Callback_Socket_Read(s32 socketId, s32 errCode, void* customParam )
             APP_DEBUG("<-- Receive data failure,ret=%d.-->\r\n",ret);
             APP_DEBUG("<-- Close socket.-->\r\n");
             Ql_SOC_Close(socketId); //you can close this socket  
-            m_SocketId = -1;
+            g_SocketId = -1;
             m_tcp_state = STATE_SOC_CREATE;
             break;
         }
@@ -309,7 +347,13 @@ void Callback_Socket_Read(s32 socketId, s32 errCode, void* customParam )
         }
         else if(ret < RECV_BUFFER_LEN)
         {
-            APP_DEBUG("<--Receive data from sock(%d),len(%d):%s\r\n",socketId,ret,m_recv_buf);
+			#if 0
+            for(int i = 0; i < ret; i++)
+            	APP_DEBUG("0x%x ",m_recv_buf[i]);
+            APP_DEBUG("\r\n");
+            #endif
+            	
+            Server_Msg_Handle(m_recv_buf,ret);	
             break;
         }else if(ret == RECV_BUFFER_LEN)
         {
@@ -327,7 +371,7 @@ void Callback_Socket_Write(s32 socketId, s32 errCode, void* customParam )
         APP_DEBUG("<--CallBack: socket write failure,(sock=%d,error=%d)-->\r\n",socketId,errCode);
         APP_DEBUG("<-- Close socket.-->\r\n");
         Ql_SOC_Close(socketId);
-        m_SocketId = -1;
+        g_SocketId = -1;
         
         if(ret == SOC_BEARER_FAIL)  
         {
@@ -345,8 +389,8 @@ void Callback_Socket_Write(s32 socketId, s32 errCode, void* customParam )
 
     do
     {
-        ret = Ql_SOC_Send(m_SocketId, m_pCurrentPos, m_remain_len);
-        APP_DEBUG("<--CallBack: Send data,socketid=%d,number of bytes sent=%d-->\r\n",m_SocketId,ret);
+        ret = Ql_SOC_Send(g_SocketId, m_pCurrentPos, m_remain_len);
+        APP_DEBUG("<--CallBack: Send data,socketid=%d,number of bytes sent=%d-->\r\n",g_SocketId,ret);
 
         if(ret == m_remain_len)//send compelete
         {
@@ -366,7 +410,7 @@ void Callback_Socket_Write(s32 socketId, s32 errCode, void* customParam )
               APP_DEBUG("<--Send data failure,ret=%d.-->\r\n",ret);
               APP_DEBUG("<-- Close socket.-->\r\n");
               Ql_SOC_Close(socketId);//error , Ql_SOC_Close
-              m_SocketId = -1;
+              g_SocketId = -1;
 
               m_remain_len = 0;
               m_pCurrentPos = NULL; 

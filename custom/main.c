@@ -39,7 +39,7 @@
 #include "ql_gprs.h"
 #include "ql_socket.h"
 #include "ql_uart.h"
-#include "app_com.h"
+#include "app_debug.h"
 #include "app_socket.h"
 
 
