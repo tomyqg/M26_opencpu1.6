@@ -49,6 +49,10 @@
 /*********************************************************************
  * VARIABLES
  */
+
+extern u8 g_imei[8];
+extern u8 g_imsi[8];
+ 
 static s16 g_msg_number = 0;
 
 static s8 hw_sw_version[2][4] = {
@@ -115,6 +119,13 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
   if(msg_send_buff == NULL)
   {
 	 s32 ret;
+	 
+	 #if 1
+     for(int i = 0; i < msg_buff_len; i++)
+     	APP_DEBUG("0x%02x ",msg_buff[i]);
+     APP_DEBUG("\r\n");
+     #endif
+     
 	 ret = Ql_SOC_Send(g_SocketId, msg_buff, msg_buff_len);
      if (ret != msg_buff_len)
      {
@@ -126,6 +137,13 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
   else
   {
 	 s32 ret;
+
+	 #if 1
+     for(int i = 0; i < msg_send_buff_len; i++)
+     	APP_DEBUG("0x%02x ",msg_send_buff[i]);
+     APP_DEBUG("\r\n");
+     #endif
+	 
 	 ret = Ql_SOC_Send(g_SocketId, msg_send_buff, msg_send_buff_len);
      if (ret != msg_send_buff_len)
      {
@@ -248,6 +266,13 @@ u8 msg_need_transform(u8 *pBuffer, u16 length)
 bool Server_Msg_Handle(u8 *pbuffer,u16 numBytes)
 {
 	u16 retransform_count;
+
+    #if 1
+    for(int i = 0; i < numBytes; i++)
+    	APP_DEBUG("0x%02x ",pbuffer[i]);
+    APP_DEBUG("\r\n");
+    #endif
+	
 	retransform_count = Server_Msg_Need_Retransform(pbuffer,numBytes);
 	if(retransform_count > 0)
 	{
@@ -466,7 +491,7 @@ s32 App_Server_Register( void )
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
 	m_Server_Msg_Head.msg_id= TOSERVER_REGISTER_ID;
 	m_Server_Msg_Head.msg_length = 20;
-	Ql_memset(m_Server_Msg_Head.device_imei, 0x74, 8);
+	Ql_memcpy(m_Server_Msg_Head.device_imei, g_imei, 8);
 	m_Server_Msg_Head.msg_number = g_msg_number++;
 
 	//body
@@ -474,7 +499,7 @@ s32 App_Server_Register( void )
   	for(int i = 0; i < 4; i++)
 		msg_body[i] = 0xFF;
   
-  	Ql_memset(msg_body+4,0x74,8);
+  	Ql_memcpy(msg_body+4,g_imsi,8);
   	Ql_memcpy(msg_body+12,hw_sw_version,8);
 
     //register a timer to start heartbeat
@@ -515,7 +540,7 @@ void App_Heartbeat_To_Server( void )
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
 	m_Server_Msg_Head.msg_id= TOSERVER_HEARTBEAT_ID;
 	m_Server_Msg_Head.msg_length = 20;
-	Ql_memset(m_Server_Msg_Head.device_imei, 0x74, 8);
+	Ql_memcpy(m_Server_Msg_Head.device_imei, g_imei, 8);
 	m_Server_Msg_Head.msg_number = g_msg_number++;
   
   	gmsg_num_heartbeat = m_Server_Msg_Head.msg_number;

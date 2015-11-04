@@ -217,14 +217,6 @@ void GPRS_TCP_Program(void)
     }
 #endif
     App_Server_Register();
-    u64  ackNum = 0;
-    do 
-    {
-    	ret = Ql_SOC_GetAckNumber(g_SocketId, &ackNum);
-       	APP_DEBUG("<-- Current ACK Number:%llu/%d --> \r\n", ackNum, 55);
-       	Ql_Sleep(500);
-    } while (ackNum != 55);
-     APP_DEBUG("<-- Server has received all data --> \r\n");
 /*
     //8. Close socket
     ret = Ql_SOC_Close(g_SocketId);
@@ -346,13 +338,7 @@ void Callback_Socket_Read(s32 socketId, s32 errCode, void* customParam )
             break;
         }
         else if(ret < RECV_BUFFER_LEN)
-        {
-			#if 0
-            for(int i = 0; i < ret; i++)
-            	APP_DEBUG("0x%x ",m_recv_buf[i]);
-            APP_DEBUG("\r\n");
-            #endif
-            	
+        {     	
             Server_Msg_Handle(m_recv_buf,ret);	
             break;
         }else if(ret == RECV_BUFFER_LEN)

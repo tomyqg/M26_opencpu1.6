@@ -51,6 +51,11 @@ static u8 m_RxBuf_Uart1[SERIAL_RX_BUFFER_LEN];
 static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, bool level, void* customizedPara);
 static s32 ATResponse_Handler(char* line, u32 len, void* userData);
 
+char userdata[20];
+u8 g_imei[8],g_imsi[8];
+
+extern s32 RIL_SIM_GetIMEI(char* pIMEI, u32 pIMEILen);
+extern s32 RIL_SIM_GetIMSI(char* pIMSI, u32 pIMSILen);
 
 /************************************************************************/
 /*                                                                      */
@@ -117,7 +122,41 @@ void proc_main_task(s32 taskId)
                 if (SIM_STAT_READY == msg.param2)
                 {
                     APP_DEBUG("<-- SIM card is ready -->\r\n");
-                }else{
+
+					u32 ret;
+                    ret = RIL_SIM_GetIMEI(userdata, sizeof(userdata));
+					if (ret != RIL_AT_SUCCESS)
+					{
+						APP_ERROR("Fail to get IMSI!\r\n");
+					}
+					APP_DEBUG("IMEI: %s\r\n",userdata);
+				    g_imei[0] = userdata[0] - '0';
+				    APP_DEBUG("IMEI: %x",g_imei[0]);
+					for(u8 i = 1,j = 1; i < 8; i++)
+					{
+						g_imei[i] = ((userdata[j] - '0')<<4) + (userdata[j+1] - '0');
+						j += 2;
+						APP_DEBUG("%02x",g_imei[i]);
+					}
+					
+					ret = RIL_SIM_GetIMSI(userdata, sizeof(userdata));
+					if (ret != RIL_AT_SUCCESS)
+					{
+						APP_ERROR("Fail to get IMSI!\r\n");
+					}
+					APP_DEBUG("\r\nIMSI: %s\r\n",userdata);
+					g_imsi[0] = userdata[0] - '0';
+					APP_DEBUG("IMSI: %x",g_imsi[0]);
+					for(u8 i = 1,j = 1; i < 8; i++)
+					{
+						g_imsi[i] = ((userdata[j] - '0')<<4) + (userdata[j+1] - '0');
+						j += 2;
+						APP_DEBUG("%02x",g_imsi[i]);
+					}
+					APP_DEBUG("\r\n");
+                }
+                else
+                {
                     APP_DEBUG("<-- SIM card is not available, cause:%d -->\r\n", msg.param2);
                     /* cause: 0 = SIM card not inserted
                      *        2 = Need to input PIN code
