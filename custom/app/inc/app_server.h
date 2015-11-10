@@ -146,6 +146,12 @@ typedef struct {
 }Parameter;
 extern Parameter gParmeter;
 
+typedef struct {
+	u32 lac;    
+    u32 cell_id;
+}Lac_CellID;
+extern Lac_CellID glac_ci;
+
 /*********************************************************************
  * VARIABLES
  */
@@ -170,4 +176,5 @@ void Server_Msg_Parse(u8* pBuffer, u16 length);
 void App_Report_Parameter(u16 msg_id, u16 msg_number);
 void App_Set_Parameter(u8* pBuffer, u16 length);
 s32 binary_search_parameter(Parameter_8 *pParameter_8, u32 len, u16 goal, u8 par_len);
+void get_lac_cellid(char *s);
 #endif  //__APP_SERVER_H__

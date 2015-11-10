@@ -48,7 +48,7 @@ const char* g_InitCmds[] = {
     "AT+CMEE=1\r",  // Extended errors. This item is necessary.     
     "ATS0=0\r",     // No auto-answer.  If customer want auto answer the incoming call , must change this string as "ATS0=n\r" (n=1~255).
     "AT+CREG=1\r",    // GSM registration events . 
-    "AT+CGREG=1\r", // GPRS registration events
+    "AT+CGREG=2\r", // GPRS registration events
     "AT+CLIP=1\r",  // Display RING number
     "AT+COLP=0\r"   // no connected line identification
 

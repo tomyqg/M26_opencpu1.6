@@ -35,6 +35,7 @@
 #include "ril.h "
 #include "ril_util.h"
 #include "ril_sms.h"
+#include "ril_network.h"
 #include "ril_telephony.h "
 #include "ql_power.h"
 #include "ql_system.h"
@@ -80,6 +81,8 @@ static void OnURCHandler_AudPlayInd(const char* strURC, void* reserved);
 /************************************************************************/
 CallBack_Ftp_Upload FtpPut_IND_CB = NULL;
 CallBack_Ftp_Download FtpGet_IND_CB = NULL;
+
+extern void get_lac_cellid(char *s);
 
 /******************************************************************************
 * Definitions for URCs and the handler.
@@ -228,6 +231,10 @@ static void OnURCHandler_Network(const char* strURC, void* reserved)
             Ql_memset(strTmp, 0x0, sizeof(strTmp));
             Ql_memcpy(strTmp, p1, p2 - p1);
             nwStat = Ql_atoi(strTmp);
+            if(nwStat == NW_STAT_REGISTERED || nwStat == NW_STAT_REGISTERED_ROAMING)
+    		{
+            	get_lac_cellid(strTmp);
+            }	
             Ql_OS_SendMessage(URC_RCV_TASK_ID, MSG_ID_URC_INDICATION, URC_GPRS_NW_STATE_IND, nwStat);
         }
     }

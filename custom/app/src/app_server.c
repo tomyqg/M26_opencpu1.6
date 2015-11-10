@@ -99,6 +99,8 @@ Parameter gParmeter = {
 	 {0x0305,6,{0x15,0x11,0x05,0x16,0x51,0x53}}}
 };	 
 
+Lac_CellID glac_ci;
+
 /*********************************************************************
  * FUNCTIONS
  */
@@ -591,7 +593,7 @@ void App_Heartbeat_To_Server( void )
 		msg_body[i] = 0x0;
 	  
 	//LAC&CI
-	Ql_memset(msg_body+4,0x55,8);
+	Ql_memcpy(msg_body+4,&glac_ci,8);
 	//IMEI  
 	Ql_memset(msg_body+12,0xff,8);
 	  
@@ -841,3 +843,59 @@ s32 binary_search_parameter(Parameter_8 *pParameter_8, u32 len, u16 goal, u8 par
 	}
 	return APP_RET_ERR_NOT_FOUND;
 }
+/*********************************************************************
+ * @fn      get_lac_cellid
+ *
+ * @brief   get_lac_cellid
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+void get_lac_cellid(char *s)
+{
+	char *p1,*p2;
+	s32 j;
+	
+	//LAC
+	glac_ci.lac = 0;
+	p1 = Ql_strchr(s, '\"');
+	p2 = Ql_strchr(p1+1, '\"');
+	j = p2-p1;
+
+	for(u32 i = 1; i < j; i++)
+	{
+		if(Ql_isdigit(*(p1+i)))
+		{
+			glac_ci.lac += (u32)((*(p1+i) - '0')<<(16-i*4));
+		}
+		else
+		{   char c;
+			c = Ql_toupper(*(p1+i));
+			glac_ci.lac += (u32)((c - 'A')<<(16-i*4)) + 10;
+		}	
+	}
+
+	//CELL ID
+	glac_ci.cell_id = 0;
+    p1 = Ql_strchr(p2+1, '\"');
+	p2 = Ql_strchr(p1+1, '\"');
+	j = p2-p1;
+	for(u32 i = 1; i < j; i++)
+	{
+		if(Ql_isdigit(*(p1+i)))
+		{
+			glac_ci.cell_id += (u32)((*(p1+i) - '0')<<(16-i*4));
+		}
+		else
+		{   char c = *(p1+i);
+		    if( c >= 'a' && c <= 'f')
+				c = Ql_toupper(*(p1+i));
+			glac_ci.cell_id += (u32)((c - 'A')<<(16-i*4)) + 10;
+		}	
+	}
+
+	glac_ci.lac = TOBIGENDIAN32(glac_ci.lac);
+	glac_ci.cell_id = TOBIGENDIAN32(glac_ci.cell_id);
+}
+

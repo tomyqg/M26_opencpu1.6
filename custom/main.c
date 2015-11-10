@@ -53,6 +53,7 @@ static s32 ATResponse_Handler(char* line, u32 len, void* userData);
 
 char userdata[20];
 u8 g_imei[8],g_imsi[8];
+extern Lac_CellID glac_ci;
 
 extern s32 RIL_SIM_GetIMEI(char* pIMEI, u32 pIMEILen);
 extern s32 RIL_SIM_GetIMSI(char* pIMSI, u32 pIMSILen);
@@ -187,9 +188,8 @@ void proc_main_task(s32 taskId)
             case URC_GPRS_NW_STATE_IND:
                 if (NW_STAT_REGISTERED == msg.param2 || NW_STAT_REGISTERED_ROAMING == msg.param2)
                 {
-                    APP_DEBUG("<-- Module has registered to GPRS network -->\r\n");
-
-					
+                    APP_DEBUG("<-- Module has registered to GPRS network-->\r\n");
+					APP_DEBUG("lac:0x%x,cell_id:0x%x\n",glac_ci.lac,glac_ci.cell_id);
                     // Module has registered to GPRS network, and app may start to activate PDP and program TCP
                     GPRS_TCP_Program();
                 }else{
