@@ -30,6 +30,7 @@
 #include "ql_socket.h"
 #include "ql_time.h"
 #include "ql_timer.h"
+#include "app_error.h"
 #include "app_debug.h"
 #include "app_socket.h"
 #include "app_server.h"
@@ -66,6 +67,38 @@ static u8 gServer_State = SERVER_STATE_UNKNOW;
 bool greceived_heartbeat_rsp = TRUE;
 static u16 gmsg_num_heartbeat;
 
+Parameter gParmeter = {
+	{{0x0001,4,30},
+	 {0x0002,4,10},
+	 {0x0003,4,10},
+	 {0x0004,4,5},
+	 {0x0019,4,0},
+	 {0x0100,4,0xffffffff},
+	 {0x0101,4,0xffffffff},
+	 {0x0102,4,0xffffffff},
+	 {0x0104,3,0x233000},
+	 {0x0105,4,0xffffffff},
+	 {0x0108,4,0},
+	 {0x0109,4,0xffffffff},
+	 {0x010A,4,0},
+	 {0x0110,4,20},
+	 {0x0111,4,20},
+	 {0x0112,4,0},
+	 {0x0113,4,1},
+	 {0x0200,4,120},
+	 {0x0201,4,15},
+	 {0x0202,4,10},
+	 {0x0203,4,0xffffffff},
+	 {0x0210,4,30},
+	 {0x0300,4,0x0}},
+	 
+	{{0x0301,8,{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}},
+	 {0x0302,8,{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}},
+	 {0x0303,8,{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}},
+	 {0x0304,8,{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}},
+	 {0x0305,6,{0x15,0x11,0x05,0x16,0x51,0x53}}}
+};	 
+
 /*********************************************************************
  * FUNCTIONS
  */
@@ -100,7 +133,6 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
   msg_buff[0] = MSG_IDENTIFIER;
   Ql_memcpy(msg_buff+1,msg_head,msg_head_lenght);
   Ql_memcpy(msg_buff+msg_head_lenght+1,msg_body,msg_body_len);
-  
   msg_buff[msg_buff_len-2] = server_msg_calculate_checkcode(msg_buff, msg_buff_len);
   msg_buff[msg_buff_len-1] = MSG_IDENTIFIER;
   
@@ -120,9 +152,9 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
   {
 	 s32 ret;
 	 
-	 #if 1
+	 #if 0
      for(int i = 0; i < msg_buff_len; i++)
-     	APP_DEBUG("0x%02x ",msg_buff[i]);
+     	APP_DEBUG("%02x",msg_buff[i]);
      APP_DEBUG("\r\n");
      #endif
      
@@ -138,9 +170,9 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
   {
 	 s32 ret;
 
-	 #if 1
+	 #if 0
      for(int i = 0; i < msg_send_buff_len; i++)
-     	APP_DEBUG("0x%02x ",msg_send_buff[i]);
+     	APP_DEBUG("%02x",msg_send_buff[i]);
      APP_DEBUG("\r\n");
      #endif
 	 
@@ -169,11 +201,11 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
  *********************************************************************/
 u8 server_msg_calculate_checkcode(u8 *pBuffer, u16 length)
 {
-    u8 i;
-    u8 checkCode, checkCodeLocation;
+    u8 checkCode;
+    u16 checkCodeLocation;
     checkCode = pBuffer[1];
     checkCodeLocation = length - 2;
-    for( i = 2; i < checkCodeLocation; i++ )
+    for(u16 i = 2; i < checkCodeLocation; i++ )
     {
       checkCode = checkCode ^ pBuffer[i];
     }
@@ -267,9 +299,9 @@ bool Server_Msg_Handle(u8 *pbuffer,u16 numBytes)
 {
 	u16 retransform_count;
 
-    #if 1
+    #if 0
     for(int i = 0; i < numBytes; i++)
-    	APP_DEBUG("0x%02x ",pbuffer[i]);
+    	APP_DEBUG("%02x ",pbuffer[i]);
     APP_DEBUG("\r\n");
     #endif
 	
@@ -390,7 +422,8 @@ bool Uart_Msg_Verify_Checkcode(u8 *pBuffer, u16 length )
 void Server_Msg_Parse(u8* pBuffer, u16 length)
 {
     u16 command_id = TOSMALLENDIAN16(pBuffer[3],pBuffer[4]);
-
+    u16 msg_num = TOSMALLENDIAN16(pBuffer[15],pBuffer[16]);
+    //APP_DEBUG("Server_Msg_Parse 0x%x\n",command_id);
     switch(command_id)
     {
         case TODEVICE_GENERIC_RSP_ID:
@@ -412,20 +445,16 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 			
 			  	//set system time
 			  	ST_Time datetime;
-			  	for(u8 i = 0; i < 6; i++)
-			  	{	
-					BCDTODEC(pBuffer[22+i]);
-					//APP_DEBUG("time: %d\r\n",pBuffer[22+i]);
-			  	}
 			  	//time start from 2000-1-1-00:00:00
-				datetime.year=pBuffer[22] + 2000;
-				datetime.month=pBuffer[23];
-				datetime.day=pBuffer[24];
-				datetime.hour=pBuffer[25];
-				datetime.minute=pBuffer[26];
-				datetime.second=pBuffer[27];
+				datetime.year=BCDTODEC(pBuffer[22]) + 2000;
+				datetime.month=BCDTODEC(pBuffer[23]);
+				datetime.day=BCDTODEC(pBuffer[24]);
+				datetime.hour=BCDTODEC(pBuffer[25]);
+				datetime.minute=BCDTODEC(pBuffer[26]);
+				datetime.second=BCDTODEC(pBuffer[27]);
 				datetime.timezone=TIMEZONE;
   			  	Ql_SetLocalTime(&datetime);
+  			  	//APP_DEBUG("time: %d-%d-%d %d:%d:%d\n",datetime.year,datetime.month,datetime.day,datetime.hour,datetime.minute,datetime.second);
 			}
 			else
 			{
@@ -433,6 +462,15 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 			  	gServer_State = SERVER_STATE_REGISTER_FAILURE;
 			  	APP_DEBUG("register failure\n");
 			}
+        	break;
+
+        case TODEVICE_SET_PARAMETER_ID:
+			App_Set_Parameter(pBuffer,length);
+			App_Report_Parameter(TODEVICE_SET_PARAMETER_ID, msg_num);
+        	break;
+
+        case TODEVICE_GET_PARAMETER_ID:
+			App_Report_Parameter(TODEVICE_GET_PARAMETER_ID, msg_num);
         	break;
 			
         default:                
@@ -492,7 +530,7 @@ s32 App_Server_Register( void )
 	m_Server_Msg_Head.msg_id= TOSERVER_REGISTER_ID;
 	m_Server_Msg_Head.msg_length = 20;
 	Ql_memcpy(m_Server_Msg_Head.device_imei, g_imei, 8);
-	m_Server_Msg_Head.msg_number = g_msg_number++;
+	m_Server_Msg_Head.msg_number = ++g_msg_number;
 
 	//body
   	u8 msg_body[20];
@@ -534,14 +572,14 @@ s32 App_Server_Register( void )
  *********************************************************************/
 void App_Heartbeat_To_Server( void )
 {
-	//APP_DEBUG("heartbeat to server\n");
+	APP_DEBUG("heartbeat to server\n");
     //head
 	Server_Msg_Head m_Server_Msg_Head;
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
 	m_Server_Msg_Head.msg_id= TOSERVER_HEARTBEAT_ID;
 	m_Server_Msg_Head.msg_length = 20;
 	Ql_memcpy(m_Server_Msg_Head.device_imei, g_imei, 8);
-	m_Server_Msg_Head.msg_number = g_msg_number++;
+	m_Server_Msg_Head.msg_number = ++g_msg_number;
   
   	gmsg_num_heartbeat = m_Server_Msg_Head.msg_number;
   	greceived_heartbeat_rsp = FALSE;
@@ -596,4 +634,210 @@ void App_Heartbeat_Check(void)
 	  		App_Heartbeat_To_Server();
 		}
   	}
+}
+
+/*********************************************************************
+ * @fn      App_Report_Parameter
+ *
+ * @brief   App_Report_Parameter
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+void App_Report_Parameter(u16 msg_id, u16 msg_number)
+{
+    u16 j;
+    APP_DEBUG("app report parameter\n");
+    
+    //head
+	Server_Msg_Head m_Server_Msg_Head;
+	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
+	m_Server_Msg_Head.msg_id= TOSERVER_PARAMETER_ID;
+	m_Server_Msg_Head.msg_length = sizeof(gParmeter) + 7;
+	Ql_memcpy(m_Server_Msg_Head.device_imei, g_imei, 8);
+	m_Server_Msg_Head.msg_number = ++g_msg_number;
+    
+	//body
+	u8 *msg_body;
+	msg_body = (u8 *)Ql_MEM_Alloc(m_Server_Msg_Head.msg_length);
+	Ql_memset(msg_body, 0, m_Server_Msg_Head.msg_length);
+	
+	msg_id = TOBIGENDIAN16(msg_id);
+	msg_number = TOBIGENDIAN16(msg_number);
+    Ql_memcpy(msg_body,&msg_number,2);
+    Ql_memcpy(msg_body+2,&msg_id,2);
+    msg_body[4] = APP_RSP_OK;
+    msg_body[5] = 0;
+    msg_body[6] = parameter_8_num + parameter_12_num;
+
+    j = 6;
+	for(u16 i = 0; i < parameter_8_num; i++)
+	{
+        if(gParmeter.parameter_8[i].length != 4)
+        {
+			if(gParmeter.parameter_8[i].length == 3)
+			{
+				msg_body[++j] = gParmeter.parameter_8[i].id >> 8;
+				msg_body[++j] = gParmeter.parameter_8[i].id;
+				msg_body[++j] = gParmeter.parameter_8[i].length >> 8;
+				msg_body[++j] = gParmeter.parameter_8[i].length;
+				msg_body[++j] = gParmeter.parameter_8[i].data >> 16;
+				msg_body[++j] = gParmeter.parameter_8[i].data >> 8;
+				msg_body[++j] = gParmeter.parameter_8[i].data;
+				#if 0
+				for(s8 i =6; i >= 0; i--)
+				{
+				 	APP_DEBUG("%02x",msg_body[j-i]);
+	            }
+	            #endif
+			}
+			continue;
+		}	
+		msg_body[++j] = gParmeter.parameter_8[i].id >> 8;
+		msg_body[++j] = gParmeter.parameter_8[i].id;
+		msg_body[++j] = gParmeter.parameter_8[i].length >> 8;
+		msg_body[++j] = gParmeter.parameter_8[i].length;
+		msg_body[++j] = gParmeter.parameter_8[i].data >> 24;
+		msg_body[++j] = gParmeter.parameter_8[i].data >> 16;
+		msg_body[++j] = gParmeter.parameter_8[i].data >> 8;
+		msg_body[++j] = gParmeter.parameter_8[i].data;
+        #if 0
+		for(s8 i = 7; i >= 0; i--)
+		{
+			APP_DEBUG("%02x",msg_body[j-i]);
+        }
+        #endif
+	}
+	
+    for(u16 i = 0; i < parameter_12_num; i++)
+	{
+		if(gParmeter.parameter_12[i].length != 8)
+		{
+			if(gParmeter.parameter_12[i].length == 6)
+			{
+				msg_body[++j] = gParmeter.parameter_12[i].id >> 8;
+				msg_body[++j] = gParmeter.parameter_12[i].id;
+				msg_body[++j] = gParmeter.parameter_12[i].length >> 8;
+				msg_body[++j] = gParmeter.parameter_12[i].length;
+
+				Ql_memcpy((msg_body+j+1), gParmeter.parameter_12[i].data, 6);
+				j += 6;
+	            #if 0
+				for(s8 i =9; i >= 0; i--)
+					APP_DEBUG("%02x",msg_body[j-i]);
+				#endif
+			}
+			continue;
+		}
+		
+		msg_body[++j] = gParmeter.parameter_12[i].id >> 8;
+		msg_body[++j] = gParmeter.parameter_12[i].id;
+		msg_body[++j] = gParmeter.parameter_12[i].length >> 8;
+		msg_body[++j] = gParmeter.parameter_12[i].length;
+		
+		Ql_memcpy((msg_body+j+1), gParmeter.parameter_12[i].data, 8);
+		j += 8;
+        #if 0
+		for(s8 i =11; i >= 0; i--)
+			APP_DEBUG("%02x",msg_body[j-i]);
+		#endif
+	}
+
+	m_Server_Msg_Head.msg_length = j + 1;
+	//pack msg
+	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
+
+	Ql_MEM_Free(msg_body);
+  
+  	return;  
+}
+
+/*********************************************************************
+ * @fn      App_Set_Parameter
+ *
+ * @brief   App_Set_Parameter
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+void App_Set_Parameter(u8* pBuffer, u16 length)
+{
+    u16 num = TOSMALLENDIAN16(pBuffer[17],pBuffer[18]);
+	APP_DEBUG("setting paramter number %d\n",num);
+	u16 pLocation = 19;
+	for(u16 i = 0; i < num; i++)
+	{
+		u16 par_id = TOSMALLENDIAN16(pBuffer[pLocation],pBuffer[pLocation+1]);
+		u8  par_len = pBuffer[pLocation+2];
+
+		if(par_id != NETWORK_TIME && par_id != PASSWORD)
+		{
+			s32 index = binary_search_parameter(gParmeter.parameter_8, parameter_8_num, par_id, par_len);
+			if(index < APP_RET_OK)
+			{
+				APP_ERROR("binary_search error: App_Set_Parameter, ret = %d\n",index);
+			}
+			//APP_DEBUG("find:0x%04x,index:%d\n",par_id,index);
+			if(par_len == 4)
+			{
+				gParmeter.parameter_8[index].data = TOSMALLENDIAN32(pBuffer[pLocation+3],pBuffer[pLocation+4],pBuffer[pLocation+5],pBuffer[pLocation+6]);
+				//APP_DEBUG("find:0x%04x,index:%d,data:%d\n",par_id,index,gParmeter.parameter_8[index].data);
+			}
+			else if(par_len == 3)
+			{
+				//gParmeter.parameter_8[index].data = TOSMALLENDIAN32(BCDTODEC(pBuffer[pLocation+3]),BCDTODEC(pBuffer[pLocation+4]),BCDTODEC(pBuffer[pLocation+5]),0);
+				gParmeter.parameter_8[index].data = TOSMALLENDIAN32(0,pBuffer[pLocation+3],pBuffer[pLocation+4],pBuffer[pLocation+5]);
+				//APP_DEBUG("find:0x%04x,index:%d,data:%x\n",par_id,index,gParmeter.parameter_8[index].data);
+			}
+		}
+		else if(par_id == NETWORK_TIME)
+		{
+			//set local time
+			ST_Time datetime;
+			//time start from 2000-1-1-00:00:00
+		    datetime.year=BCDTODEC(pBuffer[pLocation+3]) + 2000;
+			datetime.month=BCDTODEC(pBuffer[pLocation+4]);
+			datetime.day=BCDTODEC(pBuffer[pLocation+5]);
+			datetime.hour=BCDTODEC(pBuffer[pLocation+6]);
+			datetime.minute=BCDTODEC(pBuffer[pLocation+7]);
+			datetime.second=BCDTODEC(pBuffer[pLocation+8]);
+			datetime.timezone=TIMEZONE;
+  			Ql_SetLocalTime(&datetime);
+  			//APP_DEBUG("time: %d-%d-%d %d:%d:%d\n",datetime.year,datetime.month,datetime.day,datetime.hour,datetime.minute,datetime.second);
+		}
+		else
+		{
+			//set password
+		}
+		
+		pLocation = pLocation + par_len + 3;
+	}
+}
+
+/*********************************************************************
+ * @fn      binary_search_parameter
+ *
+ * @brief   binary_search_parameter
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+s32 binary_search_parameter(Parameter_8 *pParameter_8, u32 len, u16 goal, u8 par_len)
+{
+	s32 low = 0;
+	s32 high = len - 1;
+	while(low <= high)
+	{
+		s32 middle = (low + high)/2;
+		if(pParameter_8[middle].id == goal && pParameter_8[middle].length == par_len)
+			return middle;
+		else if(pParameter_8[middle].id > goal)
+			high = middle - 1;
+		else
+			low = middle + 1;
+	}
+	return APP_RET_ERR_NOT_FOUND;
 }

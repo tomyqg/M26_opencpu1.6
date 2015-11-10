@@ -58,8 +58,11 @@ static ST_GprsConfig m_GprsConfig = {
 /* Definition for Server IP Address and Socket Port Number              */
 /************************************************************************/
 //pan
-static u8  m_SrvADDR[20] = "54.223.223.222\0";
-static u32 m_SrvPort = 5605;
+//static u8  m_SrvADDR[20] = "54.223.223.222\0";
+//static u32 m_SrvPort = 5605;
+//IBM
+static u8  m_SrvADDR[20] = "54.223.54.184\0";
+static u32 m_SrvPort = 8300;
 //static u8  m_SrvADDR[20] = "113.92.228.197\0";
 //static u32 m_SrvPort = 6800;
 
@@ -300,6 +303,7 @@ void Callback_Socket_Accept(s32 listenSocketId, s32 errCode, void* customParam )
 void Callback_Socket_Read(s32 socketId, s32 errCode, void* customParam )
 {
     s32 ret;
+    //APP_DEBUG("call back socket read...\n");
     if(errCode)
     {
         APP_DEBUG("<--CallBack: socket read failure,(sock=%d,error=%d)-->\r\n",socketId,errCode);

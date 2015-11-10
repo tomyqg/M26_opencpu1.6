@@ -41,7 +41,7 @@
 #include "ql_uart.h"
 #include "app_debug.h"
 #include "app_socket.h"
-
+#include "app_server.h"
 
 #define SERIAL_RX_BUFFER_LEN  2048
 
@@ -122,14 +122,12 @@ void proc_main_task(s32 taskId)
                 if (SIM_STAT_READY == msg.param2)
                 {
                     APP_DEBUG("<-- SIM card is ready -->\r\n");
-
 					u32 ret;
                     ret = RIL_SIM_GetIMEI(userdata, sizeof(userdata));
 					if (ret != RIL_AT_SUCCESS)
 					{
 						APP_ERROR("Fail to get IMSI!\r\n");
 					}
-					APP_DEBUG("IMEI: %s\r\n",userdata);
 				    g_imei[0] = userdata[0] - '0';
 				    APP_DEBUG("IMEI: %x",g_imei[0]);
 					for(u8 i = 1,j = 1; i < 8; i++)
@@ -144,9 +142,8 @@ void proc_main_task(s32 taskId)
 					{
 						APP_ERROR("Fail to get IMSI!\r\n");
 					}
-					APP_DEBUG("\r\nIMSI: %s\r\n",userdata);
 					g_imsi[0] = userdata[0] - '0';
-					APP_DEBUG("IMSI: %x",g_imsi[0]);
+					APP_DEBUG(" IMSI: %x",g_imsi[0]);
 					for(u8 i = 1,j = 1; i < 8; i++)
 					{
 						g_imsi[i] = ((userdata[j] - '0')<<4) + (userdata[j+1] - '0');
@@ -154,6 +151,8 @@ void proc_main_task(s32 taskId)
 						APP_DEBUG("%02x",g_imsi[i]);
 					}
 					APP_DEBUG("\r\n");
+					Ql_memcpy(gParmeter.parameter_12[0].data, g_imei, 8);
+					Ql_memcpy(gParmeter.parameter_12[1].data, g_imsi, 8);
                 }
                 else
                 {

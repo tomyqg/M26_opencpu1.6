@@ -47,8 +47,8 @@
 							        ((C) << 8) | \
 						             (D)) 
 
-#define BCDTODEC(bcd) ((bcd) = ((bcd) % 16) + ((bcd)>>4) * 10)
-#define DECTOBCD(bcd) ((bcd) = (((bcd) / 10)*16) + ((bcd)%10))  						   
+#define BCDTODEC(bcd) (((bcd) % 16) + ((bcd)>>4) * 10)
+#define DECTOBCD(bcd) ((((bcd) / 10)*16) + ((bcd)%10))  						   
   
 /*********************************************************************
  * CONSTANTS
@@ -74,10 +74,13 @@
 //device to server msg id
 #define TOSERVER_HEARTBEAT_ID             0x0100  
 #define TOSERVER_REGISTER_ID              0x0102
+#define TOSERVER_PARAMETER_ID             0x0104
 
 //server to device msg id  
 #define TODEVICE_GENERIC_RSP_ID           0x8001
-#define TODEVICE_REGISTER_RSP_ID          0x8002 
+#define TODEVICE_REGISTER_RSP_ID          0x8002
+#define TODEVICE_SET_PARAMETER_ID         0x8103
+#define TODEVICE_GET_PARAMETER_ID         0x8104 
 
 //heartbeat
 #define HB_TIMER_ID         (TIMER_ID_USER_START + 100)
@@ -86,17 +89,62 @@
 //beijin timezone
 #define TIMEZONE            8
 
+#define parameter_8_num     23
+#define parameter_12_num    5
+#define NETWORK_TIME        0x0305
+#define PASSWORD            0x0400
+
+enum {
+    APP_RSP_OK           = 0,
+    APP_RSP_FAILURE      = 1,
+    APP_RSP_MSG_ERROR    = 2,
+    APP_RSP_NONSUPPORT   = 3,
+    APP_RSP_CHECKERR     = 4,
+};
 /*********************************************************************
  * TYPEDEFS
  */
  
 typedef struct {
-    s16 protocol_version;    
-    s16 msg_id;
-    s16 msg_length;
+    u16 protocol_version;    
+    u16 msg_id;
+    u16 msg_length;
     u8  device_imei[8];
-    s16 msg_number;  
+    u16 msg_number;  
 }Server_Msg_Head;
+
+typedef struct {
+    u32 alarm_flags;    
+    u32 status;
+    u32 latitude;
+    u32 longitude;
+    u32 altitude;
+    u32 speed;
+    u32 direction;
+    u8  time[6];
+    u32 gps_num;
+    u32 lac;
+    u32 cell_id;
+    u32 rssi;
+}Alarm_Msg;
+
+typedef struct {
+	u16 id;    
+    u16 length;
+    u32 data;
+}Parameter_8;
+
+typedef struct {
+	u16 id;    
+    u16 length;
+    u8 data[8];
+}Parameter_12;
+
+typedef struct {
+	Parameter_8 parameter_8[parameter_8_num];
+	Parameter_12 parameter_12[parameter_12_num];
+}Parameter;
+extern Parameter gParmeter;
 
 /*********************************************************************
  * VARIABLES
@@ -119,5 +167,7 @@ u16 Server_Msg_Need_Retransform(u8 *pBuffer, u16 length);
 u16 Server_Msg_Retransform(u8 *pbuffer,u16 numBytes);
 bool Uart_Msg_Verify_Checkcode(u8 *pBuffer, u16 length );
 void Server_Msg_Parse(u8* pBuffer, u16 length);
-
+void App_Report_Parameter(u16 msg_id, u16 msg_number);
+void App_Set_Parameter(u8* pBuffer, u16 length);
+s32 binary_search_parameter(Parameter_8 *pParameter_8, u32 len, u16 goal, u8 par_len);
 #endif  //__APP_SERVER_H__
