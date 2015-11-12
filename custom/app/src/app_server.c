@@ -575,6 +575,8 @@ s32 App_Server_Register( void )
 void App_Heartbeat_To_Server( void )
 {
 	APP_DEBUG("heartbeat to server\n");
+	Ql_OS_SendMessage(subtask1_id, MSG_ID_USER_START+0x101, g_msg_number, g_msg_number);
+	MutextTest(main_task_id);
     //head
 	Server_Msg_Head m_Server_Msg_Head;
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;

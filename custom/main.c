@@ -45,6 +45,12 @@
 
 #define SERIAL_RX_BUFFER_LEN  2048
 
+#define MSG_ID_USER_DATA                MSG_ID_USER_START+0x100
+#define MSG_ID_MUTEX_TEST               MSG_ID_USER_START+0x101
+#define MSG_ID_SEMAPHORE_TEST           MSG_ID_USER_START+0x102
+#define MSG_ID_GET_ALL_TASK_PRIORITY    MSG_ID_USER_START+0x103
+#define MSG_ID_GET_ALL_TASK_REMAINSTACK MSG_ID_USER_START+0x104
+
 // Define the UART port and the receive data buffer
 static Enum_SerialPort m_myUartPort  = UART_PORT1;
 static u8 m_RxBuf_Uart1[SERIAL_RX_BUFFER_LEN];
@@ -57,6 +63,8 @@ extern Lac_CellID glac_ci;
 
 extern s32 RIL_SIM_GetIMEI(char* pIMEI, u32 pIMEILen);
 extern s32 RIL_SIM_GetIMSI(char* pIMSI, u32 pIMSILen);
+
+s32  s_iMutexId = 0;
 
 /************************************************************************/
 /*                                                                      */
@@ -79,6 +87,9 @@ void proc_main_task(s32 taskId)
     {
         Ql_Debug_Trace("Fail to open serial port[%d], ret=%d\r\n", m_myUartPort, ret);
     }
+
+    s_iMutexId = Ql_OS_CreateMutex("MyMutex");
+
 
     APP_DEBUG("OpenCPU: Customer Application\r\n");
 
@@ -332,6 +343,21 @@ static s32 ATResponse_Handler(char* line, u32 len, void* userData)
         return  RIL_ATRSP_FAILED;
     }
     return RIL_ATRSP_CONTINUE; //continue wait
+}
+
+/**************************************************************
+* the 1st sub task
+***************************************************************/
+
+void MutextTest(int iTaskId)  //Two task Run this function at the same time
+{
+
+    APP_DEBUG("<---I am Task %d--->\r\n", iTaskId);
+    Ql_OS_TakeMutex(s_iMutexId);
+    APP_DEBUG("<-----I am Task %d----->\r\n", iTaskId);   //Another Caller prints this sentence after 5 seconds
+    Ql_Sleep(5000);                                                             
+    APP_DEBUG("<--(TaskId=%d)Do not reboot with calling Ql_sleep-->\r\n", iTaskId);
+    Ql_OS_GiveMutex(s_iMutexId);
 }
 
 #endif // __CUSTOMER_CODE__

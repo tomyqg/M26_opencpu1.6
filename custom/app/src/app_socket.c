@@ -93,6 +93,58 @@ static ST_SOC_Callback      callback_soc_func=
     Callback_Socket_Write
 };
 
+#define MSG_ID_USER_DATA                MSG_ID_USER_START+0x100
+#define MSG_ID_MUTEX_TEST               MSG_ID_USER_START+0x101
+#define MSG_ID_SEMAPHORE_TEST           MSG_ID_USER_START+0x102
+#define MSG_ID_GET_ALL_TASK_PRIORITY    MSG_ID_USER_START+0x103
+#define MSG_ID_GET_ALL_TASK_REMAINSTACK MSG_ID_USER_START+0x104
+
+void proc_subtask1(s32 TaskId)
+{
+    bool keepGoing = TRUE;
+    ST_MSG subtask1_msg;
+    
+    APP_DEBUG("<--multitask = %d  %d: example_task1_entry-->\r\n",TaskId,subtask1_id);
+    while(keepGoing)
+    {    
+        Ql_OS_GetMessage(&subtask1_msg);
+        switch(subtask1_msg.message)
+        {
+            case MSG_ID_USER_DATA:
+            {
+               APP_DEBUG("\r\n<--Sub task 1 recv MSG: SrcId=%d,MsgID=%d Data1=%d, Data2=%d-->\r\n", \
+                        subtask1_msg.srcTaskId, \
+                        subtask1_msg.message,\
+                        subtask1_msg.param1, \
+                        subtask1_msg.param2);
+                break;
+            }
+            case MSG_ID_MUTEX_TEST:
+            {
+                MutextTest(TaskId);
+                break;
+            }
+            case MSG_ID_SEMAPHORE_TEST:
+            {
+                //SemaphoreTest1(TaskId);  
+                break;
+            }
+            case MSG_ID_GET_ALL_TASK_PRIORITY:
+            {
+                //GetCurrentTaskPriority(TaskId);
+                break;
+            }
+            case MSG_ID_GET_ALL_TASK_REMAINSTACK:
+            {
+                //GetCurrenTaskRemainStackSize(TaskId);
+                break;
+            } 
+            default:
+                break;
+        }
+    }    
+}
+
 //
 // Activate GPRS and program TCP.
 //
