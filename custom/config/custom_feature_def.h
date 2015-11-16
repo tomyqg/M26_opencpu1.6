@@ -7,7 +7,7 @@
 #define __OCPU_RIL_SUPPORT__
 #define __OCPU_RIL_SMS_SUPPORT__
 #define __OCPU_RIL_CALL_SUPPORT__
-#define __OCPU_RIL_BT_SUPPORT__
+//#define __OCPU_RIL_BT_SUPPORT__
 
 
 

@@ -1,0 +1,88 @@
+/*****************************************************************************
+ *
+ * Filename:
+ * ---------
+ *   app_gps.h 
+ *
+ * Project:
+ * --------
+ * --------
+ *
+ * Description:
+ * ------------
+ * ------------
+ *
+ * Author:
+ * -------
+ * -------
+ *
+ *============================================================================
+ *             HISTORY
+ *----------------------------------------------------------------------------
+ * 
+ ****************************************************************************/
+
+
+#ifndef __APP_GPS_H__
+#define __APP_GPS_H__
+
+/*********************************************************************
+ * INCLUDES
+ */
+#include "Ql_uart.h"
+
+/*********************************************************************
+ * MACROS
+ */
+
+/*********************************************************************
+ * CONSTANTS
+ */
+#define GPS_UART_PORT           UART_PORT3
+#define GPS_UART_baudrate       9600
+
+/*********************************************************************
+ * TYPEDEFS
+ */
+typedef struct {
+    s32  latitude;
+    s32  longitude;
+    s32  altitude;
+    s32  speed;
+    s32  bearing;
+    s32  starInusing;
+} GpsLocation;
+ 
+#define  GPS_MAX_SIZE  83
+typedef void (*GpsLocation_cb)(void);
+typedef struct {
+    int     pos;
+    GpsLocation  fix;
+    GpsLocation_cb callback;
+	char    in[ GPS_MAX_SIZE+1 ];
+	bool flag;
+} GpsReader; 
+extern GpsReader mGpsReader[1];
+
+typedef struct {
+    const char*  p;
+    const char*  end;
+} Token;
+
+#define  MAX_GPS_TOKENS  21
+typedef struct {
+    int     count;
+    Token   tokens[ MAX_GPS_TOKENS ];
+} GpsTokenizer;
+
+/*********************************************************************
+ * VARIABLES
+ */
+ 
+/*********************************************************************
+ * FUNCTIONS
+ */
+ 
+#endif // End-of __APP_GPS_H__ 
+
+

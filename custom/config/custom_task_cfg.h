@@ -54,7 +54,8 @@ TASK_ITEM(proc_main_task,       main_task_id,   10*1024, DEFAULT_VALUE1, DEFAULT
 TASK_ITEM(proc_reserved1,       reserved1_id,   5*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
 TASK_ITEM(proc_reserved2,       reserved2_id,   5*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
 #ifdef __CUSTOMER_CODE__
-TASK_ITEM(proc_subtask1,        subtask1_id,    5*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
+TASK_ITEM(proc_subtask_gprs,    subtask_gprs_id,    5*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
+TASK_ITEM(proc_subtask_gps,     subtask_gps_id,     2*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
 #endif
 
 #if __ECHO_REMOTE_APP__ 

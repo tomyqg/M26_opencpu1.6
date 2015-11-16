@@ -39,17 +39,11 @@
 #include "ql_gprs.h"
 #include "ql_socket.h"
 #include "ql_uart.h"
-#include "app_debug.h"
+#include "app_common.h"
 #include "app_socket.h"
 #include "app_server.h"
 
 #define SERIAL_RX_BUFFER_LEN  2048
-
-#define MSG_ID_USER_DATA                MSG_ID_USER_START+0x100
-#define MSG_ID_MUTEX_TEST               MSG_ID_USER_START+0x101
-#define MSG_ID_SEMAPHORE_TEST           MSG_ID_USER_START+0x102
-#define MSG_ID_GET_ALL_TASK_PRIORITY    MSG_ID_USER_START+0x103
-#define MSG_ID_GET_ALL_TASK_REMAINSTACK MSG_ID_USER_START+0x104
 
 // Define the UART port and the receive data buffer
 static Enum_SerialPort m_myUartPort  = UART_PORT1;
@@ -202,7 +196,8 @@ void proc_main_task(s32 taskId)
                     APP_DEBUG("<-- Module has registered to GPRS network-->\r\n");
 					APP_DEBUG("lac:0x%x,cell_id:0x%x\n",glac_ci.lac,glac_ci.cell_id);
                     // Module has registered to GPRS network, and app may start to activate PDP and program TCP
-                    GPRS_TCP_Program();
+                    //GPRS_TCP_Program();
+                    Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
                 }else{
                     APP_DEBUG("<-- GPRS network status:%d -->\r\n", msg.param2);
                     /* status: 0 = Not registered, module not currently search a new operator
@@ -344,10 +339,6 @@ static s32 ATResponse_Handler(char* line, u32 len, void* userData)
     }
     return RIL_ATRSP_CONTINUE; //continue wait
 }
-
-/**************************************************************
-* the 1st sub task
-***************************************************************/
 
 void MutextTest(int iTaskId)  //Two task Run this function at the same time
 {
