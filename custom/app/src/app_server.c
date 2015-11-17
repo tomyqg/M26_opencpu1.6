@@ -103,7 +103,13 @@ Parameter gParmeter = {
 
 Lac_CellID glac_ci;
 GpsLocation gGpsLocation;
-Location_Policy gLocation_Policy;
+Location_Policy gLocation_Policy = {
+    1,   //location_policy;    
+    1,   //static_policy;
+    30,  //time_Interval;
+    100, //distance_Interval;
+    45,  //bearing_Interval;
+};
 
 /*********************************************************************
  * FUNCTIONS
@@ -516,7 +522,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
  *
  * @return  
  *********************************************************************/
-void Timer_Handler(u32 timerId, void* param)
+static void Timer_Handler(u32 timerId, void* param)
 {
     if(HB_TIMER_ID == timerId)
     {
@@ -890,6 +896,7 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
  *********************************************************************/
 void App_Report_Location( void )
 {
+	APP_DEBUG("App_Report_Location\n");
 	//head
 	Server_Msg_Head m_Server_Msg_Head;
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
@@ -962,7 +969,7 @@ void App_Set_Location_policy( u8* pBuffer, u16 length )
 	//APP_DEBUG("setting distance policy %d\n",gLocation_Policy.distance_Interval);
 
 	gLocation_Policy.bearing_Interval = TOBIGENDIAN32(gLocation_Policy.bearing_Interval);	
-	//APP_DEBUG("setting bearing policy %d\n",gLocation_Policy.bearing_Interval);				
+	//APP_DEBUG("setting bearing policy %d\n",gLocation_Policy.bearing_Interval);
 }
 
 /*********************************************************************

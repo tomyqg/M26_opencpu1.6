@@ -149,6 +149,7 @@ void proc_subtask_gprs(s32 TaskId)
 				gGpsLocation.speed = TOBIGENDIAN32(mGpsReader[0].fix.speed);
 				gGpsLocation.bearing = TOBIGENDIAN32(mGpsReader[0].fix.bearing);
 				gGpsLocation.starInusing = TOBIGENDIAN32(mGpsReader[0].fix.starInusing);
+				App_Report_Location();
                 break;
             }
             default:

@@ -61,6 +61,8 @@ static void CallBack_UART_GPS(Enum_SerialPort port, Enum_UARTEventType msg, bool
 static void gps_reader_init( GpsReader* r );
 //static s32 str2int( const s8* p, const s8* end );
 static double str2float( const char* p, const char* end );
+
+static void Timer_Handler(u32 timerId, void* param);
  
 /**************************************************************
 * gps sub task
@@ -83,6 +85,22 @@ void proc_subtask_gps(s32 TaskId)
     {
         APP_ERROR("Fail to open gps serial port,ret=%d\r\n",ret);
     }
+
+    //timer
+    ret = Ql_Timer_Register(GPS_TIMER_ID, Timer_Handler, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer gps register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
+    }
+	//start a timer,repeat=FALSE;
+	if(gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+	{
+		ret = Ql_Timer_Start(GPS_TIMER_ID,gLocation_Policy.time_Interval*1000,FALSE);
+		if(ret < 0)
+		{
+			APP_ERROR("\r\nfailed!!, Timer gps start fail ret=%d\r\n",ret);        
+		}
+	}	
 
     //gps init
     gps_reader_init(mGpsReader);
@@ -108,7 +126,37 @@ void proc_subtask_gps(s32 TaskId)
     }    
 }
 
-# if 0
+static void Timer_Handler(u32 timerId, void* param)
+{
+    if(GPS_TIMER_ID == timerId)
+    {
+		if (mGpsReader[0].flag == TRUE)
+		{
+        	#if 0
+			APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
+    			   	   r->fix.latitude,r->fix.longitude,r->fix.altitude,r->fix.speed,r->fix.bearing);
+			#endif
+			if(mGpsReader[0].callback)
+			{
+				mGpsReader[0].callback();
+			}
+			mGpsReader[0].flag = FALSE;
+		}
+
+			//start a timer,repeat=FALSE;
+		if(gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+		{
+			u32 ret;
+			ret = Ql_Timer_Start(GPS_TIMER_ID,gLocation_Policy.time_Interval*1000,FALSE);
+			if(ret < 0)
+			{
+				APP_ERROR("\r\nfailed!!, Timer gps start fail ret=%d\r\n",ret);        
+			}
+		}
+    }
+}
+
+#if 0
 static s32 str2int( const s8* p, const s8* end )
 {
     s32   result = 0;
@@ -348,7 +396,7 @@ static void gps_reader_parse( GpsReader* r )
         tok.p -= 2;
         //APP_DEBUG("unknown sentence '%.*s\n", tok.end-tok.p, tok.p);
     }
-
+#if 0
     if (r->flag == TRUE) {
         #if 0
 		APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
@@ -360,6 +408,7 @@ static void gps_reader_parse( GpsReader* r )
 		}
 		r->flag = FALSE;
 	}
+#endif	
 }
 
 void GpsLocation_CallBack(void)

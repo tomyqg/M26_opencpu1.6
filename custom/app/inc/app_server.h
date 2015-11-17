@@ -100,6 +100,11 @@
 #define NETWORK_TIME        0x0305
 #define PASSWORD            0x0400
 
+#define STOP_REPORT_LOCATION      0
+#define TIMER_REPORT_LOCATION     1
+#define DISTANCE_REPORT_LOCATION  2
+#define DIS_TIM_REPORT_LOCATION   3
+
 enum {
     APP_RSP_OK           = 0,
     APP_RSP_FAILURE      = 1,
@@ -165,6 +170,7 @@ typedef struct {
     u32 distance_Interval;
     u32 bearing_Interval;
 }Location_Policy;
+extern Location_Policy gLocation_Policy;
 
 /*********************************************************************
  * VARIABLES

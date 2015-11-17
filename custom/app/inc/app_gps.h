@@ -30,6 +30,8 @@
  * INCLUDES
  */
 #include "Ql_uart.h"
+#include "Ql_time.h"
+#include "Ql_timer.h"
 
 /*********************************************************************
  * MACROS
@@ -40,6 +42,8 @@
  */
 #define GPS_UART_PORT           UART_PORT3
 #define GPS_UART_baudrate       9600
+
+#define GPS_TIMER_ID            (TIMER_ID_USER_START + 101)
 
 /*********************************************************************
  * TYPEDEFS
