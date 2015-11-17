@@ -31,6 +31,7 @@
 #include "ql_socket.h"
 #include "ql_time.h"
 #include "ql_timer.h"
+#include "ril_network.h"
 #include "app_common.h"
 #include "app_socket.h"
 #include "app_server.h"
@@ -102,6 +103,7 @@ Parameter gParmeter = {
 
 Lac_CellID glac_ci;
 GpsLocation gGpsLocation;
+Location_Policy gLocation_Policy;
 
 /*********************************************************************
  * FUNCTIONS
@@ -491,7 +493,14 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 				App_Report_Location();
 			}
         	break;
-        }	
+        }
+
+        case TODEVICE_LOCATION_POLICY_ID:
+        {
+			App_CommonRsp_To_Server(TODEVICE_LOCATION_POLICY_ID,msg_num);
+			App_Set_Location_policy(pBuffer,length);
+        	break;
+        }
 			
         default:                
             break;
@@ -529,6 +538,38 @@ void Timer_Handler(u32 timerId, void* param)
 			APP_ERROR("register server timeout for serveral times\r\n");
 		}
     }
+}
+
+/*********************************************************************
+ * @fn      App_CommonRsp_To_Server
+ *
+ * @brief   App_CommonRsp_To_Server
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number )
+{
+	APP_DEBUG("App_CommonRsp_To_Server\n");
+
+    //head
+	Server_Msg_Head m_Server_Msg_Head;
+	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
+	m_Server_Msg_Head.msg_id= TOSERVER_COMMON_RSP_ID;
+	m_Server_Msg_Head.msg_length = 5;
+	Ql_memcpy(m_Server_Msg_Head.device_imei, g_imei, 8);
+	m_Server_Msg_Head.msg_number = ++g_msg_number;
+
+	//body
+  	u8 msg_body[m_Server_Msg_Head.msg_length];
+  	msg_id = TOBIGENDIAN16(msg_id);
+	msg_number = TOBIGENDIAN16(msg_number);
+    Ql_memcpy(msg_body,&msg_number,2);
+    Ql_memcpy(msg_body+2,&msg_id,2);
+    msg_body[4] = APP_RSP_OK;
+  
+  	Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, m_Server_Msg_Head.msg_length);
 }
 
 /*********************************************************************
@@ -689,6 +730,7 @@ void App_Report_Parameter(u16 msg_id, u16 msg_number)
     Ql_memcpy(msg_body,&msg_number,2);
     Ql_memcpy(msg_body+2,&msg_id,2);
     msg_body[4] = APP_RSP_OK;
+    
     msg_body[5] = 0;
     msg_body[6] = parameter_8_num + parameter_12_num;
 
@@ -890,6 +932,37 @@ void App_Report_Location( void )
 	//pack msg
 	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
 	Ql_MEM_Free(msg_body);
+}
+
+/*********************************************************************
+ * @fn      App_Set_Location_policy
+ *
+ * @brief   App_Set_Location_policy
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+void App_Set_Location_policy( u8* pBuffer, u16 length )
+{
+	//APP_DEBUG("setting location policy\n");
+
+	Ql_memcpy(&gLocation_Policy, pBuffer+17, 20);
+
+	gLocation_Policy.location_policy = TOBIGENDIAN32(gLocation_Policy.location_policy);	
+	//APP_DEBUG("setting location policy %d\n",gLocation_Policy.location_policy);
+
+	gLocation_Policy.static_policy = TOBIGENDIAN32(gLocation_Policy.static_policy);	
+	//APP_DEBUG("setting static policy %d\n",gLocation_Policy.static_policy);
+
+	gLocation_Policy.time_Interval = TOBIGENDIAN32(gLocation_Policy.time_Interval);	
+	//APP_DEBUG("setting time policy %d\n",gLocation_Policy.time_Interval);
+
+	gLocation_Policy.distance_Interval = TOBIGENDIAN32(gLocation_Policy.distance_Interval);	
+	//APP_DEBUG("setting distance policy %d\n",gLocation_Policy.distance_Interval);
+
+	gLocation_Policy.bearing_Interval = TOBIGENDIAN32(gLocation_Policy.bearing_Interval);	
+	//APP_DEBUG("setting bearing policy %d\n",gLocation_Policy.bearing_Interval);				
 }
 
 /*********************************************************************

@@ -72,6 +72,7 @@
 #define SERVER_STATE_REGISTERING          2
 
 //device to server msg id
+#define TOSERVER_COMMON_RSP_ID            0x0001
 #define TOSERVER_HEARTBEAT_ID             0x0100  
 #define TOSERVER_REGISTER_ID              0x0102
 #define TOSERVER_PARAMETER_ID             0x0104
@@ -85,7 +86,7 @@
 #define TODEVICE_GET_PARAMETER_ID         0x8104
 
 #define TODEVICE_REQUEST_LOCATION_ID      0x8200
-#define TODEVICE_LOCATION_STRATEGY_ID     0x8202
+#define TODEVICE_LOCATION_POLICY_ID       0x8202
 
 //heartbeat
 #define HB_TIMER_ID         (TIMER_ID_USER_START + 100)
@@ -157,6 +158,14 @@ typedef struct {
 }Lac_CellID;
 extern Lac_CellID glac_ci;
 
+typedef struct {
+    u32 location_policy;    
+    u32 static_policy;
+    u32 time_Interval;
+    u32 distance_Interval;
+    u32 bearing_Interval;
+}Location_Policy;
+
 /*********************************************************************
  * VARIABLES
  */
@@ -182,4 +191,7 @@ void App_Report_Parameter(u16 msg_id, u16 msg_number);
 void App_Set_Parameter(u8* pBuffer, u16 length);
 s32 binary_search_parameter(Parameter_8 *pParameter_8, u32 len, u16 goal, u8 par_len);
 void get_lac_cellid(char *s);
+void App_Report_Location( void );
+void App_Set_Location_policy( u8* pBuffer, u16 length );
+s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number );
 #endif  //__APP_SERVER_H__
