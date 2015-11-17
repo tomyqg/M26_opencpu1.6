@@ -21,6 +21,7 @@
  *--------------------------------------------------------------------
  * 
  *********************************************************************/
+//#ifdef __CUSTOMER_CODE__ 
 /*********************************************************************
  * INCLUDES
  */
@@ -30,10 +31,10 @@
 #include "ql_socket.h"
 #include "ql_time.h"
 #include "ql_timer.h"
-#include "app_error.h"
-#include "app_debug.h"
+#include "app_common.h"
 #include "app_socket.h"
 #include "app_server.h"
+#include "app_gps.h"
 
 /*********************************************************************
  * MACROS
@@ -100,6 +101,7 @@ Parameter gParmeter = {
 };	 
 
 Lac_CellID glac_ci;
+GpsLocation gGpsLocation;
 
 /*********************************************************************
  * FUNCTIONS
@@ -424,6 +426,7 @@ bool Uart_Msg_Verify_Checkcode(u8 *pBuffer, u16 length )
 void Server_Msg_Parse(u8* pBuffer, u16 length)
 {
     u16 command_id = TOSMALLENDIAN16(pBuffer[3],pBuffer[4]);
+    u16 msg_attribute = TOSMALLENDIAN16(pBuffer[5],pBuffer[6]);
     u16 msg_num = TOSMALLENDIAN16(pBuffer[15],pBuffer[16]);
     //APP_DEBUG("Server_Msg_Parse 0x%x\n",command_id);
     switch(command_id)
@@ -440,6 +443,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
         break;
 		
         case TODEVICE_REGISTER_RSP_ID:
+        {
 		    if(pBuffer[21] == SERVER_STATE_REGISTER_OK)
 			{ 
 				APP_DEBUG("register ok\n");
@@ -465,15 +469,29 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 			  	APP_DEBUG("register failure\n");
 			}
         	break;
+        }	
 
         case TODEVICE_SET_PARAMETER_ID:
+        {
 			App_Set_Parameter(pBuffer,length);
 			App_Report_Parameter(TODEVICE_SET_PARAMETER_ID, msg_num);
         	break;
+        }	
 
         case TODEVICE_GET_PARAMETER_ID:
+        {
 			App_Report_Parameter(TODEVICE_GET_PARAMETER_ID, msg_num);
         	break;
+        }	
+
+        case TODEVICE_REQUEST_LOCATION_ID:
+        {
+			if(!msg_attribute)
+			{
+				App_Report_Location();
+			}
+        	break;
+        }	
 			
         default:                
             break;
@@ -575,8 +593,7 @@ s32 App_Server_Register( void )
 void App_Heartbeat_To_Server( void )
 {
 	APP_DEBUG("heartbeat to server\n");
-	Ql_OS_SendMessage(subtask1_id, MSG_ID_USER_START+0x101, g_msg_number, g_msg_number);
-	MutextTest(main_task_id);
+	
     //head
 	Server_Msg_Head m_Server_Msg_Head;
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
@@ -821,6 +838,61 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 }
 
 /*********************************************************************
+ * @fn      App_Report_Location
+ *
+ * @brief   App_Report_Location
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+void App_Report_Location( void )
+{
+	//head
+	Server_Msg_Head m_Server_Msg_Head;
+	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
+	m_Server_Msg_Head.msg_id= TOSERVER_LOCATION_INFO_ID;
+	m_Server_Msg_Head.msg_length = 50;
+	Ql_memcpy(m_Server_Msg_Head.device_imei, g_imei, 8);
+	m_Server_Msg_Head.msg_number = ++g_msg_number;
+    
+	//body
+	u8 *msg_body;
+	msg_body = (u8 *)Ql_MEM_Alloc(m_Server_Msg_Head.msg_length);
+	Ql_memset(msg_body, 0, m_Server_Msg_Head.msg_length);
+	
+	//alarm_flag = TOBIGENDIAN32(alarm_flag);
+	//Ql_memcpy(msg_body,&alarm_flag,4);
+	//status not use;
+	//Ql_memcpy(msg_body+4,&status,4);
+	
+	Ql_memcpy(msg_body+8,&gGpsLocation,20);
+	Ql_memcpy(msg_body+34,&gGpsLocation.starInusing,4);
+
+	//time start from 2000-1-1-00:00:00
+	ST_Time datetime;
+	Ql_GetLocalTime(&datetime);
+	msg_body[28] = DECTOBCD(datetime.year -2000);
+	msg_body[29] = DECTOBCD(datetime.month);
+	msg_body[30] = DECTOBCD(datetime.day);
+	msg_body[31] = DECTOBCD(datetime.hour);
+	msg_body[32] = DECTOBCD(datetime.minute);
+	msg_body[33] = DECTOBCD(datetime.second);
+
+	//LAC&CI
+	Ql_memcpy(msg_body+38,&glac_ci,8);
+	//RSSI
+	u32 rssi,ber;
+    RIL_NW_GetSignalQuality(&rssi, &ber);
+    rssi = TOBIGENDIAN32(rssi);
+	Ql_memcpy(msg_body+46,&rssi,4);
+
+	//pack msg
+	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
+	Ql_MEM_Free(msg_body);
+}
+
+/*********************************************************************
  * @fn      binary_search_parameter
  *
  * @brief   binary_search_parameter
@@ -901,3 +973,4 @@ void get_lac_cellid(char *s)
 	glac_ci.cell_id = TOBIGENDIAN32(glac_ci.cell_id);
 }
 
+//#endif // __CUSTOMER_CODE__

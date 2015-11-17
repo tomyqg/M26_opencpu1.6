@@ -76,11 +76,16 @@
 #define TOSERVER_REGISTER_ID              0x0102
 #define TOSERVER_PARAMETER_ID             0x0104
 
+#define TOSERVER_LOCATION_INFO_ID         0x0200
+
 //server to device msg id  
 #define TODEVICE_GENERIC_RSP_ID           0x8001
 #define TODEVICE_REGISTER_RSP_ID          0x8002
 #define TODEVICE_SET_PARAMETER_ID         0x8103
-#define TODEVICE_GET_PARAMETER_ID         0x8104 
+#define TODEVICE_GET_PARAMETER_ID         0x8104
+
+#define TODEVICE_REQUEST_LOCATION_ID      0x8200
+#define TODEVICE_LOCATION_STRATEGY_ID     0x8202
 
 //heartbeat
 #define HB_TIMER_ID         (TIMER_ID_USER_START + 100)

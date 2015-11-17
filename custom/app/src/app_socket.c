@@ -21,10 +21,7 @@
  *----------------------------------------------------------------------------
  * 
  ****************************************************************************/
- 
-#include "ril.h"
-#include "ril_util.h"
-#include "ril_network.h"
+#ifdef __CUSTOMER_CODE__ 
 #include "ql_stdlib.h"
 #include "ql_error.h"
 #include "ql_trace.h"
@@ -32,12 +29,15 @@
 #include "ql_timer.h"
 #include "ql_socket.h"
 #include "ql_gprs.h"
-#include "app_debug.h"
+#include "ril.h"
+#include "ril_util.h"
+#include "ril_network.h"
 #include "app_socket.h"
 #include "app_server.h"
+#include "app_common.h"
+#include "app_gps.h"
 
-
-#define  SOC_RECV_BUFFER_LEN  1460
+#define SOC_RECV_BUFFER_LEN   1460
 #define SRVADDR_BUFFER_LEN    100
 #define SEND_BUFFER_LEN       2048
 #define RECV_BUFFER_LEN       2048
@@ -78,6 +78,7 @@ static char *m_pCurrentPos = NULL;
 static u8 m_tcp_state = STATE_NW_GET_SIMSTATE;
 
 s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
+extern GpsLocation gGpsLocation;
 
 static ST_PDPContxt_Callback     callback_gprs_func = 
 {
@@ -93,30 +94,27 @@ static ST_SOC_Callback      callback_soc_func=
     Callback_Socket_Write
 };
 
-#define MSG_ID_USER_DATA                MSG_ID_USER_START+0x100
-#define MSG_ID_MUTEX_TEST               MSG_ID_USER_START+0x101
-#define MSG_ID_SEMAPHORE_TEST           MSG_ID_USER_START+0x102
-#define MSG_ID_GET_ALL_TASK_PRIORITY    MSG_ID_USER_START+0x103
-#define MSG_ID_GET_ALL_TASK_REMAINSTACK MSG_ID_USER_START+0x104
-
-void proc_subtask1(s32 TaskId)
+/**************************************************************
+* the gprs sub task
+***************************************************************/
+void proc_subtask_gprs(s32 TaskId)
 {
-    bool keepGoing = TRUE;
-    ST_MSG subtask1_msg;
+    ST_MSG subtask_msg;
     
-    APP_DEBUG("<--multitask = %d  %d: example_task1_entry-->\r\n",TaskId,subtask1_id);
-    while(keepGoing)
+    APP_DEBUG("<--multitask = %d  %d: example_task_entry-->\r\n",TaskId,subtask_gprs_id);
+    while(TRUE)
     {    
-        Ql_OS_GetMessage(&subtask1_msg);
-        switch(subtask1_msg.message)
+        Ql_OS_GetMessage(&subtask_msg);
+        switch(subtask_msg.message)
         {
-            case MSG_ID_USER_DATA:
+            case MSG_ID_GPRS_STATE:
             {
-               APP_DEBUG("\r\n<--Sub task 1 recv MSG: SrcId=%d,MsgID=%d Data1=%d, Data2=%d-->\r\n", \
-                        subtask1_msg.srcTaskId, \
-                        subtask1_msg.message,\
-                        subtask1_msg.param1, \
-                        subtask1_msg.param2);
+                APP_DEBUG("recv MSG: gprs state = %d\r\n",subtask_msg.param1);
+                if (subtask_msg.param1 == NW_STAT_REGISTERED ||
+                    subtask_msg.param1 == NW_STAT_REGISTERED_ROAMING)
+				{
+					GPRS_TCP_Program();
+				}
                 break;
             }
             case MSG_ID_MUTEX_TEST:
@@ -138,7 +136,21 @@ void proc_subtask1(s32 TaskId)
             {
                 //GetCurrenTaskRemainStackSize(TaskId);
                 break;
-            } 
+            }
+            case MSG_ID_GPS_REP_LOCATION:
+            {
+				#if 0
+				APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
+    			          mGpsReader[0].fix.latitude,mGpsReader[0].fix.longitude,mGpsReader[0].fix.altitude,mGpsReader[0].fix.speed,mGpsReader[0].fix.bearing);
+				#endif
+				gGpsLocation.latitude  = TOBIGENDIAN32(mGpsReader[0].fix.latitude);
+				gGpsLocation.longitude = TOBIGENDIAN32(mGpsReader[0].fix.longitude);
+				gGpsLocation.altitude = TOBIGENDIAN32(mGpsReader[0].fix.altitude);
+				gGpsLocation.speed = TOBIGENDIAN32(mGpsReader[0].fix.speed);
+				gGpsLocation.bearing = TOBIGENDIAN32(mGpsReader[0].fix.bearing);
+				gGpsLocation.starInusing = TOBIGENDIAN32(mGpsReader[0].fix.starInusing);
+                break;
+            }
             default:
                 break;
         }
@@ -474,3 +486,5 @@ void Callback_Socket_Write(s32 socketId, s32 errCode, void* customParam )
         }
      }while(1);
 }
+
+#endif // __CUSTOMER_CODE__
