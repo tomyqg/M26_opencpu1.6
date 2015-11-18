@@ -28,6 +28,7 @@
 /*********************************************************************
  * INCLUDES
  */
+#include "app_gps.h"
 
 /*********************************************************************
  * MACROS
@@ -171,6 +172,7 @@ typedef struct {
     u32 bearing_Interval;
 }Location_Policy;
 extern Location_Policy gLocation_Policy;
+extern GpsLocation gGpsLocation;
 
 /*********************************************************************
  * VARIABLES

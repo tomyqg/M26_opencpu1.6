@@ -25,6 +25,7 @@
 /*********************************************************************
  * INCLUDES
  */
+#include <math.h>
 #include "ql_stdlib.h"
 #include "ql_memory.h"
 #include "ql_time.h"
@@ -43,6 +44,8 @@
  * CONSTANTS
  */
 #define GPS_SERIAL_RX_BUFFER_LEN  1024
+#define PI                      3.1415926  
+#define EARTH_RADIUS            6378137
 
 /*********************************************************************
  * TYPEDEFS
@@ -63,6 +66,8 @@ static void gps_reader_init( GpsReader* r );
 static double str2float( const char* p, const char* end );
 
 static void Timer_Handler(u32 timerId, void* param);
+
+static float get_distance(float lat1, float lng1, float lat2, float lng2);
  
 /**************************************************************
 * gps sub task
@@ -143,8 +148,9 @@ static void Timer_Handler(u32 timerId, void* param)
 			mGpsReader[0].flag = FALSE;
 		}
 
-			//start a timer,repeat=FALSE;
-		if(gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+		//start a timer,repeat=FALSE;
+		if(gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || 
+		   gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
 		{
 			u32 ret;
 			ret = Ql_Timer_Start(GPS_TIMER_ID,gLocation_Policy.time_Interval*1000,FALSE);
@@ -329,6 +335,25 @@ static s32 gps_reader_update_bearing( GpsReader* r,Token bearing )
     return 0;
 }
 
+// Calculate radian
+static float radian(float d)  
+{  
+     return d * PI / 180.0;
+}  
+
+static float get_distance(float lat1, float lng1, float lat2, float lng2)  
+{  
+     float radLat1 = radian(lat1);  
+     float radLat2 = radian(lat2);  
+     float a = radLat1 - radLat2;  
+     float b = radian(lng1) - radian(lng2);  
+	 
+     float dst = 2 * asin((sqrt(pow(sin(a / 2), 2) + cos(radLat1) * cos(radLat2) * pow(sin(b / 2), 2) )));  
+     dst = dst * EARTH_RADIUS;
+     dst= round(dst * 10000) / 10000;  
+     return dst;
+} 
+
 static void gps_reader_parse( GpsReader* r )
 {
    /* we received a complete sentence, now parse it to generate
@@ -396,23 +421,30 @@ static void gps_reader_parse( GpsReader* r )
         tok.p -= 2;
         //APP_DEBUG("unknown sentence '%.*s\n", tok.end-tok.p, tok.p);
     }
-#if 0
+
     if (r->flag == TRUE) {
         #if 0
 		APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
     			   r->fix.latitude,r->fix.longitude,r->fix.altitude,r->fix.speed,r->fix.bearing);
 		#endif
-		if(r->callback)
+		if(gLocation_Policy.location_policy == DISTANCE_REPORT_LOCATION || 
+		   gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
 		{
-			r->callback();
+			float distance = get_distance(r->fix.latitude, r->fix.longitude, gGpsLocation.latitude, gGpsLocation.longitude);
+			if(distance >= gLocation_Policy.distance_Interval && r->callback)
+			{
+				r->callback();
+				r->flag = FALSE;
+			}
 		}
-		r->flag = FALSE;
 	}
-#endif	
 }
 
 void GpsLocation_CallBack(void)
 {
+	if(mGpsReader[0].fix.speed == 0 && gLocation_Policy.static_policy == 1)
+		return;
+		
 	//report to gprs task
 	Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPS_REP_LOCATION, 0, 0);
 }

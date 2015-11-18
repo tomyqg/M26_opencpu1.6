@@ -78,7 +78,6 @@ static char *m_pCurrentPos = NULL;
 static u8 m_tcp_state = STATE_NW_GET_SIMSTATE;
 
 s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
-extern GpsLocation gGpsLocation;
 
 static ST_PDPContxt_Callback     callback_gprs_func = 
 {
