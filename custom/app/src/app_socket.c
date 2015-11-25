@@ -151,6 +151,12 @@ void proc_subtask_gprs(s32 TaskId)
 				App_Report_Location();
                 break;
             }
+            case MSG_ID_GPS_SPEED_UP:
+            {
+                //APP_DEBUG("speed up event:%d\n",subtask_msg.param1);
+                update_alarm(ALARM_BIT_SPEED_UP,subtask_msg.param1);
+                break;
+            }
             default:
                 break;
         }
@@ -164,6 +170,12 @@ void GPRS_TCP_Program(void)
 {
     s32 ret;
     s32 pdpCntxtId;
+
+    //ret = Ql_Timer_Register(ALARM_TIMER_ID, Timer_Handler_Alarm, NULL);
+    //if(ret <0)
+    //{
+    //    APP_ERROR("\r\nfailed!!, Timer alarm register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
+    //}
 	
     //1. Register GPRS callback
     pdpCntxtId = Ql_GPRS_GetPDPContextId();

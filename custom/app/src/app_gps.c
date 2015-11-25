@@ -415,7 +415,16 @@ static void gps_reader_parse( GpsReader* r )
         if (tok_fixStatus.p[0] == 'A'){
         	r->flag = TRUE;
             gps_reader_update_bearing( r, tok_bearing );
-            gps_reader_update_speed ( r, tok_speed );  
+            gps_reader_update_speed ( r, tok_speed );
+            if(r->fix.speed > gParmeter.parameter_8[17].data)
+            {
+            	//report to gprs task
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPS_SPEED_UP, TRUE, 0);
+			}
+			else if(gAlarm_Flag.alarm_flags & BV(MSG_ID_GPS_SPEED_UP))
+			{
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPS_SPEED_UP, FALSE, 0);
+			}
 		}
     }else {
         tok.p -= 2;

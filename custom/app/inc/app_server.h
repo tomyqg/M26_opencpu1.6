@@ -79,6 +79,7 @@
 #define TOSERVER_PARAMETER_ID             0x0104
 
 #define TOSERVER_LOCATION_INFO_ID         0x0200
+#define TOSERVER_ALARM_ID                 0x0201
 
 //server to device msg id  
 #define TODEVICE_GENERIC_RSP_ID           0x8001
@@ -93,6 +94,9 @@
 #define HB_TIMER_ID         (TIMER_ID_USER_START + 100)
 #define HB_TIMER_PERIOD     30000   //30s
 
+//alarm
+#define ALARM_TIMER_ID         (TIMER_ID_USER_START + 102)
+
 //beijin timezone
 #define TIMEZONE            8
 
@@ -105,6 +109,11 @@
 #define TIMER_REPORT_LOCATION     1
 #define DISTANCE_REPORT_LOCATION  2
 #define DIS_TIM_REPORT_LOCATION   3
+
+#define ALARM_BIT_LOW_POWER       9
+#define ALARM_BIT_LOST_DOWN       10
+#define ALARM_BIT_LOST_UP         11
+#define ALARM_BIT_SPEED_UP        12
 
 enum {
     APP_RSP_OK           = 0,
@@ -127,18 +136,9 @@ typedef struct {
 
 typedef struct {
     u32 alarm_flags;    
-    u32 status;
-    u32 latitude;
-    u32 longitude;
-    u32 altitude;
-    u32 speed;
-    u32 direction;
-    u8  time[6];
-    u32 gps_num;
-    u32 lac;
-    u32 cell_id;
-    u32 rssi;
-}Alarm_Msg;
+    u32 alarm_flags_bk;
+}Alarm_Flag;
+extern Alarm_Flag gAlarm_Flag;
 
 typedef struct {
 	u16 id;    
@@ -202,4 +202,7 @@ void get_lac_cellid(char *s);
 void App_Report_Location( void );
 void App_Set_Location_policy( u8* pBuffer, u16 length );
 s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number );
+void update_alarm(u32 alarm_bit, u32 alarm);
+void App_Ropert_Alarm(void);
+void Timer_Handler_Alarm(u32 timerId, void* param);
 #endif  //__APP_SERVER_H__

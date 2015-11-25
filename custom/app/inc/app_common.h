@@ -42,6 +42,30 @@
 //gps
 #define MSG_ID_GPS_MODE_CONTROL  	        MSG_ID_USER_START+0x105
 #define MSG_ID_GPS_REP_LOCATION  	        MSG_ID_USER_START+0x106
+#define MSG_ID_GPS_SPEED_UP  	            MSG_ID_USER_START+0x107
+
+#ifndef BV
+#define BV(n)      (1 << (n))
+#endif
+
+#ifndef BF
+#define BF(x,b,s)  (((x) & (b)) >> (s))
+#endif
+
+#ifndef MIN
+#define MIN(n,m)   (((n) < (m)) ? (n) : (m))
+#endif
+
+#ifndef MAX
+#define MAX(n,m)   (((n) < (m)) ? (m) : (n))
+#endif
+
+#ifndef ABS
+#define ABS(n)     (((n) < 0) ? -(n) : (n))
+#endif
+
+#define SET_BIT(x,n)   ((x) | BV(n))
+#define CLE_BIT(x,n)   ((x) & (~(BV(n))))
 
 #endif // End-of __APP_COMMON_H__ 
 

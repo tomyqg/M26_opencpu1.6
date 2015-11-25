@@ -111,6 +111,11 @@ Location_Policy gLocation_Policy = {
     45,  //bearing_Interval;
 };
 
+Alarm_Flag gAlarm_Flag = {
+	0x0,
+	0x0,
+};
+
 /*********************************************************************
  * FUNCTIONS
  */
@@ -530,6 +535,7 @@ static void Timer_Handler(u32 timerId, void* param)
 		{
 			//heartbeat send
 			//App_Heartbeat_To_Server();
+			Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[0].data*1000,FALSE);
 			App_Heartbeat_Check();
 			gRegister_Count = 9;
 		}
@@ -542,6 +548,30 @@ static void Timer_Handler(u32 timerId, void* param)
 			gRegister_Count = 9;
 			Ql_Timer_Stop(HB_TIMER_ID);
 			APP_ERROR("register server timeout for serveral times\r\n");
+		}
+    }
+}
+
+/*********************************************************************
+ * @fn      Timer_Handler_Alarm
+ *
+ * @brief   timer callback function
+ *
+ * @param   timer id;
+ *
+ * @return  
+ *********************************************************************/
+void Timer_Handler_Alarm(u32 timerId, void* param)
+{
+    if(ALARM_TIMER_ID == timerId)
+    {
+		if(gAlarm_Flag.alarm_flags == 0)
+		{
+			gAlarm_Flag.alarm_flags_bk = 0;
+		}
+		else
+		{
+			App_Ropert_Alarm();
 		}
     }
 }
@@ -615,7 +645,7 @@ s32 App_Server_Register( void )
         APP_ERROR("\r\nfailed!!, Timer heartbeat register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
     }
 	//start a timer,repeat=true;
-	ret = Ql_Timer_Start(HB_TIMER_ID,HB_TIMER_PERIOD,TRUE);
+	ret = Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[0].data*1000,FALSE);
 	if(ret < 0)
 	{
 		APP_ERROR("\r\nfailed!!, Timer heartbeat start fail ret=%d\r\n",ret);        
@@ -910,8 +940,8 @@ void App_Report_Location( void )
 	msg_body = (u8 *)Ql_MEM_Alloc(m_Server_Msg_Head.msg_length);
 	Ql_memset(msg_body, 0, m_Server_Msg_Head.msg_length);
 	
-	//alarm_flag = TOBIGENDIAN32(alarm_flag);
-	//Ql_memcpy(msg_body,&alarm_flag,4);
+	u32 alarm_flag = TOBIGENDIAN32(gAlarm_Flag.alarm_flags);
+	Ql_memcpy(msg_body,&alarm_flag,4);
 	//status not use;
 	//Ql_memcpy(msg_body+4,&status,4);
 	
@@ -1051,6 +1081,102 @@ void get_lac_cellid(char *s)
 
 	glac_ci.lac = TOBIGENDIAN32(glac_ci.lac);
 	glac_ci.cell_id = TOBIGENDIAN32(glac_ci.cell_id);
+}
+
+/*********************************************************************
+ * @fn      update_alarm
+ *
+ * @brief   update_alarm
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+void update_alarm(u32 alarm_bit, u32 alarm)
+{
+	if(alarm == 1)
+	{
+		gAlarm_Flag.alarm_flags = SET_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
+		if(gAlarm_Flag.alarm_flags_bk & BV(alarm_bit))
+		{
+			return;
+		}	
+		App_Ropert_Alarm();
+		gAlarm_Flag.alarm_flags_bk = SET_BIT(gAlarm_Flag.alarm_flags_bk, alarm_bit);
+	}
+	else
+	{
+		gAlarm_Flag.alarm_flags = CLE_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
+	}
+}
+
+/*********************************************************************
+ * @fn      App_Ropert_Alarm
+ *
+ * @brief   App_Ropert_Alarm
+ *
+ * @param   
+ *
+ * @return  
+ *********************************************************************/
+void App_Ropert_Alarm(void)
+{
+	APP_DEBUG("App_Ropert_Alarm\n");
+	//head
+	Server_Msg_Head m_Server_Msg_Head;
+	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
+	m_Server_Msg_Head.msg_id= TOSERVER_ALARM_ID;
+	m_Server_Msg_Head.msg_length = 50;
+	Ql_memcpy(m_Server_Msg_Head.device_imei, g_imei, 8);
+	m_Server_Msg_Head.msg_number = ++g_msg_number;
+    
+	//body
+	u8 *msg_body;
+	msg_body = (u8 *)Ql_MEM_Alloc(m_Server_Msg_Head.msg_length);
+	Ql_memset(msg_body, 0, m_Server_Msg_Head.msg_length);
+	
+	u32 alarm_flag = TOBIGENDIAN32(gAlarm_Flag.alarm_flags);
+	Ql_memcpy(msg_body,&alarm_flag,4);
+	//status not use;
+	//Ql_memcpy(msg_body+4,&status,4);
+	
+	Ql_memcpy(msg_body+8,&gGpsLocation,20);
+	Ql_memcpy(msg_body+34,&gGpsLocation.starInusing,4);
+
+	//time start from 2000-1-1-00:00:00
+	ST_Time datetime;
+	Ql_GetLocalTime(&datetime);
+	msg_body[28] = DECTOBCD(datetime.year -2000);
+	msg_body[29] = DECTOBCD(datetime.month);
+	msg_body[30] = DECTOBCD(datetime.day);
+	msg_body[31] = DECTOBCD(datetime.hour);
+	msg_body[32] = DECTOBCD(datetime.minute);
+	msg_body[33] = DECTOBCD(datetime.second);
+
+	//LAC&CI
+	Ql_memcpy(msg_body+38,&glac_ci,8);
+	//RSSI
+	u32 rssi,ber;
+    RIL_NW_GetSignalQuality(&rssi, &ber);
+    rssi = TOBIGENDIAN32(rssi);
+	Ql_memcpy(msg_body+46,&rssi,4);
+
+	//pack msg
+	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
+	Ql_MEM_Free(msg_body);
+
+	//start a timer
+	u32 ret;
+	ret = Ql_Timer_Register(ALARM_TIMER_ID, Timer_Handler_Alarm, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer alarm register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
+    }
+	ret = Ql_Timer_Start(ALARM_TIMER_ID,gParmeter.parameter_8[21].data*1000,FALSE);
+	if(ret < 0)
+	{
+		APP_ERROR("\r\nfailed!!, Timer alarm start fail ret=%d\r\n",ret);
+	}
 }
 
 //#endif // __CUSTOMER_CODE__
