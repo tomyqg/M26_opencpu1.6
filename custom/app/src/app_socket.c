@@ -32,6 +32,7 @@
 #include "ril.h"
 #include "ril_util.h"
 #include "ril_network.h"
+#include "ril_alarm.h"
 #include "app_socket.h"
 #include "app_server.h"
 #include "app_common.h"
@@ -100,12 +101,36 @@ void proc_subtask_gprs(s32 TaskId)
 {
     ST_MSG subtask_msg;
     
-    APP_DEBUG("<--multitask = %d  %d: example_task_entry-->\r\n",TaskId,subtask_gprs_id);
+    APP_DEBUG("gprs_subtask_entry,subtaskId = %d\n",TaskId);
+	
     while(TRUE)
     {    
         Ql_OS_GetMessage(&subtask_msg);
         switch(subtask_msg.message)
         {
+			case MSG_ID_RIL_READY:
+			{
+				APP_DEBUG("proc_subtask_gps revice MSG_ID_RIL_READY\n");
+				ST_Time datetime;
+				u8 pBuffer[3];
+				Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_LOC].data, 3);
+				//time start from 2000-1-1-00:00:00
+		    	datetime.year=15;
+				datetime.month=11;
+				datetime.day=25;
+				datetime.hour=BCDTODEC(pBuffer[2]);
+				datetime.minute=BCDTODEC(pBuffer[1]);
+				datetime.second=BCDTODEC(pBuffer[0]);
+				APP_DEBUG("hour=%d,min=%d,sec=%d\n",datetime.hour,datetime.minute,datetime.second);
+				datetime.timezone=TIMEZONE;
+				s32 iRet = RIL_Alarm_Create(&datetime, 1);
+				if(iRet != RIL_AT_SUCCESS)
+				{
+					APP_ERROR("Create alarm error ret:%d\n",iRet);
+				}
+				break;
+			}	
+			
             case MSG_ID_GPRS_STATE:
             {
                 APP_DEBUG("recv MSG: gprs state = %d\r\n",subtask_msg.param1);

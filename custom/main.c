@@ -105,6 +105,7 @@ void proc_main_task(s32 taskId)
             // After RIL initialization, developer may call RIL-related APIs in the .h files in the directory of SDK\ril\inc
             // RIL-related APIs may simplify programming, and quicken the development.
             //
+            SendEvent2AllSubTask(MSG_ID_RIL_READY,0,0);
             break;
 
             // Handle URC messages.
@@ -242,6 +243,25 @@ void proc_main_task(s32 taskId)
             break;
         }
     }
+}
+
+s32 SendEvent2AllSubTask(u32 msgId,u32 iData1, u32 iData2)
+{
+    int iTmp = 0;
+    int iRet = 0;
+    
+    for(iTmp=subtask_gprs_id; iTmp<SUB_TASK_NUM+subtask_gprs_id; iTmp++)
+    {
+
+        iRet = Ql_OS_SendMessage(iTmp,msgId,iData1, iData2);
+     
+        if(iRet != OS_SUCCESS)
+        {
+           APP_ERROR("failed!!,Ql_OS_SendMessage(%d,%d,%d,%d) fail, ret=%d\n", iTmp,msgId,iData1,iData2, iRet);
+           break;
+        } 
+    }
+    return iRet;
 }
 
 static s32 ReadSerialPort(Enum_SerialPort port, /*[out]*/u8* pBuffer, /*[in]*/u32 bufLen)

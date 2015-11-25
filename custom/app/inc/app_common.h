@@ -32,6 +32,8 @@
 /****************************************************************************
  * Task msg id Definition
  ***************************************************************************/
+#define SUB_TASK_NUM   2
+ 
 //gprs 
 #define MSG_ID_GPRS_STATE               	MSG_ID_USER_START+0x100
 #define MSG_ID_MUTEX_TEST               	MSG_ID_USER_START+0x101

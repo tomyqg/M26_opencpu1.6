@@ -115,6 +115,8 @@
 #define ALARM_BIT_LOST_UP         11
 #define ALARM_BIT_SPEED_UP        12
 
+#define QST_WORKUP_TIME_LOC       8
+
 enum {
     APP_RSP_OK           = 0,
     APP_RSP_FAILURE      = 1,

@@ -77,7 +77,7 @@ void proc_subtask_gps(s32 TaskId)
     ST_MSG subtask_msg;
 	s32 ret;
     
-    APP_DEBUG("gps_subtask_entry\r\n");
+    APP_DEBUG("gps_subtask_entry,subtaskId = %d\n",TaskId);
     
     // Register & open UART port
     ret = Ql_UART_Register(GPS_UART_PORT, CallBack_UART_GPS, NULL);
@@ -115,6 +115,11 @@ void proc_subtask_gps(s32 TaskId)
         Ql_OS_GetMessage(&subtask_msg);
         switch(subtask_msg.message)
         {
+			case MSG_ID_RIL_READY:
+			{
+				APP_DEBUG("proc_subtask_gps revice MSG_ID_RIL_READY\n");
+				break;
+			}	
             case MSG_ID_GPS_MODE_CONTROL:
             {
                 APP_DEBUG("recv msg: gps mode control\n");
