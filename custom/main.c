@@ -160,6 +160,7 @@ void proc_main_task(s32 taskId)
 					APP_DEBUG("\r\n");
 					Ql_memcpy(gParmeter.parameter_12[0].data, g_imei, 8);
 					Ql_memcpy(gParmeter.parameter_12[1].data, g_imsi, 8);
+					Ql_OS_SendMessage(subtask_ble_id, MSG_ID_IMEI_IMSI_OK, 0, 0);
                 }
                 else
                 {
