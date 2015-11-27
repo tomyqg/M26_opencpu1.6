@@ -187,7 +187,7 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
                     u8 *msg_body, u16 msg_body_len);
 u8 server_msg_calculate_checkcode(u8 *pBuffer, u16 length);
 bool server_msg_transform(u8 *pBuffer, u16 length, u8 *pSend_Buffer, u16 send_length);
-u8 msg_need_transform(u8 *pBuffer, u16 length);
+u16 msg_need_transform(u8 *pBuffer, u16 length);
 s32 App_Server_Register(void);
 void App_Heartbeat_To_Server(void);
 void App_Heartbeat_Check(void);
@@ -195,7 +195,7 @@ void App_Heartbeat_Check(void);
 bool Server_Msg_Handle(u8 *pbuffer,u16 numBytes);
 u16 Server_Msg_Need_Retransform(u8 *pBuffer, u16 length);
 u16 Server_Msg_Retransform(u8 *pbuffer,u16 numBytes);
-bool Uart_Msg_Verify_Checkcode(u8 *pBuffer, u16 length );
+bool Server_Msg_Verify_Checkcode(u8 *pBuffer, u16 length );
 void Server_Msg_Parse(u8* pBuffer, u16 length);
 void App_Report_Parameter(u16 msg_id, u16 msg_number);
 void App_Set_Parameter(u8* pBuffer, u16 length);

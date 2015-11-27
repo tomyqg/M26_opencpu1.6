@@ -110,12 +110,12 @@ void proc_subtask_gprs(s32 TaskId)
         {
 			case MSG_ID_RIL_READY:
 			{
-				APP_DEBUG("proc_subtask_gps revice MSG_ID_RIL_READY\n");
+				APP_DEBUG("proc_subtask_gprs revice MSG_ID_RIL_READY\n");
 				ST_Time datetime;
 				u8 pBuffer[3];
 				Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_LOC].data, 3);
 				//time start from 2000-1-1-00:00:00
-		    	datetime.year=15;
+		    	datetime.year=16;
 				datetime.month=11;
 				datetime.day=25;
 				datetime.hour=BCDTODEC(pBuffer[2]);

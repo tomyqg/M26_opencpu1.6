@@ -134,10 +134,10 @@ static void Timer_Handler(u32 timerId, void* param);
 s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
                     u8 *msg_body, u16 msg_body_len)
 {
-  u8 count;
   u8 *msg_buff, *msg_send_buff;
   u16 msg_buff_len = 3+msg_head_lenght+msg_body_len;
   u16 msg_send_buff_len;
+  u16 count;
   
   msg_buff = (u8 *)Ql_MEM_Alloc(msg_buff_len);
   
@@ -201,9 +201,11 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
        //return -1;
      }
      Ql_MEM_Free(msg_send_buff);
+     msg_send_buff = NULL;
   }
   
   Ql_MEM_Free(msg_buff);
+  msg_buff = NULL;
   return 0;
 }
 
@@ -240,7 +242,7 @@ u8 server_msg_calculate_checkcode(u8 *pBuffer, u16 length)
  *********************************************************************/
 bool server_msg_transform(u8 *pBuffer, u16 length, u8 *pSend_Buffer, u16 send_length)
 {
-	u8 i, j;
+	u16 i, j;
     for( i = 1, j = 1; i < length - 1; i++)
     {
         if( pBuffer[i] == MSG_IDENTIFIER || pBuffer[i] == MSG_IDENTIFIER_TRANSFORM )
@@ -285,11 +287,11 @@ bool server_msg_transform(u8 *pBuffer, u16 length, u8 *pSend_Buffer, u16 send_le
  *
  * @return  
  *********************************************************************/
-u8 msg_need_transform(u8 *pBuffer, u16 length)
+u16 msg_need_transform(u8 *pBuffer, u16 length)
 {
 	u16 i;
 	u16 m = length - 1;
-	u8 count = 0;
+	u16 count = 0;
 	
 	for(i = 1; i < m; i++)
 	{
@@ -329,7 +331,7 @@ bool Server_Msg_Handle(u8 *pbuffer,u16 numBytes)
 		numBytes = Server_Msg_Retransform(pbuffer,numBytes);
 	}
 	
-    if ( !Uart_Msg_Verify_Checkcode(pbuffer, numBytes ) )
+    if ( !Server_Msg_Verify_Checkcode(pbuffer, numBytes ) )
     {
 		APP_ERROR("check code error\n");
       	return FALSE;
@@ -405,7 +407,7 @@ u16 Server_Msg_Retransform(u8 *pBuffer,u16 numBytes)
 }
 
 /*********************************************************************
- * @fn      Uart_Msg_Verify_Checkcode
+ * @fn      Server_Msg_Verify_Checkcode
  *
  * @brief   
  *
@@ -413,7 +415,7 @@ u16 Server_Msg_Retransform(u8 *pBuffer,u16 numBytes)
  *
  * @return  None
  *********************************************************************/
-bool Uart_Msg_Verify_Checkcode(u8 *pBuffer, u16 length )
+bool Server_Msg_Verify_Checkcode(u8 *pBuffer, u16 length)
 {
     u16 checkCode_Location = length - 2;
     u8 checkCode;
@@ -606,6 +608,7 @@ s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number )
     msg_body[4] = APP_RSP_OK;
   
   	Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, m_Server_Msg_Head.msg_length);
+	return APP_RET_OK;
 }
 
 /*********************************************************************
@@ -848,6 +851,7 @@ void App_Report_Parameter(u16 msg_id, u16 msg_number)
 	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
 
 	Ql_MEM_Free(msg_body);
+	msg_body = NULL;
   
   	return;  
 }
@@ -969,6 +973,7 @@ void App_Report_Location( void )
 	//pack msg
 	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
 	Ql_MEM_Free(msg_body);
+	msg_body = NULL;
 }
 
 /*********************************************************************
@@ -1164,6 +1169,7 @@ void App_Ropert_Alarm(void)
 	//pack msg
 	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
 	Ql_MEM_Free(msg_body);
+	msg_body = NULL;
 
 	//start a timer
 	u32 ret;
