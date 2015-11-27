@@ -89,6 +89,13 @@ void proc_subtask_ble(s32 TaskId)
     {
         APP_ERROR("failed!!, Ql_Timer_Register: timer(%d) fail ,ret = %d\r\n",BLE_UART_RSP_TIMER_ID,ret);
     }
+
+    //register a timer
+    ret = Ql_Timer_Register(BLE_UART_HEARBEAT_TIMER_ID, Timer_handler_Ble_Uart, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("failed!!, Ql_Timer_Register: timer(%d) fail ,ret = %d\r\n",BLE_UART_RSP_TIMER_ID,ret);
+    }
     
     // Register & open UART port
     ret = Ql_UART_Register(BLE_UART_PORT, CallBack_UART_BLE, NULL);
@@ -124,8 +131,19 @@ void proc_subtask_ble(s32 TaskId)
 				ret = BLE_Send_IMSI();
 				if(ret != APP_RET_OK)
 				{
-					APP_ERROR("function BLE_Send_IMEI ret error: \n",ret);
+					APP_ERROR("function BLE_Send_IMSI ret error: \n",ret);
 				}
+				ret = BLE_Send_HEARTBEAT();
+				if(ret != APP_RET_OK)
+				{
+					APP_ERROR("function BLE_Send_HEARTBEAT ret error: \n",ret);
+				}
+				//start timer
+    			ret = Ql_Timer_Start(BLE_UART_HEARBEAT_TIMER_ID,BLE_UART_HEARBEAT_INTERVAL,TRUE);
+    			if(ret < 0)
+    			{
+        			APP_ERROR("failed!! timer(%d) Ql_Timer_Start ret=%d\r\n",ret,BLE_UART_HEARBEAT_TIMER_ID);        
+    			}
 				break;
 			}	
 			
@@ -202,6 +220,14 @@ void Timer_handler_Ble_Uart(u32 timerId, void* param)
 										 uart_send.msg_len,
 										 uart_send.need_rsp);
 	  		}
+		}
+	}
+	else if(BLE_UART_HEARBEAT_TIMER_ID == timerId)
+	{
+		s32 ret = BLE_Send_HEARTBEAT();
+		if(ret != APP_RET_OK)
+		{
+			APP_ERROR("function BLE_Send_HEARTBEAT ret error: \n",ret);
 		}
 	}
 }
@@ -349,6 +375,30 @@ s32 BLE_Send_IMSI(void)
     //Send msg
     ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
     
+    return ret;
+}
+
+s32 BLE_Send_HEARTBEAT(void)
+{
+	u8 msg_buf[8];
+    u16 length = 8;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_TIME_ID;
+    msg_buf[1] = 6;
+    
+    //time start from 2000-1-1-00:00:00
+	ST_Time datetime;
+	Ql_GetLocalTime(&datetime);
+	msg_buf[2] = DECTOBCD(datetime.year -2000);
+	msg_buf[3] = DECTOBCD(datetime.month);
+	msg_buf[4] = DECTOBCD(datetime.day);
+	msg_buf[5] = DECTOBCD(datetime.hour);
+	msg_buf[6] = DECTOBCD(datetime.minute);
+	msg_buf[7] = DECTOBCD(datetime.second);
+    
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,FALSE);
     return ret;
 }
 

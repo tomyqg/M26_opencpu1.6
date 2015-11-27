@@ -77,8 +77,10 @@
 #define RSP_MSG_ERR                      0x02
 #define RSP_NOT_SUP                      0x03
 
-#define BLE_UART_RSP_TIMER_ID   (TIMER_ID_USER_START + 103)
-#define BLE_UART_RSP_INTERVAL   200
+#define BLE_UART_RSP_TIMER_ID        (TIMER_ID_USER_START + 103)
+#define BLE_UART_RSP_INTERVAL        200
+#define BLE_UART_HEARBEAT_TIMER_ID   (TIMER_ID_USER_START + 104)
+#define BLE_UART_HEARBEAT_INTERVAL   30*1000
 
 /*********************************************************************
  * TYPEDEFS
