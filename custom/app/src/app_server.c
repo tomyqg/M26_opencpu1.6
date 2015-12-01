@@ -64,7 +64,7 @@ static s8 hw_sw_version[2][4] = {
 };
 
 static u8 gRegister_Count = 9;
-static u8 gServer_State = SERVER_STATE_UNKNOW;
+u8 gServer_State = SERVER_STATE_UNKNOW;
 
 bool greceived_heartbeat_rsp = TRUE;
 static u16 gmsg_num_heartbeat;
@@ -138,8 +138,14 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
   u16 msg_buff_len = 3+msg_head_lenght+msg_body_len;
   u16 msg_send_buff_len;
   u16 count;
+  s32 ret;
   
   msg_buff = (u8 *)Ql_MEM_Alloc(msg_buff_len);
+  if (msg_buff == NULL)
+  {
+  	 APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,msg_buff_len);
+     return APP_RET_ERR_MEM_OLLOC;
+  }
   
   //change head to bg_endian
   msg_head->protocol_version = TOBIGENDIAN16(msg_head->protocol_version);
@@ -158,55 +164,44 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
   {
     msg_send_buff_len = msg_buff_len + count;
     msg_send_buff = (u8 *)Ql_MEM_Alloc(msg_send_buff_len);
+    if (msg_send_buff == NULL)
+  	{
+  	 	APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,msg_send_buff_len);
+     	return APP_RET_ERR_MEM_OLLOC;
+  	}
   	server_msg_transform(msg_buff, msg_buff_len,msg_send_buff,msg_send_buff_len);
+  	Ql_MEM_Free(msg_buff);
+  	msg_buff = NULL;
   }
   else
   {
-	msg_send_buff = NULL;
+	msg_send_buff_len = msg_buff_len;
+	msg_send_buff = msg_buff;
   }
   
-  if(msg_send_buff == NULL)
-  {
-	 s32 ret;
-	 
-	 #if 0
-     for(int i = 0; i < msg_buff_len; i++)
-     	APP_DEBUG("%02x",msg_buff[i]);
-     APP_DEBUG("\r\n");
-     #endif
-     
-	 ret = Ql_SOC_Send(g_SocketId, msg_buff, msg_buff_len);
-     if (ret != msg_buff_len)
-     {
-       	APP_ERROR("App Fail to send socket data.\r\n");
-       	Ql_SOC_Close(g_SocketId);
-       //return -1;
-     }
-  }
-  else
-  {
-	 s32 ret;
-
-	 #if 0
-     for(int i = 0; i < msg_send_buff_len; i++)
+  #if 0
+  	for(int i = 0; i < msg_send_buff_len; i++)
      	APP_DEBUG("%02x",msg_send_buff[i]);
-     APP_DEBUG("\r\n");
-     #endif
-	 
-	 ret = Ql_SOC_Send(g_SocketId, msg_send_buff, msg_send_buff_len);
-     if (ret != msg_send_buff_len)
-     {
-       	APP_ERROR("App Fail to send socket data.\r\n");
-       	Ql_SOC_Close(g_SocketId);
-       //return -1;
-     }
-     Ql_MEM_Free(msg_send_buff);
-     msg_send_buff = NULL;
+    APP_DEBUG("\r\n");
+  #endif
+
+  if(gServer_State != SERVER_STATE_REGISTER_OK && gServer_State != SERVER_STATE_REGISTERING)
+  {
+	return APP_RET_ERR_SEV_NOT_REGISTER;
+  }	
+
+  ret = Ql_SOC_Send(g_SocketId, msg_send_buff, msg_send_buff_len);
+  if (ret != msg_send_buff_len)
+  {
+  	APP_ERROR("App Fail to send socket data.\r\n");
+  	Ql_MEM_Free(msg_send_buff);
+    msg_send_buff = NULL;
+    return APP_RET_ERR_SOC_SEND;
   }
   
-  Ql_MEM_Free(msg_buff);
-  msg_buff = NULL;
-  return 0;
+  Ql_MEM_Free(msg_send_buff);
+  msg_send_buff = NULL;
+  return APP_RET_OK;
 }
 
 /*********************************************************************
@@ -624,6 +619,8 @@ s32 App_Server_Register( void )
 {
 	APP_DEBUG("register to server\n");
 
+	gServer_State = SERVER_STATE_UNKNOW;
+
     //head
 	Server_Msg_Head m_Server_Msg_Head;
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
@@ -658,7 +655,7 @@ s32 App_Server_Register( void )
 
 	Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, 20);
 	
-	return TRUE;
+	return APP_RET_OK;
 }
 
 /*********************************************************************

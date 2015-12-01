@@ -71,6 +71,7 @@
 #define SERVER_STATE_REGISTER_OK          0
 #define SERVER_STATE_REGISTER_FAILURE     1
 #define SERVER_STATE_REGISTERING          2
+extern u8 gServer_State;
 
 //device to server msg id
 #define TOSERVER_COMMON_RSP_ID            0x0001

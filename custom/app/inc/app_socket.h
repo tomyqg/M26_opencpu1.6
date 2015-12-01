@@ -31,16 +31,19 @@
 typedef enum{
     STATE_NW_GET_SIMSTATE,
     STATE_NW_QUERY_STATE,
+    STATE_GPRS_UNKNOWN,
     STATE_GPRS_REGISTER,
     STATE_GPRS_CONFIG,
-    STATE_GPRS_ACTIVATE,
     STATE_GPRS_ACTIVATING,
+    STATE_GPRS_ACTIVATED,
     STATE_GPRS_GET_DNSADDRESS,
     STATE_GPRS_GET_LOCALIP,
     STATE_CHACK_SRVADDR,
+    STATE_SOC_UNKNOWN,
+    STATE_SOC_ALREADY_PROGRAM,
     STATE_SOC_REGISTER,
-    STATE_SOC_CREATE,
-    STATE_SOC_CONNECT,
+    STATE_SOC_CREATED,
+    STATE_SOC_CONNECTED,
     STATE_SOC_CONNECTING,
     STATE_SOC_SEND,
     STATE_SOC_SENDING,
@@ -49,6 +52,7 @@ typedef enum{
     STATE_GPRS_DEACTIVATE,
     STATE_TOTAL_NUM
 }Enum_TCPSTATE;
+extern Enum_TCPSTATE mTcpState;
 
 /************************************************************************/
 /* Declarations common variable                                         */
@@ -60,7 +64,7 @@ extern s32 g_SocketId;
 /************************************************************************/
 //
 // Activate GPRS and program TCP.
-extern void GPRS_TCP_Program(void);
+extern s32 GPRS_TCP_Program(void);
 //
 // This callback function is invoked when GPRS actived.
 extern void Callback_GPRS_Actived(u8 contexId, s32 errCode, void* customParam);

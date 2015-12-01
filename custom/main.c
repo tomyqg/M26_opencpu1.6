@@ -50,6 +50,7 @@ static Enum_SerialPort m_myUartPort  = UART_PORT1;
 static u8 m_RxBuf_Uart1[SERIAL_RX_BUFFER_LEN];
 static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, bool level, void* customizedPara);
 static s32 ATResponse_Handler(char* line, u32 len, void* userData);
+static s32 GetIMEIandIMSI(void);
 
 char userdata[20];
 u8 g_imei[8],g_imsi[8];
@@ -84,7 +85,6 @@ void proc_main_task(s32 taskId)
 
     s_iMutexId = Ql_OS_CreateMutex("MyMutex");
 
-
     APP_DEBUG("OpenCPU: Customer Application\r\n");
 
     // START MESSAGE LOOP OF THIS TASK
@@ -112,54 +112,17 @@ void proc_main_task(s32 taskId)
             // URC messages include "module init state", "CFUN state", "SIM card state(change)",
             // "GSM network state(change)", "GPRS network state(change)" and other user customized URC.
         case MSG_ID_URC_INDICATION:
-            //APP_DEBUG("<-- Received URC: type: %d, -->\r\n", msg.param1);
             switch (msg.param1)
             {
-                // URC for module initialization state
-            case URC_SYS_INIT_STATE_IND:
-                APP_DEBUG("<-- Sys Init Status %d -->\r\n", msg.param2);
-                if (SYS_STATE_SMSOK == msg.param2)
-                {
-                    // SMS option has been initialized, and application can program SMS
-                    APP_DEBUG("<-- Application can program SMS -->\r\n");
-                }
+            case URC_CFUN_STATE_IND:
+                APP_DEBUG("<-- CFUN Status:%d -->\r\n", msg.param2);
                 break;
                 // URC for SIM card state(change)
             case URC_SIM_CARD_STATE_IND:
                 if (SIM_STAT_READY == msg.param2)
                 {
                     APP_DEBUG("<-- SIM card is ready -->\r\n");
-					u32 ret;
-                    ret = RIL_SIM_GetIMEI(userdata, sizeof(userdata));
-					if (ret != RIL_AT_SUCCESS)
-					{
-						APP_ERROR("Fail to get IMSI!\r\n");
-					}
-				    g_imei[0] = userdata[0] - '0';
-				    APP_DEBUG("IMEI: %x",g_imei[0]);
-					for(u8 i = 1,j = 1; i < 8; i++)
-					{
-						g_imei[i] = ((userdata[j] - '0')<<4) + (userdata[j+1] - '0');
-						j += 2;
-						APP_DEBUG("%02x",g_imei[i]);
-					}
-					
-					ret = RIL_SIM_GetIMSI(userdata, sizeof(userdata));
-					if (ret != RIL_AT_SUCCESS)
-					{
-						APP_ERROR("Fail to get IMSI!\r\n");
-					}
-					g_imsi[0] = userdata[0] - '0';
-					APP_DEBUG(" IMSI: %x",g_imsi[0]);
-					for(u8 i = 1,j = 1; i < 8; i++)
-					{
-						g_imsi[i] = ((userdata[j] - '0')<<4) + (userdata[j+1] - '0');
-						j += 2;
-						APP_DEBUG("%02x",g_imsi[i]);
-					}
-					APP_DEBUG("\r\n");
-					Ql_memcpy(gParmeter.parameter_12[0].data, g_imei, 8);
-					Ql_memcpy(gParmeter.parameter_12[1].data, g_imsi, 8);
+					GetIMEIandIMSI();
 					Ql_OS_SendMessage(subtask_ble_id, MSG_ID_IMEI_IMSI_OK, 0, 0);
                 }
                 else
@@ -172,6 +135,14 @@ void proc_main_task(s32 taskId)
                      */
                 }
                 break;
+                // URC for module initialization state
+            case URC_SYS_INIT_STATE_IND:
+                if (SYS_STATE_SMSOK == msg.param2)
+                {
+                    // SMS option has been initialized, and application can program SMS
+                    APP_DEBUG("<-- Application can program SMS -->\r\n");
+                }
+                break;    
 
                 // URC for GSM network state(change).
                 // Application receives this URC message when GSM network state changes, such as register to 
@@ -179,9 +150,9 @@ void proc_main_task(s32 taskId)
             case URC_GSM_NW_STATE_IND:
                 if (NW_STAT_REGISTERED == msg.param2 || NW_STAT_REGISTERED_ROAMING == msg.param2)
                 {
-                    APP_DEBUG("<-- Module has registered to GSM network -->\r\n");
+                    APP_DEBUG("<-- Module has registered to GSM network status:%d-->\r\n",msg.param2);
                 }else{
-                    APP_DEBUG("<-- GSM network status:%d -->\r\n", msg.param2);
+                    //APP_DEBUG("<-- GSM network status:%d -->\r\n", msg.param2);
                     /* status: 0 = Not registered, module not currently search a new operator
                      *         2 = Not registered, but module is currently searching a new operator
                      *         3 = Registration denied 
@@ -195,17 +166,17 @@ void proc_main_task(s32 taskId)
             case URC_GPRS_NW_STATE_IND:
                 if (NW_STAT_REGISTERED == msg.param2 || NW_STAT_REGISTERED_ROAMING == msg.param2)
                 {
-                    APP_DEBUG("<-- Module has registered to GPRS network-->\r\n");
+                    APP_DEBUG("<-- Module has registered to GPRS network status:%d-->\r\n",msg.param2);
 					APP_DEBUG("lac:0x%x,cell_id:0x%x\n",glac_ci.lac,glac_ci.cell_id);
-                    // Module has registered to GPRS network, and app may start to activate PDP and program TCP
-                    //GPRS_TCP_Program();
+                    // Module has registered to GPRS network,app can start to activate PDP and program TCP
                     Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
                 }else{
-                    APP_DEBUG("<-- GPRS network status:%d -->\r\n", msg.param2);
                     /* status: 0 = Not registered, module not currently search a new operator
                      *         2 = Not registered, but module is currently searching a new operator
                      *         3 = Registration denied 
                      */
+                    APP_DEBUG("<-- GPRS network status:%d -->\r\n", msg.param2);
+                    
                     // If GPRS drops down and currently socket connection is on line, app should close socket
                     // and check signal strength. And try to reset the module.
                     if (NW_STAT_NOT_REGISTERED == msg.param2 /*&& m_GprsActState*/)
@@ -216,9 +187,6 @@ void proc_main_task(s32 taskId)
                         APP_DEBUG("<-- Signal strength:%d, BER:%d -->\r\n", rssi, ber);
                     }
                 }
-                break;
-            case URC_CFUN_STATE_IND:
-                APP_DEBUG("<-- CFUN Status:%d -->\r\n", msg.param2);
                 break;
             case URC_COMING_CALL_IND:
                 {
@@ -263,6 +231,50 @@ s32 SendEvent2AllSubTask(u32 msgId,u32 iData1, u32 iData2)
         } 
     }
     return iRet;
+}
+
+s32 GetIMEIandIMSI(void)
+{
+	u32 ret;
+    ret = RIL_SIM_GetIMEI(userdata, sizeof(userdata));
+	if (ret != RIL_AT_SUCCESS)
+	{
+		APP_ERROR("Fail to get IMSI!\r\n");
+	}
+	
+	#if 1
+	g_imei[0] = userdata[0] - '0';
+	APP_DEBUG("IMEI: %x",g_imei[0]);
+	for(u8 i = 1,j = 1; i < 8; i++)
+	{
+		g_imei[i] = ((userdata[j] - '0')<<4) + (userdata[j+1] - '0');
+		j += 2;
+		APP_DEBUG("%02x",g_imei[i]);
+	}
+	#endif
+	
+	ret = RIL_SIM_GetIMSI(userdata, sizeof(userdata));
+	if (ret != RIL_AT_SUCCESS)
+	{
+		APP_ERROR("Fail to get IMSI!\r\n");
+	}
+	
+	#if 1
+	g_imsi[0] = userdata[0] - '0';
+	APP_DEBUG(" IMSI: %x",g_imsi[0]);
+	for(u8 i = 1,j = 1; i < 8; i++)
+	{
+		g_imsi[i] = ((userdata[j] - '0')<<4) + (userdata[j+1] - '0');
+		j += 2;
+		APP_DEBUG("%02x",g_imsi[i]);
+	}
+	APP_DEBUG("\r\n");
+	#endif
+	
+	Ql_memcpy(gParmeter.parameter_12[0].data, g_imei, 8);
+	Ql_memcpy(gParmeter.parameter_12[1].data, g_imsi, 8);
+
+	return APP_RET_OK;
 }
 
 static s32 ReadSerialPort(Enum_SerialPort port, /*[out]*/u8* pBuffer, /*[in]*/u32 bufLen)
