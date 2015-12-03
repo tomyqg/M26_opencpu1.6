@@ -50,10 +50,10 @@
 //static u8  m_SrvADDR[20] = "54.223.223.222\0";
 //static u32 m_SrvPort = 5605;
 //IBM
-static u8  m_SrvADDR[20] = "54.223.54.184\0";
-static u32 m_SrvPort = 8300;
-//static u8  m_SrvADDR[20] = "113.92.228.197\0";
-//static u32 m_SrvPort = 6800;
+//static u8  m_SrvADDR[20] = "54.223.54.184\0";
+//static u32 m_SrvPort = 8300;
+static u8  m_SrvADDR[20] = "116.24.214.28\0";
+static u32 m_SrvPort = 6800;
 
 static u8 m_recv_buf[RECV_BUFFER_LEN];
 static u64 m_nSentLen  = 0;      // Bytes of number sent data through current socket    
@@ -63,7 +63,8 @@ static char *m_pCurrentPos = NULL;
 
 s32 g_PdpCntxtId = -1;
 s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
-Enum_TCPSTATE mTcpState = STATE_GPRS_UNKNOWN;
+volatile Enum_TCPSTATE mTcpState = STATE_GPRS_UNKNOWN;
+//volatile static u8 network_state_count = 10;
 
 static ST_PDPContxt_Callback callback_gprs_func = 
 {
@@ -79,14 +80,32 @@ static ST_SOC_Callback callback_soc_func=
     Callback_Socket_Write
 };
 
+void Timer_Handler_Network_State(u32 timerId, void* param);
+void check_network_state(u32 state);
+
 /**************************************************************
 * the gprs sub task
 ***************************************************************/
 void proc_subtask_gprs(s32 TaskId)
 {
+	u32 ret;
     ST_MSG subtask_msg;
     
     APP_DEBUG("gprs_subtask_entry,subtaskId = %d\n",TaskId);
+
+    //register a timer for heartbeat
+    ret = Ql_Timer_Register(HB_TIMER_ID, Timer_Handler_HB, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer heartbeat register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
+    }
+
+    //register a timer for network state checkout
+    ret = Ql_Timer_Register(NETWOEK_STATE_TIMER_ID, Timer_Handler_Network_State, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",NETWOEK_STATE_TIMER_ID,ret);
+    }
 	
     while(TRUE)
     {    
@@ -118,7 +137,7 @@ void proc_subtask_gprs(s32 TaskId)
 			
             case MSG_ID_GPRS_STATE:
             {
-                APP_DEBUG("recv MSG: gprs state = %d\r\n",subtask_msg.param1);
+                APP_DEBUG("recv MSG: gprs state = %d, %d\r\n",subtask_msg.param1,mTcpState);
                 if (subtask_msg.param1 == NW_STAT_REGISTERED ||
                     subtask_msg.param1 == NW_STAT_REGISTERED_ROAMING)
 				{
@@ -150,6 +169,11 @@ void proc_subtask_gprs(s32 TaskId)
                 //APP_DEBUG("speed up event:%d\n",subtask_msg.param1);
                 update_alarm(ALARM_BIT_SPEED_UP,subtask_msg.param1);
                 break;
+            }
+            case MSG_ID_NETWORK_STATE:
+            {
+				APP_DEBUG("network state:%d\n",subtask_msg.param1);
+				check_network_state(subtask_msg.param1);
             }
             default:
                 break;
@@ -216,6 +240,19 @@ s32 GPRS_Program(void)
 s32 TCP_Program(s32 pdpCntxtId)
 {	
 	s32 ret;
+	s32 cgreg = 0;
+
+	if(mTcpState != STATE_GPRS_ACTIVATED)
+    	return SOC_ERROR;
+
+    ret = RIL_NW_GetGPRSState(&cgreg);
+    //APP_DEBUG("<--Network State:cgreg=%d-->\r\n",cgreg);
+    if((cgreg != NW_STAT_REGISTERED) && (cgreg != NW_STAT_REGISTERED_ROAMING))
+    {
+     	mTcpState = STATE_GPRS_UNKNOWN;
+     	Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
+    }	
+    	
 	//1. Register Socket callback
     ret = Ql_SOC_Register(callback_soc_func, NULL);
     if (SOC_SUCCESS == ret)
@@ -260,14 +297,16 @@ s32 TCP_Program(s32 pdpCntxtId)
             	mTcpState = STATE_SOC_CONNECTED;
             	break;
         	}else{
-        		Ql_Sleep(100);
-            	APP_ERROR("<-- Fail to connect to server, cause=%d -->\r\n", ret);
+            	//APP_ERROR("<-- Fail to connect to server, cause=%d -->\r\n", ret);
+            	Ql_Sleep(200);
         	}
         }
 
         if(mTcpState != STATE_SOC_CONNECTED)
         {
+			APP_DEBUG("<-- Connect to server failure,close socket -->\r\n");
 			Ql_SOC_Close(g_SocketId);
+			mTcpState = STATE_GPRS_ACTIVATED;
 			return ret;
         }
     }
@@ -297,13 +336,16 @@ s32 GPRS_TCP_Program(void)
 		APP_ERROR("<-- Fail to get pdpCntxtId. -->\r\n");
 		return g_PdpCntxtId;
     }
+    APP_DEBUG("g_PdpCntxtId = %d\n",g_PdpCntxtId);
 
     ret = TCP_Program(g_PdpCntxtId);
 	if(ret != SOC_SUCCESS)
 	{
 		Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
 		mTcpState = STATE_GPRS_UNKNOWN;
-	}	
+		APP_DEBUG("tcp program error,mTcpState = %d\n",mTcpState);
+	}
+	
 	return ret;   
 }
 
@@ -347,19 +389,23 @@ void Callback_Socket_Close(s32 socketId, s32 errCode, void* customParam )
 {
 	s32 ret;
 	APP_ERROR("<--Callback: socket close by remote side,errCode=%d-->\r\n",errCode);
+	Ql_SOC_Close(socketId);
     gServer_State = SERVER_STATE_UNKNOW;
-    ret = Ql_SOC_Close(socketId);
-	if(ret != SOC_SUCCESS)
-	{
-		APP_ERROR("<--Callback: socket closed error,errCode=%d-->\r\n",ret);
-	}
-	
-    mTcpState = STATE_SOC_UNKNOWN;
-    ret = TCP_Program(g_PdpCntxtId);
-	if(ret != SOC_SUCCESS)
-	{
-		APP_ERROR("<--Callback: TCP_Program again error,errCode=%d-->\r\n",ret);
-	}	
+    mTcpState = STATE_GPRS_ACTIVATED;
+    //Ql_Sleep(100);
+    //Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
+	//mTcpState = STATE_GPRS_UNKNOWN;
+
+    //send msg
+    //Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_NETWORK_STATE, mTcpState, 0);
+
+
+    //ret = TCP_Program(g_PdpCntxtId);
+	//if(ret != SOC_SUCCESS)
+	//{
+		//APP_ERROR("<--Callback: TCP_Program again error,errCode=%d-->\r\n",ret);
+	//}
+	Ql_Timer_Start(NETWOEK_STATE_TIMER_ID,NETWOEK_STATE_TIMER_PERIOD,FALSE);
 }
 
 //
@@ -491,5 +537,70 @@ void Callback_Socket_Write(s32 socketId, s32 errCode, void* customParam )
      }while(1);
 #endif     
 }
+
+void Timer_Handler_Network_State(u32 timerId, void* param)
+{
+    if(NETWOEK_STATE_TIMER_ID == timerId)
+    {
+		s32 ret;
+		volatile static u8 network_state_count = 10;
+		if(network_state_count > 0)
+		{
+			APP_DEBUG("%s count = %d\n",__func__,network_state_count);
+			network_state_count--;
+			ret = TCP_Program(g_PdpCntxtId);
+			if(ret != SOC_SUCCESS)
+			{
+				//APP_ERROR("<--Callback: TCP_Program again error,errCode=%d-->\r\n",ret);
+				Ql_Timer_Start(NETWOEK_STATE_TIMER_ID,NETWOEK_STATE_TIMER_PERIOD,FALSE);
+				return;
+			}
+	    } else {
+			//reboot
+			network_state_count = 10;
+			APP_DEBUG("%s reboot count = %d\n",__func__,network_state_count);
+	    }
+	    network_state_count = 10;
+	    APP_DEBUG("%s 2 count = %d\n",__func__,network_state_count);
+	}
+}
+
+void check_network_state(u32 state)
+{
+	static s32 count = 3;
+	s32 ret;
+	switch(state)
+	{
+		case STATE_GPRS_UNKNOWN:
+		{
+			APP_DEBUG("socket close by remote side %s\n",__func__);
+			mTcpState = STATE_GPRS_UNKNOWN;
+			APP_DEBUG("1 start newwork state timer\n");
+			//TCP_Program(g_PdpCntxtId);
+			ret = GPRS_TCP_Program();
+			if(ret != SOC_SUCCESS)
+				mTcpState = STATE_GPRS_UNKNOWN;
+			APP_DEBUG("2 start newwork state timer\n");
+			count--;
+			if(count > 0)
+			{
+				APP_DEBUG("start newwork state timer\n");
+				Ql_Timer_Start(NETWOEK_STATE_TIMER_ID,NETWOEK_STATE_TIMER_PERIOD,FALSE);
+			}
+			else
+			{
+				//soc can't work
+				APP_DEBUG("false start newwork state timer\n");
+			}
+			break;
+		}
+		default:
+		{
+			count = 3;
+			break;
+		}	
+	}
+}
+
 
 #endif // __CUSTOMER_CODE__

@@ -328,7 +328,7 @@ bool Server_Msg_Handle(u8 *pbuffer,u16 numBytes)
 	
     if ( !Server_Msg_Verify_Checkcode(pbuffer, numBytes ) )
     {
-		APP_ERROR("check code error\n");
+		APP_ERROR("check code error:%s\n",__func__);
       	return FALSE;
     }
     Server_Msg_Parse(pbuffer, numBytes);
@@ -524,7 +524,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
  *
  * @return  
  *********************************************************************/
-static void Timer_Handler(u32 timerId, void* param)
+void Timer_Handler_HB(u32 timerId, void* param)
 {
     if(HB_TIMER_ID == timerId)
     {
@@ -637,14 +637,8 @@ s32 App_Server_Register( void )
   	Ql_memcpy(msg_body+4,g_imsi,8);
   	Ql_memcpy(msg_body+12,hw_sw_version,8);
 
-    //register a timer to start heartbeat
-    u32 ret;
-    ret = Ql_Timer_Register(HB_TIMER_ID, Timer_Handler, NULL);
-    if(ret <0)
-    {
-        APP_ERROR("\r\nfailed!!, Timer heartbeat register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
-    }
 	//start a timer,repeat=true;
+	s32 ret;
 	ret = Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[0].data*1000,FALSE);
 	if(ret < 0)
 	{

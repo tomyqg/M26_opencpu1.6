@@ -705,7 +705,7 @@ void Uart_BLE_Msg_Handle(u8 *pBuffer, u16 length)
 	
     if ( !Server_Msg_Verify_Checkcode(pBuffer, length))
     {
-		APP_ERROR("check code error\n");
+		APP_ERROR("check code error:%s\n",__func__);
       	return;
     }
     Uart_BLE_Msg_Parse(pBuffer, length);

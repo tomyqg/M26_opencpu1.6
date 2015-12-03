@@ -208,4 +208,5 @@ s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number );
 void update_alarm(u32 alarm_bit, u32 alarm);
 void App_Ropert_Alarm(void);
 void Timer_Handler_Alarm(u32 timerId, void* param);
+void Timer_Handler_HB(u32 timerId, void* param);
 #endif  //__APP_SERVER_H__

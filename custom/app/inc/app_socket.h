@@ -38,9 +38,9 @@ typedef enum{
     STATE_GPRS_ACTIVATED,
     STATE_GPRS_GET_DNSADDRESS,
     STATE_GPRS_GET_LOCALIP,
+    STATE_GPRS_DEACTIVATE,
     STATE_CHACK_SRVADDR,
     STATE_SOC_UNKNOWN,
-    STATE_SOC_ALREADY_PROGRAM,
     STATE_SOC_REGISTER,
     STATE_SOC_CREATED,
     STATE_SOC_CONNECTED,
@@ -49,10 +49,9 @@ typedef enum{
     STATE_SOC_SENDING,
     STATE_SOC_ACK,
     STATE_SOC_CLOSE,
-    STATE_GPRS_DEACTIVATE,
     STATE_TOTAL_NUM
 }Enum_TCPSTATE;
-extern Enum_TCPSTATE mTcpState;
+extern volatile Enum_TCPSTATE mTcpState;
 
 /************************************************************************/
 /* Declarations common variable                                         */

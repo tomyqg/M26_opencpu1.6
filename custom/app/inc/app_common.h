@@ -33,10 +33,15 @@
  * Task msg id Definition
  ***************************************************************************/
 #define SUB_TASK_NUM   2
+
+//timer id
+#define NETWOEK_STATE_TIMER_ID             (TIMER_ID_USER_START + 105)
+#define NETWOEK_STATE_TIMER_PERIOD         10000   //30s
  
 //gprs 
 #define MSG_ID_GPRS_STATE               	MSG_ID_USER_START+0x100
 #define MSG_ID_IMEI_IMSI_OK               	MSG_ID_USER_START+0x101
+#define MSG_ID_NETWORK_STATE               	MSG_ID_USER_START+0x102
 
 //gps
 #define MSG_ID_GPS_MODE_CONTROL  	        MSG_ID_USER_START+0x105
