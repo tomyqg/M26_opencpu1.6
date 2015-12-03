@@ -116,6 +116,9 @@ extern u8 gServer_State;
 #define ALARM_BIT_LOST_UP         11
 #define ALARM_BIT_SPEED_UP        12
 
+#define HEARTBEAT_INTERVAL_LOC    0
+#define LOST_HEARTBEAT_RSP_MAX    1
+#define RSP_TIMEOUT               2
 #define QST_WORKUP_TIME_LOC       8
 
 enum {

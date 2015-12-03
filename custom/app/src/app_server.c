@@ -639,7 +639,7 @@ s32 App_Server_Register( void )
 
 	//start a timer,repeat=true;
 	s32 ret;
-	ret = Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[0].data*1000,FALSE);
+	ret = Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[RSP_TIMEOUT].data*1000,FALSE);
 	if(ret < 0)
 	{
 		APP_ERROR("\r\nfailed!!, Timer heartbeat start fail ret=%d\r\n",ret);        
@@ -711,7 +711,7 @@ void App_Heartbeat_Check(void)
   	}
   	else
   	{
-  		if(lost_hearbeat_rsp_count > 5)
+  		if(lost_hearbeat_rsp_count > gParmeter.parameter_8[LOST_HEARTBEAT_RSP_MAX].data)
 		{
 	  		//hearbeat timeout
 	  		lost_hearbeat_rsp_count = 1;
