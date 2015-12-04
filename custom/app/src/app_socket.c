@@ -64,7 +64,7 @@ static char *m_pCurrentPos = NULL;
 s32 g_PdpCntxtId = -1;
 s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
 volatile Enum_TCPSTATE mTcpState = STATE_GPRS_UNKNOWN;
-//volatile static u8 network_state_count = 10;
+u8 Parameter_Buffer[PAR_BLOCK_LEN] = {0};
 
 static ST_PDPContxt_Callback callback_gprs_func = 
 {
@@ -88,7 +88,7 @@ void check_network_state(u32 state);
 ***************************************************************/
 void proc_subtask_gprs(s32 TaskId)
 {
-	u32 ret;
+	s32 ret;
     ST_MSG subtask_msg;
     
     APP_DEBUG("gprs_subtask_entry,subtaskId = %d\n",TaskId);
@@ -115,6 +115,17 @@ void proc_subtask_gprs(s32 TaskId)
 			case MSG_ID_RIL_READY:
 			{
 				APP_DEBUG("proc_subtask_gprs revice MSG_ID_RIL_READY\n");
+
+				//read par
+    			ret = Ql_SecureData_Read(PAR_BLOCK, Parameter_Buffer, PAR_BLOCK_LEN);
+    			if(ret >= (s32)(sizeof(gParmeter)) && Parameter_Buffer[0] == PAR_STORED_FLAG)
+    			{
+					APP_DEBUG("read parameter ok, ret = %d\n",ret);
+					Ql_memcpy(&gParmeter, Parameter_Buffer+1, sizeof(gParmeter));
+    			}else{
+					APP_ERROR("read parameter error or not store! Using default parameter.\r\n");
+    			}
+				
 				ST_Time datetime;
 				u8 pBuffer[3];
 				Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_LOC].data, 3);

@@ -53,10 +53,15 @@ typedef enum{
 }Enum_TCPSTATE;
 extern volatile Enum_TCPSTATE mTcpState;
 
+#define PAR_BLOCK              13
+#define PAR_BLOCK_LEN          500
+#define PAR_STORED_FLAG        0xF5
+
 /************************************************************************/
 /* Declarations common variable                                         */
 /************************************************************************/
 extern s32 g_SocketId;
+extern u8 Parameter_Buffer[PAR_BLOCK_LEN];
 
 /************************************************************************/
 /* Declarations for GPRS and TCP socket callback                        */

@@ -31,6 +31,7 @@
 #include "ql_socket.h"
 #include "ql_time.h"
 #include "ql_timer.h"
+#include "ql_error.h"
 #include "ril_network.h"
 #include "app_common.h"
 #include "app_socket.h"
@@ -871,6 +872,7 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
     u16 num = TOSMALLENDIAN16(pBuffer[17],pBuffer[18]);
 	APP_DEBUG("setting paramter number %d\n",num);
 	u16 pLocation = 19;
+	s32 ret;
 	for(u16 i = 0; i < num; i++)
 	{
 		u16 par_id = TOSMALLENDIAN16(pBuffer[pLocation],pBuffer[pLocation+1]);
@@ -918,6 +920,20 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 		
 		pLocation = pLocation + par_len + 3;
 	}
+
+	//save parameter
+	Ql_memcpy(Parameter_Buffer+1, &gParmeter, sizeof(gParmeter));
+	Parameter_Buffer[0] = PAR_STORED_FLAG;
+	ret = Ql_SecureData_Store(PAR_BLOCK, Parameter_Buffer, PAR_BLOCK_LEN);
+	if(ret != QL_RET_OK)
+	{
+		APP_ERROR("parameter store fail!! errcode = %d\n",ret);
+		Parameter_Buffer[0] = 0;
+		Ql_SecureData_Store(PAR_BLOCK, Parameter_Buffer, 1);
+	}else{
+		APP_ERROR("parameter store OK!!\n");
+	}
+	
 }
 
 /*********************************************************************
