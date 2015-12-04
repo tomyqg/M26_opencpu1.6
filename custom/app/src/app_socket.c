@@ -50,10 +50,10 @@
 //static u8  m_SrvADDR[20] = "54.223.223.222\0";
 //static u32 m_SrvPort = 5605;
 //IBM
-//static u8  m_SrvADDR[20] = "54.223.54.184\0";
-//static u32 m_SrvPort = 8300;
-static u8  m_SrvADDR[20] = "116.24.214.28\0";
-static u32 m_SrvPort = 6800;
+static u8  m_SrvADDR[20] = "54.223.54.184\0";
+static u32 m_SrvPort = 8300;
+//static u8  m_SrvADDR[20] = "116.24.214.28\0";
+//static u32 m_SrvPort = 6800;
 
 static u8 m_recv_buf[RECV_BUFFER_LEN];
 static u64 m_nSentLen  = 0;      // Bytes of number sent data through current socket    

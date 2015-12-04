@@ -87,7 +87,7 @@ extern u8 gServer_State;
 #define TODEVICE_REGISTER_RSP_ID          0x8002
 #define TODEVICE_SET_PARAMETER_ID         0x8103
 #define TODEVICE_GET_PARAMETER_ID         0x8104
-
+#define TODEVICE_SET_SLEEP_MODE_ID        0x8105
 #define TODEVICE_REQUEST_LOCATION_ID      0x8200
 #define TODEVICE_LOCATION_POLICY_ID       0x8202
 
@@ -212,4 +212,5 @@ void update_alarm(u32 alarm_bit, u32 alarm);
 void App_Ropert_Alarm(void);
 void Timer_Handler_Alarm(u32 timerId, void* param);
 void Timer_Handler_HB(u32 timerId, void* param);
+void App_Set_Sleep_mode(u8* pBuffer,u16 length);
 #endif  //__APP_SERVER_H__

@@ -116,6 +116,8 @@ Alarm_Flag gAlarm_Flag = {
 	0x0,
 };
 
+bool work_mode = FALSE;
+
 /*********************************************************************
  * FUNCTIONS
  */
@@ -492,7 +494,14 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
         {
 			App_Report_Parameter(TODEVICE_GET_PARAMETER_ID, msg_num);
         	break;
-        }	
+        }
+
+        case TODEVICE_SET_SLEEP_MODE_ID:
+        {
+			App_CommonRsp_To_Server(TODEVICE_SET_SLEEP_MODE_ID,msg_num);
+			App_Set_Sleep_mode(pBuffer,length);
+        	break;
+        }
 
         case TODEVICE_REQUEST_LOCATION_ID:
         {
@@ -713,6 +722,7 @@ void App_Heartbeat_Check(void)
   	{
   		if(lost_hearbeat_rsp_count > gParmeter.parameter_8[LOST_HEARTBEAT_RSP_MAX].data)
 		{
+			APP_DEBUG("lost hearbeat rsp count = %d\n",lost_hearbeat_rsp_count);
 	  		//hearbeat timeout
 	  		lost_hearbeat_rsp_count = 1;
 	  		Ql_Timer_Stop(HB_TIMER_ID);
@@ -1173,6 +1183,47 @@ void App_Ropert_Alarm(void)
 	if(ret < 0)
 	{
 		APP_ERROR("\r\nfailed!!, Timer alarm start fail ret=%d\r\n",ret);
+	}
+}
+
+void App_Set_Sleep_mode(u8* pBuffer,u16 length)
+{
+	u32 flag = TOSMALLENDIAN32(pBuffer[17],pBuffer[18],pBuffer[19],pBuffer[20]);
+	APP_DEBUG("set sleep mode,flag = 0x%x\n",flag);
+	for(u8 i = 0; i < 6; i++)
+	{
+		if(flag & BV(i))
+		{
+			switch(i)
+			{
+				case 0:
+					//
+					break;
+
+				case 1:
+					//
+					break;
+
+				case 2:
+					//
+					break;
+
+				case 3:
+					//
+					break;
+
+				case 4:
+					//
+					break;
+
+				case 5:
+					//
+					break;
+
+				default:
+					break;
+			}
+		}
 	}
 }
 
