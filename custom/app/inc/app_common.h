@@ -36,7 +36,7 @@
 
 //timer id
 #define NETWOEK_STATE_TIMER_ID             (TIMER_ID_USER_START + 105)
-#define NETWOEK_STATE_TIMER_PERIOD         10000   //30s
+#define NETWOEK_STATE_TIMER_PERIOD         30000   //30s
  
 //gprs 
 #define MSG_ID_GPRS_STATE               	MSG_ID_USER_START+0x100

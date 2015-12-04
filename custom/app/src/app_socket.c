@@ -341,9 +341,10 @@ s32 GPRS_TCP_Program(void)
     ret = TCP_Program(g_PdpCntxtId);
 	if(ret != SOC_SUCCESS)
 	{
-		Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
-		mTcpState = STATE_GPRS_UNKNOWN;
+		//Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
+		mTcpState = STATE_GPRS_ACTIVATED;
 		APP_DEBUG("tcp program error,mTcpState = %d\n",mTcpState);
+		Ql_Timer_Start(NETWOEK_STATE_TIMER_ID,NETWOEK_STATE_TIMER_PERIOD,FALSE);
 	}
 	
 	return ret;   
@@ -354,10 +355,7 @@ s32 GPRS_TCP_Program(void)
 //
 void Callback_GPRS_Actived(u8 contexId, s32 errCode, void* customParam)
 {
-    if(errCode != SOC_SUCCESS)
-    {
-        APP_ERROR("<--CallBack: active GPRS,errCode=%d-->\r\n",errCode);
-    }
+	APP_ERROR("<--CallBack: active GPRS,errCode=%d-->\r\n",errCode);
 }
 
 //
@@ -365,10 +363,7 @@ void Callback_GPRS_Actived(u8 contexId, s32 errCode, void* customParam)
 //
 void CallBack_GPRS_Deactived(u8 contextId, s32 errCode, void* customParam )
 {
-    if (errCode != SOC_SUCCESS)
-    {
-        APP_ERROR("<--CallBack: deactived GPRS failure(may drops down),errCode=%d-->\r\n",errCode); 
-    }
+    APP_ERROR("<--CallBack: deactived GPRS (may drops down),errCode=%d-->\r\n",errCode); 
 }
 
 //
@@ -558,7 +553,9 @@ void Timer_Handler_Network_State(u32 timerId, void* param)
 	    } else {
 			//reboot
 			network_state_count = 10;
-			APP_DEBUG("%s reboot count = %d\n",__func__,network_state_count);
+			APP_DEBUG("%s:reboot\n",__func__);
+			Ql_Sleep(50);
+			Ql_Reset(0);
 	    }
 	    network_state_count = 10;
 	    APP_DEBUG("%s 2 count = %d\n",__func__,network_state_count);

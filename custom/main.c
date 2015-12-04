@@ -157,6 +157,7 @@ void proc_main_task(s32 taskId)
                      *         2 = Not registered, but module is currently searching a new operator
                      *         3 = Registration denied 
                      */
+                   	APP_DEBUG("<-- Module GSM network status:%d-->\r\n",msg.param2);  
                 }
                 break;
 

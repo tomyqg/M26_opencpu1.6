@@ -45,6 +45,7 @@
 ************************************************************************/
 const char* g_InitCmds[] = {
      //"ATE0Q0V1\r",   // verbose result codes
+    "AT+CFUN=1\r",
     "AT+CMEE=1\r",  // Extended errors. This item is necessary.     
     "ATS0=0\r",     // No auto-answer.  If customer want auto answer the incoming call , must change this string as "ATS0=n\r" (n=1~255).
     "AT+CREG=1\r",    // GSM registration events . 
