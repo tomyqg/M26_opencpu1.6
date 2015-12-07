@@ -99,9 +99,20 @@ typedef struct
 /*********************************************************************
  * FUNCTIONS
  */
+ 
+s32 Uart2BLE_Common_Response(u8 rsp_id,u8 rsp_status);
+s32 BLE_Send_HEARTBEAT(void);
+s32 BLE_Send_Reboot(void);
 s32 BLE_Send_IMEI(void);
 s32 BLE_Send_IMSI(void);
- 
+s32 BLE_Send_Battery(void);
+s32 BLE_Send_PowerUp_Paired_GSM(void);
+s32 BLE_Send_PowerOff_GSM(void);
+s32 BLE_Send_Reboot_Paired(void);
+s32 BLE_Send_GSM_State(void);
+s32 BLE_Send_Adv_Start(void);
+s32 BLE_Send_Parameter(void);
+s32 BLE_Send_Reboot_GSM(void);
 s32 Uart2BLE_Msg_Send(u8 *pBuffer, u16 length, bool need_rsp);
 s32 Uart2BLE_Msg_Send_Action(u8 *pBuffer, u16 length, bool need_rsp);
 u8 Uart2BLE_Msg_Calculate_Checkcode(u8 *pBuffer, u16 length);

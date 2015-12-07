@@ -347,6 +347,46 @@ s32 Uart2BLE_Common_Response(u8 rsp_id,u8 rsp_status)
     return ret;
 }
 
+s32 BLE_Send_HEARTBEAT(void)
+{
+	u8 msg_buf[8];
+    u16 length = 8;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_TIME_ID;
+    msg_buf[1] = 6;
+    
+    //time start from 2000-1-1-00:00:00
+	ST_Time datetime;
+	Ql_GetLocalTime(&datetime);
+	msg_buf[2] = DECTOBCD(datetime.year -2000);
+	msg_buf[3] = DECTOBCD(datetime.month);
+	msg_buf[4] = DECTOBCD(datetime.day);
+	msg_buf[5] = DECTOBCD(datetime.hour);
+	msg_buf[6] = DECTOBCD(datetime.minute);
+	msg_buf[7] = DECTOBCD(datetime.second);
+    
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,FALSE);
+    return ret;
+}
+
+s32 BLE_Send_Reboot(void)
+{
+	u8 msg_buf[3];
+    u16 length = 3;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_REBOOT_ID;
+    msg_buf[1] = 0;
+	msg_buf[2] = 0;
+    
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
+    return ret;
+}
+
 s32 BLE_Send_IMEI(void)
 {
 	u8 msg_buf[10];
@@ -381,27 +421,133 @@ s32 BLE_Send_IMSI(void)
     return ret;
 }
 
-s32 BLE_Send_HEARTBEAT(void)
+s32 BLE_Send_Battery(void)
 {
-	u8 msg_buf[8];
-    u16 length = 8;
+	u8 msg_buf[3];
+    u16 length = 3;
     s32 ret;
  
-    msg_buf[0] = TOBLE_TIME_ID;
-    msg_buf[1] = 6;
-    
-    //time start from 2000-1-1-00:00:00
-	ST_Time datetime;
-	Ql_GetLocalTime(&datetime);
-	msg_buf[2] = DECTOBCD(datetime.year -2000);
-	msg_buf[3] = DECTOBCD(datetime.month);
-	msg_buf[4] = DECTOBCD(datetime.day);
-	msg_buf[5] = DECTOBCD(datetime.hour);
-	msg_buf[6] = DECTOBCD(datetime.minute);
-	msg_buf[7] = DECTOBCD(datetime.second);
+    msg_buf[0] = TOBLE_BATTERY_ID;
+    msg_buf[1] = 1;
+	msg_buf[2] = battery;
     
     //Send msg
-    ret = Uart2BLE_Msg_Send(msg_buf,length,FALSE);
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
+    return ret;
+}
+
+s32 BLE_Send_PowerUp_Paired_GSM(void)
+{
+	u8 msg_buf[3];
+    u16 length = 3;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_BOOTUP_QST_GSM_ID;
+    msg_buf[1] = 0;
+	msg_buf[2] = 0;
+    
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
+    return ret;
+}
+
+s32 BLE_Send_PowerOff_GSM(void)
+{
+	u8 msg_buf[3];
+    u16 length = 3;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_QST_TO_POWEROFF_ID;
+    msg_buf[1] = 0;
+	msg_buf[2] = 0;
+    
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
+    return ret;
+}
+
+s32 BLE_Send_Reboot_Paired(void)
+{
+	u8 msg_buf[3];
+    u16 length = 3;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_REBOOT_PARTNER_ID;
+    msg_buf[1] = 0;
+	msg_buf[2] = 0;
+    
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
+    return ret;
+}
+
+s32 BLE_Send_GSM_State(void)
+{
+	u8 msg_buf[9];
+    u16 length = 9;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_GSM_STATUS_ID;
+    msg_buf[1] = 7;
+    //state
+	msg_buf[2] = 0;
+	//time
+    
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
+    return ret;
+}
+
+s32 BLE_Send_Adv_Start(void)
+{
+	u8 msg_buf[3];
+    u16 length = 3;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_QST_BLE_ADV_ID;
+    msg_buf[1] = 0;
+	msg_buf[2] = 0;
+	 
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
+    return ret;
+}
+
+s32 BLE_Send_Parameter(void)
+{
+	u8 msg_buf[3];
+    u16 length = 3;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_SET_PAR_ID;
+    msg_buf[1] = 0;
+	msg_buf[2] = 0;
+	 
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
+    return ret;
+}
+
+s32 BLE_Send_Reboot_GSM(void)
+{
+	u8 msg_buf[3];
+    u16 length = 3;
+    s32 ret;
+ 
+    msg_buf[0] = TOBLE_REBOOT_GSM_ID;
+    msg_buf[1] = 0;
+	msg_buf[2] = 0;
+	 
+    //Send msg
+    ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
+    
     return ret;
 }
 
