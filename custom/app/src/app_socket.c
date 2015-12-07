@@ -44,6 +44,18 @@
 #define RECV_BUFFER_LEN       2048
 
 /************************************************************************/
+/* Definition for GPRS PDP context                                      */
+/************************************************************************/
+static ST_GprsConfig m_GprsConfig = {
+    "CMNET",    // APN name
+    "",         // User name for APN
+    "",         // Password for APN
+    0,
+    NULL,
+    NULL,
+};
+
+/************************************************************************/
 /* Definition for Server IP Address and Socket Port Number              */
 /************************************************************************/
 //pan
@@ -222,11 +234,21 @@ s32 GPRS_Program(void)
         APP_ERROR("<-- Fail to register GPRS, cause=%d. -->\r\n", ret);
         return ret;
     }
+
+    //3. Configure PDP
+    ret = Ql_GPRS_Config(pdpCntxtId, &m_GprsConfig);
+    if (GPRS_PDP_SUCCESS == ret)
+    {
+        APP_DEBUG("<-- Configure PDP context -->\r\n");
+    }else{
+        APP_DEBUG("<-- Fail to configure GPRS PDP, cause=%d. -->\r\n", ret);
+        return;
+    }
     
     u8 i = 3;
 	do
 	{
-    	//3. Activate GPRS PDP context
+    	//4. Activate GPRS PDP context
     	ret = Ql_GPRS_ActivateEx(pdpCntxtId, TRUE);
     	if (ret == GPRS_PDP_SUCCESS)
     	{
