@@ -118,6 +118,7 @@ Alarm_Flag gAlarm_Flag = {
 };
 
 bool work_mode = FALSE;
+static bool alarm_timer_started = FALSE;
 
 /*********************************************************************
  * FUNCTIONS
@@ -542,7 +543,7 @@ void Timer_Handler_HB(u32 timerId, void* param)
 		{
 			//heartbeat send
 			//App_Heartbeat_To_Server();
-			Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[0].data*1000,FALSE);
+			Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[HEARTBEAT_INTERVAL_INDEX].data*1000,FALSE);
 			App_Heartbeat_Check();
 			gRegister_Count = 9;
 		}
@@ -572,6 +573,7 @@ void Timer_Handler_Alarm(u32 timerId, void* param)
 {
     if(ALARM_TIMER_ID == timerId)
     {
+		alarm_timer_started = FALSE;
 		if(gAlarm_Flag.alarm_flags == 0)
 		{
 			gAlarm_Flag.alarm_flags_bk = 0;
@@ -579,6 +581,7 @@ void Timer_Handler_Alarm(u32 timerId, void* param)
 		else
 		{
 			App_Ropert_Alarm();
+			gAlarm_Flag.alarm_flags_bk = gAlarm_Flag.alarm_flags_bk & gAlarm_Flag.alarm_flags;
 		}
     }
 }
@@ -649,7 +652,7 @@ s32 App_Server_Register( void )
 
 	//start a timer,repeat=true;
 	s32 ret;
-	ret = Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[RSP_TIMEOUT].data*1000,FALSE);
+	ret = Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[RSP_TIMEOUT_INDEX].data*1000,FALSE);
 	if(ret < 0)
 	{
 		APP_ERROR("\r\nfailed!!, Timer heartbeat start fail ret=%d\r\n",ret);        
@@ -721,7 +724,7 @@ void App_Heartbeat_Check(void)
   	}
   	else
   	{
-  		if(lost_hearbeat_rsp_count > gParmeter.parameter_8[LOST_HEARTBEAT_RSP_MAX].data)
+  		if(lost_hearbeat_rsp_count > gParmeter.parameter_8[LOST_HEARTBEAT_RSP_MAX_INDEX].data)
 		{
 			APP_DEBUG("lost hearbeat rsp count = %d\n",lost_hearbeat_rsp_count);
 	  		//hearbeat timeout
@@ -1143,6 +1146,8 @@ void update_alarm(u32 alarm_bit, u32 alarm)
  *********************************************************************/
 void App_Ropert_Alarm(void)
 {
+	s32 ret;
+		
 	APP_DEBUG("App_Ropert_Alarm\n");
 	//head
 	Server_Msg_Head m_Server_Msg_Head;
@@ -1188,17 +1193,16 @@ void App_Ropert_Alarm(void)
 	Ql_MEM_Free(msg_body);
 	msg_body = NULL;
 
-	//start a timer
-	u32 ret;
-	ret = Ql_Timer_Register(ALARM_TIMER_ID, Timer_Handler_Alarm, NULL);
-    if(ret <0)
-    {
-        APP_ERROR("\r\nfailed!!, Timer alarm register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
-    }
-	ret = Ql_Timer_Start(ALARM_TIMER_ID,gParmeter.parameter_8[21].data*1000,FALSE);
-	if(ret < 0)
+	if(!alarm_timer_started)
 	{
-		APP_ERROR("\r\nfailed!!, Timer alarm start fail ret=%d\r\n",ret);
+		//start a timer
+		ret = Ql_Timer_Start(ALARM_TIMER_ID,gParmeter.parameter_8[ALARM_INTERVAL_INDEX].data*1000,FALSE);
+		if(ret < 0)
+		{
+			APP_ERROR("\r\nfailed!!, Timer alarm start fail ret=%d\r\n",ret);
+		}else{
+			alarm_timer_started = TRUE;
+		}
 	}
 }
 

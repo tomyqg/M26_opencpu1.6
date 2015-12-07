@@ -106,6 +106,13 @@ void proc_subtask_gprs(s32 TaskId)
     {
         APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",NETWOEK_STATE_TIMER_ID,ret);
     }
+
+    //register a timer for alarm
+    ret = Ql_Timer_Register(ALARM_TIMER_ID, Timer_Handler_Alarm, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer alarm register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
+    }
 	
     while(TRUE)
     {    
@@ -128,7 +135,7 @@ void proc_subtask_gprs(s32 TaskId)
 				
 				ST_Time datetime;
 				u8 pBuffer[3];
-				Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_LOC].data, 3);
+				Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_INDEX].data, 3);
 				//time start from 2000-1-1-00:00:00
 		    	datetime.year=16;
 				datetime.month=11;
@@ -175,12 +182,12 @@ void proc_subtask_gprs(s32 TaskId)
 				App_Report_Location();
                 break;
             }
-            case MSG_ID_GPS_SPEED_UP:
+            case MSG_ID_ALARM_REP:
             {
-                //APP_DEBUG("speed up event:%d\n",subtask_msg.param1);
-                update_alarm(ALARM_BIT_SPEED_UP,subtask_msg.param1);
+				update_alarm(subtask_msg.param1,subtask_msg.param2);
                 break;
             }
+            
             case MSG_ID_NETWORK_STATE:
             {
 				APP_DEBUG("network state:%d\n",subtask_msg.param1);

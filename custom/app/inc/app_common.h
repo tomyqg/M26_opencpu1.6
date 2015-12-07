@@ -42,11 +42,12 @@
 #define MSG_ID_GPRS_STATE               	MSG_ID_USER_START+0x100
 #define MSG_ID_IMEI_IMSI_OK               	MSG_ID_USER_START+0x101
 #define MSG_ID_NETWORK_STATE               	MSG_ID_USER_START+0x102
+#define MSG_ID_ALARM_REP 	                MSG_ID_USER_START+0x103
 
 //gps
 #define MSG_ID_GPS_MODE_CONTROL  	        MSG_ID_USER_START+0x105
 #define MSG_ID_GPS_REP_LOCATION  	        MSG_ID_USER_START+0x106
-#define MSG_ID_GPS_SPEED_UP  	            MSG_ID_USER_START+0x107
+//#define MSG_ID_GPS_SPEED_UP  	            MSG_ID_USER_START+0x107
 
 #define MSG_ID_MUTEX_TEST           	    MSG_ID_USER_START+0x151
 #define MSG_ID_SEMAPHORE_TEST           	MSG_ID_USER_START+0x152

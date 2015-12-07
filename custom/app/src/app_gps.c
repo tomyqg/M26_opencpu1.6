@@ -421,14 +421,16 @@ static void gps_reader_parse( GpsReader* r )
         	r->flag = TRUE;
             gps_reader_update_bearing( r, tok_bearing );
             gps_reader_update_speed ( r, tok_speed );
-            if(r->fix.speed > gParmeter.parameter_8[17].data)
+            //r->fix.speed = 130;
+            if(r->fix.speed > gParmeter.parameter_8[GPS_SPEED_UP_LIMITES_INDEX].data)
             {
             	//report to gprs task
-				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPS_SPEED_UP, TRUE, 0);
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_SPEED_UP, TRUE);
 			}
-			else if(gAlarm_Flag.alarm_flags & BV(MSG_ID_GPS_SPEED_UP))
+			else if(gAlarm_Flag.alarm_flags & BV(ALARM_BIT_SPEED_UP))
 			{
-				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPS_SPEED_UP, FALSE, 0);
+				//clean
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_SPEED_UP, FALSE);
 			}
 		}
     }else {

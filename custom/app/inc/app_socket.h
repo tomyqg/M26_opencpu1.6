@@ -53,6 +53,15 @@ typedef enum{
 }Enum_TCPSTATE;
 extern volatile Enum_TCPSTATE mTcpState;
 
+typedef enum {
+    ALARM_BEGIN = 0,
+    ALARM_BIT_LOW_POWER = 9,
+    ALARM_BIT_LOST_DOWN,
+    ALARM_BIT_LOST_UP,
+    ALARM_BIT_SPEED_UP,
+    ALARM_END
+}Enum_AlarmType;
+
 #define PAR_BLOCK              13
 #define PAR_BLOCK_LEN          500
 #define PAR_STORED_FLAG        0xF5

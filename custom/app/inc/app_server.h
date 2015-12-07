@@ -106,20 +106,21 @@ extern u8 gServer_State;
 #define NETWORK_TIME        0x0305
 #define PASSWORD            0x0400
 
-#define STOP_REPORT_LOCATION      0
-#define TIMER_REPORT_LOCATION     1
-#define DISTANCE_REPORT_LOCATION  2
-#define DIS_TIM_REPORT_LOCATION   3
+typedef enum {
+	STOP_REPORT_LOCATION = 0,
+    TIMER_REPORT_LOCATION,
+	DISTANCE_REPORT_LOCATION,
+	DIS_TIM_REPORT_LOCATION
+}Enum_LocationReportPolicy;
 
-#define ALARM_BIT_LOW_POWER       9
-#define ALARM_BIT_LOST_DOWN       10
-#define ALARM_BIT_LOST_UP         11
-#define ALARM_BIT_SPEED_UP        12
-
-#define HEARTBEAT_INTERVAL_LOC    0
-#define LOST_HEARTBEAT_RSP_MAX    1
-#define RSP_TIMEOUT               2
-#define QST_WORKUP_TIME_LOC       8
+typedef enum {
+	HEARTBEAT_INTERVAL_INDEX     = 0,
+    LOST_HEARTBEAT_RSP_MAX_INDEX = 1,
+	RSP_TIMEOUT_INDEX            = 2,
+	QST_WORKUP_TIME_INDEX        = 8,
+	GPS_SPEED_UP_LIMITES_INDEX   = 17,
+	ALARM_INTERVAL_INDEX         = 21,
+}Enum_ParameterIndex;
 
 enum {
     APP_RSP_OK           = 0,
