@@ -452,6 +452,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 		    if(rsp_msg_id == TOSERVER_HEARTBEAT_ID && rsp_msg_id_num == gmsg_num_heartbeat)
 			{
 			  	greceived_heartbeat_rsp = TRUE;
+			  	APP_DEBUG("heartbeat ok\n");
 			}  
         }    
         break;

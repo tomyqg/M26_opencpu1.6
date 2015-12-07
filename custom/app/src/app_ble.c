@@ -33,6 +33,7 @@
 #include "app_ble.h"
 #include "app_ble_list.h"
 #include "app_server.h"
+#include "app_socket.h"
 
 /*********************************************************************
  * MACROS
@@ -57,6 +58,8 @@ static bool waiting_rsp = FALSE;
 static bool have_start_timer_rsp = FALSE;
 static UART_MSG last_uart_send;
 static SList gSList_BLE;
+u32 battery = 50;
+u32 ble_state;
 
 /*********************************************************************
  * FUNCTIONS
@@ -670,18 +673,42 @@ void Uart_BLE_Msg_Parse(u8* pBuffer, u16 length)
 			
         case FROMBLE_BATTARY_ID:
             Uart2BLE_Common_Response(FROMBLE_BATTARY_ID,RSP_OK);
+            battery = pBuffer[3];
+            if(battery < gParmeter.parameter_8[BATTERY_ALARM_INDEX].data)
+            {
+				//report to gprs task
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOW_POWER, TRUE);
+			}
+			else if(gAlarm_Flag.alarm_flags & BV(ALARM_BIT_LOW_POWER))
+			{
+				//clean
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOW_POWER, FALSE);
+			}
             break;         
            
          case FROMBLE_PARTNER_IMEI_ID:
             Uart2BLE_Common_Response(FROMBLE_PARTNER_IMEI_ID,RSP_OK);
+            Ql_memcpy(gParmeter.parameter_12[2].data, pBuffer+3, 8);
             break;
 
         case FROMBLE_PARTNER_IMSI_ID:
             Uart2BLE_Common_Response(FROMBLE_PARTNER_IMSI_ID,RSP_OK);
+            Ql_memcpy(gParmeter.parameter_12[3].data, pBuffer+3, 8);
             break;  
 			
         case FROMBLE_BLE_STATUS_ID:
             Uart2BLE_Common_Response(FROMBLE_BLE_STATUS_ID,RSP_OK);
+            ble_state = pBuffer[3];
+            if(ble_state == 1)
+            {
+				//report to gprs task
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOST_DOWN, TRUE);
+			}
+			else if((gAlarm_Flag.alarm_flags & BV(ALARM_BIT_LOW_POWER)) && (ble_state == 0))
+			{
+				//clean
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOST_DOWN, FALSE);
+			}
             break;  
 			
         case FROMBLE_SW_TRANFRER_ID:

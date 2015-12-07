@@ -119,6 +119,7 @@ typedef enum {
 	RSP_TIMEOUT_INDEX            = 2,
 	QST_WORKUP_TIME_INDEX        = 8,
 	GPS_SPEED_UP_LIMITES_INDEX   = 17,
+	BATTERY_ALARM_INDEX          = 19,
 	ALARM_INTERVAL_INDEX         = 21,
 }Enum_ParameterIndex;
 
