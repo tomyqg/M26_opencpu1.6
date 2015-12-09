@@ -91,6 +91,8 @@ extern u8 gServer_State;
 #define TODEVICE_REQUEST_LOCATION_ID      0x8200
 #define TODEVICE_LOCATION_POLICY_ID       0x8202
 
+#define TODEVICE_OTA_ID                   0x8300
+
 //heartbeat
 #define HB_TIMER_ID         (TIMER_ID_USER_START + 100)
 #define HB_TIMER_PERIOD     30000   //30s
@@ -209,7 +211,7 @@ s32 binary_search_parameter(Parameter_8 *pParameter_8, u32 len, u16 goal, u8 par
 void get_lac_cellid(char *s);
 void App_Report_Location( void );
 void App_Set_Location_policy( u8* pBuffer, u16 length );
-s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number );
+s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number, u8 rsp);
 void update_alarm(u32 alarm_bit, u32 alarm);
 void App_Ropert_Alarm(void);
 void Timer_Handler_Alarm(u32 timerId, void* param);

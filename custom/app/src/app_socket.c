@@ -33,6 +33,7 @@
 #include "ril_util.h"
 #include "ril_network.h"
 #include "ril_alarm.h"
+#include "ril_system.h"
 #include "app_socket.h"
 #include "app_server.h"
 #include "app_common.h"

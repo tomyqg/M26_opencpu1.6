@@ -32,6 +32,9 @@
 #include "ql_time.h"
 #include "ql_timer.h"
 #include "ql_error.h"
+#include "ql_gprs.h"
+#include "ril_system.h"
+#include "fota_main.h"
 #include "ril_network.h"
 #include "app_common.h"
 #include "app_socket.h"
@@ -124,7 +127,7 @@ static bool alarm_timer_started = FALSE;
  * FUNCTIONS
  */
 
-static void Timer_Handler(u32 timerId, void* param);
+void Timer_Handler(u32 timerId, void* param);
 
 /*********************************************************************
  * @fn      Server_Msg_Send
@@ -501,7 +504,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 
         case TODEVICE_SET_SLEEP_MODE_ID:
         {
-			App_CommonRsp_To_Server(TODEVICE_SET_SLEEP_MODE_ID,msg_num);
+			App_CommonRsp_To_Server(TODEVICE_SET_SLEEP_MODE_ID,msg_num,APP_RSP_OK);
 			App_Set_Sleep_mode(pBuffer,length);
         	break;
         }
@@ -517,8 +520,37 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 
         case TODEVICE_LOCATION_POLICY_ID:
         {
-			App_CommonRsp_To_Server(TODEVICE_LOCATION_POLICY_ID,msg_num);
+			App_CommonRsp_To_Server(TODEVICE_LOCATION_POLICY_ID,msg_num,APP_RSP_OK);
 			App_Set_Location_policy(pBuffer,length);
+        	break;
+        }
+
+        case TODEVICE_OTA_ID:
+        {
+			u8 URL_Buffer[100];
+			s32 ret;
+			
+			App_CommonRsp_To_Server(TODEVICE_OTA_ID,msg_num,APP_RSP_OK);
+			
+            Ql_sprintf(URL_Buffer, "http://%d.%d.%d.%d:%d/%.*s",
+            				pBuffer[17],pBuffer[18],pBuffer[19],pBuffer[20],
+            				TOSMALLENDIAN16(pBuffer[21],pBuffer[22]),msg_attribute-6,pBuffer+23);
+            APP_DEBUG("\r\n<-- URL:%s-->\r\n",URL_Buffer);
+            ST_GprsConfig m_GprsConfig = {
+    			"CMNET",    // APN name
+    			"",         // User name for APN
+    			"",         // Password for APN
+    			0,
+    			NULL,
+    			NULL,
+			};
+            
+            ret = Ql_FOTA_StartUpgrade(URL_Buffer, &m_GprsConfig, NULL);
+            if(ret != SOC_SUCCESS)
+            {
+				APP_ERROR("\r\n<-- ota start upgrade fail ret:%d-->\r\n",ret);
+				//App_CommonRsp_To_Server(TODEVICE_OTA_ID,msg_num,APP_RSP_FAILURE);
+            }
         	break;
         }
 			
@@ -596,7 +628,7 @@ void Timer_Handler_Alarm(u32 timerId, void* param)
  *
  * @return  
  *********************************************************************/
-s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number )
+s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number, u8 rsp)
 {
 	APP_DEBUG("App_CommonRsp_To_Server\n");
 
@@ -614,7 +646,7 @@ s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number )
 	msg_number = TOBIGENDIAN16(msg_number);
     Ql_memcpy(msg_body,&msg_number,2);
     Ql_memcpy(msg_body+2,&msg_id,2);
-    msg_body[4] = APP_RSP_OK;
+    msg_body[4] = rsp;
   
   	Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, m_Server_Msg_Head.msg_length);
 	return APP_RET_OK;
