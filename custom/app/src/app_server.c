@@ -1154,13 +1154,16 @@ void update_alarm(u32 alarm_bit, u32 alarm)
 {
 	if(alarm == 1)
 	{
-		gAlarm_Flag.alarm_flags = SET_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
-		if(gAlarm_Flag.alarm_flags_bk & BV(alarm_bit))
+		if(gParmeter.parameter_8[ALARM_FLAG_INDEX].data & BV(alarm_bit))
 		{
-			return;
-		}	
-		App_Ropert_Alarm();
-		gAlarm_Flag.alarm_flags_bk = SET_BIT(gAlarm_Flag.alarm_flags_bk, alarm_bit);
+			gAlarm_Flag.alarm_flags = SET_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
+			if(gAlarm_Flag.alarm_flags_bk & BV(alarm_bit))
+			{
+				return;
+			}	
+			App_Ropert_Alarm();
+			gAlarm_Flag.alarm_flags_bk = SET_BIT(gAlarm_Flag.alarm_flags_bk, alarm_bit);
+		}
 	}
 	else
 	{
