@@ -47,7 +47,7 @@
 /************************************************************************/
 /* Definition for GPRS PDP context                                      */
 /************************************************************************/
-static ST_GprsConfig m_GprsConfig = {
+ST_GprsConfig m_GprsConfig = {
     "CMNET",    // APN name
     "",         // User name for APN
     "",         // Password for APN

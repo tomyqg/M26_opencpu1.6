@@ -122,6 +122,7 @@ Alarm_Flag gAlarm_Flag = {
 
 bool work_mode = FALSE;
 static bool alarm_timer_started = FALSE;
+extern ST_GprsConfig m_GprsConfig;
 
 /*********************************************************************
  * FUNCTIONS
@@ -536,6 +537,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
             				pBuffer[17],pBuffer[18],pBuffer[19],pBuffer[20],
             				TOSMALLENDIAN16(pBuffer[21],pBuffer[22]),msg_attribute-6,pBuffer+23);
             APP_DEBUG("\r\n<-- URL:%s-->\r\n",URL_Buffer);
+#if 0
             ST_GprsConfig m_GprsConfig = {
     			"CMNET",    // APN name
     			"",         // User name for APN
@@ -544,7 +546,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
     			NULL,
     			NULL,
 			};
-            
+#endif            
             ret = Ql_FOTA_StartUpgrade(URL_Buffer, &m_GprsConfig, NULL);
             if(ret != SOC_SUCCESS)
             {

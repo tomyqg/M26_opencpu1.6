@@ -31,6 +31,7 @@
 #include "ril_util.h"
 #include "ril_network.h"
 #include "ril_telephony.h"
+#include "ril_sms.h"
 #include "ql_stdlib.h"
 #include "ql_error.h"
 #include "ql_trace.h"
@@ -51,10 +52,13 @@ static u8 m_RxBuf_Uart1[SERIAL_RX_BUFFER_LEN];
 static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, bool level, void* customizedPara);
 static s32 ATResponse_Handler(char* line, u32 len, void* userData);
 static s32 GetIMEIandIMSI(void);
+static void Hdlr_RecvNewSMS(u32 nIndex, bool bAutoReply);
+static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo, bool bAutoReply);
 
 char userdata[20];
 u8 g_imei[8],g_imsi[8];
 extern Lac_CellID glac_ci;
+extern ST_GprsConfig m_GprsConfig;
 
 extern s32 RIL_SIM_GetIMEI(char* pIMEI, u32 pIMEILen);
 extern s32 RIL_SIM_GetIMSI(char* pIMSI, u32 pIMSILen);
@@ -200,6 +204,7 @@ void proc_main_task(s32 taskId)
                 break;
             case URC_NEW_SMS_IND:
                 APP_DEBUG("<-- New SMS Arrives: index=%d\r\n", msg.param2);
+                Hdlr_RecvNewSMS(msg.param2, TRUE);
                 break;
             case URC_MODULE_VOLTAGE_IND:
                 APP_DEBUG("<-- VBatt Voltage Ind: type=%d\r\n", msg.param2);
@@ -383,6 +388,143 @@ void MutextTest(int iTaskId)  //Two task Run this function at the same time
     Ql_Sleep(5000);                                                             
     APP_DEBUG("<--(TaskId=%d)Do not reboot with calling Ql_sleep-->\r\n", iTaskId);
     Ql_OS_GiveMutex(s_iMutexId);
+}
+
+static void Hdlr_RecvNewSMS(u32 nIndex, bool bAutoReply)
+{
+    s32 iResult = 0;
+    u32 uMsgRef = 0;
+    ST_RIL_SMS_TextInfo *pTextInfo = NULL;
+    ST_RIL_SMS_DeliverParam *pDeliverTextInfo = NULL;
+    char aPhNum[RIL_SMS_PHONE_NUMBER_MAX_LEN] = {0,};
+    const char aReplyCon[] = {"Module has received SMS."};
+    
+    pTextInfo = Ql_MEM_Alloc(sizeof(ST_RIL_SMS_TextInfo));
+    if (NULL == pTextInfo)
+    {
+        APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", sizeof(ST_RIL_SMS_TextInfo), __func__, __LINE__);
+        return;
+    }
+    Ql_memset(pTextInfo, 0x00, sizeof(ST_RIL_SMS_TextInfo));
+    iResult = RIL_SMS_ReadSMS_Text(nIndex, LIB_SMS_CHARSET_GSM, pTextInfo);
+    if (iResult != RIL_AT_SUCCESS)
+    {
+        Ql_MEM_Free(pTextInfo);
+        APP_ERROR("Fail to read text SMS[%d], cause:%d\r\n", nIndex, iResult);
+        return;
+    }        
+    
+    if ((LIB_SMS_PDU_TYPE_DELIVER != (pTextInfo->type)) || (RIL_SMS_STATUS_TYPE_INVALID == (pTextInfo->status)))
+    {
+        Ql_MEM_Free(pTextInfo);
+        APP_ERROR("WARNING: NOT a new received SMS.\r\n");    
+        return;
+    }
+    
+    pDeliverTextInfo = &((pTextInfo->param).deliverParam);    
+
+    if(TRUE == pDeliverTextInfo->conPres)  //Receive CON-SMS segment
+    {
+        APP_DEBUG("This is a concatenate SMS\r\n");
+        Ql_MEM_Free(pTextInfo);
+        return;
+    }
+
+    APP_DEBUG("<-- RIL_SMS_ReadSMS_Text OK.eCharSet:LIB_SMS_CHARSET_GSM,nIndex:%u -->\r\n",nIndex);
+    APP_DEBUG("status:%u,type:%u,alpha:%u,sca:%s,oa:%s,scts:%s,data length:%u\r\n",
+        pTextInfo->status,
+        pTextInfo->type,
+        pDeliverTextInfo->alpha,
+        pTextInfo->sca,
+        pDeliverTextInfo->oa,
+        pDeliverTextInfo->scts,
+        pDeliverTextInfo->length);
+    APP_DEBUG("data = %s\r\n",(pDeliverTextInfo->data));
+
+    if(pDeliverTextInfo->length < 1 || pDeliverTextInfo->data[pDeliverTextInfo->length-1] != '#')
+    {
+		APP_ERROR("This is not a complete SMS\n");
+        Ql_MEM_Free(pTextInfo);
+        return;
+    }
+	Parse_SMS_Data(pDeliverTextInfo, bAutoReply);
+    
+    Ql_strcpy(aPhNum, pDeliverTextInfo->oa);
+    Ql_MEM_Free(pTextInfo);
+    
+    if (bAutoReply)
+    {
+        if (!Ql_strstr(aPhNum, "10086"))  // Not reply SMS from operator
+        {
+            APP_DEBUG("<-- Replying SMS... -->\r\n");
+            iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,(u8*)aReplyCon,Ql_strlen(aReplyCon),&uMsgRef);
+            if (iResult != RIL_AT_SUCCESS)
+            {
+                APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+                return;
+            }
+            APP_DEBUG("<-- RIL_SMS_SendTextSMS OK. uMsgRef:%d -->\r\n", uMsgRef);
+        }
+    }
+    return;
+}
+
+static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo, bool bAutoReply)
+{
+    char* p1 = NULL;
+    char* p2 = NULL;
+    u8 n = 0;
+    char* password = "1234";
+    u8 password_length = 4;
+    
+	if (Ql_StrPrefixMatch(pDeliverTextInfo->data, "APN,"))
+    {
+        p1 = Ql_strstr(pDeliverTextInfo->data,"APN,");
+        p1 += Ql_strlen("APN,");
+        p2 = Ql_strchr(p1, ',');
+        if(p2 == NULL)
+        {
+			APP_ALARM("can't found password\n");
+			return;
+        }
+        
+	    n = p2 - p1;
+		if(password_length != n || Ql_memcmp(password, p1, 4))
+    	{
+			APP_DEBUG("SMS password error\n");
+			return;
+    	}	
+
+        p1 = p2 + 1;
+        p2 = Ql_strchr(p1, ',');
+        if (p1 && p2)
+        {
+			n = p2 - p1;
+            Ql_memcpy(m_GprsConfig.apnName, p1, n);
+            m_GprsConfig.apnName[n] = '\0';
+            p1 = p2 + 1;
+            p2 = Ql_strchr(p1, ',');
+            if(p2)
+            {
+            	n = p2 - p1;
+				Ql_memcpy(m_GprsConfig.apnUserId, p1, n);
+            	m_GprsConfig.apnUserId[n] = '\0';
+            	p1 = p2 + 1;
+            	p2 = pDeliverTextInfo->data + pDeliverTextInfo->length-1;
+            	n = p2 - p1;
+            	Ql_memcpy(m_GprsConfig.apnPasswd, p1, n);
+            	m_GprsConfig.apnUserId[n] = '\0';
+            }
+            //Ql_OS_SendMessage(URC_RCV_TASK_ID, MSG_ID_URC_INDICATION, URC_GSM_NW_STATE_IND, nwStat);
+        } else {
+        	p2 = pDeliverTextInfo->data + pDeliverTextInfo->length-1;
+        	n = p2 - p1;
+			Ql_memcpy(m_GprsConfig.apnName, p1, n);
+            m_GprsConfig.apnName[n] = '\0';
+        }
+        //save apn
+        APP_DEBUG("set APN:%s,UserID:%s,Passwd:%s\n",m_GprsConfig.apnName,m_GprsConfig.apnUserId,m_GprsConfig.apnPasswd);
+    }
 }
 
 #endif // __CUSTOMER_CODE__
