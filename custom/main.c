@@ -344,6 +344,19 @@ static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, boo
                     {
                         return;
                     }
+
+					//gps infor
+                    if (Ql_strstr((char*)m_RxBuf_Uart1, "AT+GPSINFO="))
+                    {
+						pCh = m_RxBuf_Uart1 + 11;
+						if(Ql_isdigit(*pCh))
+						{
+							gps_info_out = (*pCh - '0')?TRUE:FALSE;
+                        	return;
+                        }
+                        return;
+                    }
+                    
                     ret = Ql_RIL_SendATCmd((char*)m_RxBuf_Uart1, totalBytes, ATResponse_Handler, NULL, 0);
                 }
             }

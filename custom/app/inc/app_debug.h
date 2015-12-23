@@ -82,4 +82,7 @@ static char DBG_BUFFER[DBG_BUF_LEN];
 #define APP_DEBUG(FORMAT,...) 
 #endif //end of DEBUG_ENABLE > 0
 
+//gps info out
+extern bool gps_info_out;
+
 #endif  //__APP_DEBUG_H__

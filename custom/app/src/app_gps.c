@@ -56,6 +56,7 @@
  */
 static char RxBuf_GPS[GPS_SERIAL_RX_BUFFER_LEN];
 GpsReader  mGpsReader[1];
+bool gps_info_out = FALSE;
 
 /*********************************************************************
  * FUNCTIONS
@@ -275,7 +276,7 @@ static s32 gps_reader_update_latlong( GpsReader* r, Token latitude, s8 latitudeH
 
     tok = latitude;
     if (tok.p + 6 > tok.end) {
-        APP_DEBUG("latitude is too short: '%.*s'\n", tok.end-tok.p, tok.p);
+        //APP_DEBUG("latitude is too short: '%.*s'\n", tok.end-tok.p, tok.p);
         return -1;
     }
     lat = convert_from_hhmm(tok);
@@ -284,7 +285,7 @@ static s32 gps_reader_update_latlong( GpsReader* r, Token latitude, s8 latitudeH
 
     tok = longitude;
     if (tok.p + 6 > tok.end) {
-        APP_DEBUG("longitude is too short: '%.*s'\n", tok.end-tok.p, tok.p);
+        //APP_DEBUG("longitude is too short: '%.*s'\n", tok.end-tok.p, tok.p);
         return -1;
     }
     lon = convert_from_hhmm(tok);
@@ -531,7 +532,11 @@ static void CallBack_UART_GPS(Enum_SerialPort port, Enum_UARTEventType msg, bool
                     APP_DEBUG("No data in UART buffer!\n");
                     return;
                 }
-				//APP_DEBUG("gps uart port read data %d\n",totalBytes);
+                
+				if(gps_info_out)
+				{
+					APP_DEBUG("%.*s",totalBytes,RxBuf_GPS);
+				}
 				
                 char *p1 = Ql_strstr(RxBuf_GPS,"$GPGGA");
                 if(!p1)
