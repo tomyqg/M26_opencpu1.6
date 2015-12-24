@@ -62,6 +62,16 @@ typedef enum {
     ALARM_END
 }Enum_AlarmType;
 
+typedef enum {
+	STATE_GSM_NORMAL = 0,
+	STATE_GSM_POWEROFF_SLEEP,
+	STATE_GSM_NOT_CON_SERVER,
+	STATE_GSM_NO_GPRS_NET,
+	STATE_GSM_Ok_GPRS_NET,
+	STATE_GSM_NO_GPS_FIX,
+	STATE_GSM_OK_GPS_FIX,
+};
+
 #define PAR_BLOCK              13
 #define PAR_BLOCK_LEN          500
 #define PAR_STORED_FLAG        0xF5

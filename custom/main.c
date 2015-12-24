@@ -175,6 +175,7 @@ void proc_main_task(s32 taskId)
 					APP_DEBUG("lac:0x%x,cell_id:0x%x\n",glac_ci.lac,glac_ci.cell_id);
                     // Module has registered to GPRS network,app can start to activate PDP and program TCP
                     Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
+                    Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0);
                 }else{
                     /* status: 0 = Not registered, module not currently search a new operator
                      *         2 = Not registered, but module is currently searching a new operator

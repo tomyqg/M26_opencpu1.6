@@ -29,6 +29,7 @@
 #include "ql_memory.h"
 #include "ql_timer.h"
 #include "ql_error.h"
+#include "ril_network.h"
 #include "app_common.h"
 #include "app_ble.h"
 #include "app_ble_list.h"
@@ -148,7 +149,19 @@ void proc_subtask_ble(s32 TaskId)
         			APP_ERROR("failed!! timer(%d) Ql_Timer_Start ret=%d\r\n",ret,BLE_UART_HEARBEAT_TIMER_ID);        
     			}
 				break;
-			}	
+			}
+			case MSG_ID_GPRS_STATE:
+            {
+                //APP_DEBUG("recv MSG: gprs state = %d, %d\r\n",subtask_msg.param1,mTcpState);
+                if (subtask_msg.param1 == NW_STAT_REGISTERED ||
+                    subtask_msg.param1 == NW_STAT_REGISTERED_ROAMING)
+				{
+					BLE_Send_GSM_State(STATE_GSM_Ok_GPRS_NET);
+				} else {
+					BLE_Send_GSM_State(STATE_GSM_NO_GPRS_NET);
+				}
+                break;
+            }
 			
             default:
                 break;
@@ -485,21 +498,22 @@ s32 BLE_Send_Reboot_Paired(void)
     return ret;
 }
 
-s32 BLE_Send_GSM_State(void)
+s32 BLE_Send_GSM_State(u8 state)
 {
-	u8 msg_buf[9];
-    u16 length = 9;
+	u8 msg_buf[10];
+    u16 length = 10;
     s32 ret;
  
     msg_buf[0] = TOBLE_GSM_STATUS_ID;
     msg_buf[1] = 7;
     //state
-	msg_buf[2] = 0;
+	msg_buf[2] = state;
 	//time
-    
+	msg_buf[3] = 1;
+	msg_buf[4] = 2;
+	
     //Send msg
     ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
-    
     return ret;
 }
 
@@ -608,8 +622,8 @@ s32 Uart2BLE_Msg_Send(u8 *pBuffer, u16 length, bool need_rsp)
   	}
   	
 	#if 0
-    for(int i = 0; i < msg_buff_len; i++)
-    	APP_DEBUG("%02x",msg_buff[i]);
+    for(int i = 0; i < msg_send_buff_len; i++)
+    	APP_DEBUG("%02x",msg_send_buff[i]);
     APP_DEBUG("\r\n");
     #endif
 

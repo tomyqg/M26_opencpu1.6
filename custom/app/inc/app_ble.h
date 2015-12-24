@@ -109,7 +109,7 @@ s32 BLE_Send_Battery(void);
 s32 BLE_Send_PowerUp_Paired_GSM(void);
 s32 BLE_Send_PowerOff_GSM(void);
 s32 BLE_Send_Reboot_Paired(void);
-s32 BLE_Send_GSM_State(void);
+s32 BLE_Send_GSM_State(u8 state);
 s32 BLE_Send_Adv_Start(void);
 s32 BLE_Send_Parameter(void);
 s32 BLE_Send_Reboot_GSM(void);
