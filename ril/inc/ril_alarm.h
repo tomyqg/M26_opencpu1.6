@@ -84,4 +84,7 @@ s32 RIL_Alarm_Query(ST_Time* dateTime);
 *****************************************************************/
 s32 RIL_Alarm_Remove(ST_Time* dateTime);
 
+s32 RIL_Alarm_Add(ST_Time* dateTime, u8 repeat, u8 power);
+s32 RIL_Alarm_Del(void);
+
 #endif	//__RIL_ALARM_H__

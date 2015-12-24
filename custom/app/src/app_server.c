@@ -479,6 +479,8 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 				datetime.second=BCDTODEC(pBuffer[27]);
 				datetime.timezone=TIMEZONE;
   			  	Ql_SetLocalTime(&datetime);
+  			  	Ql_Sleep(20);
+  			  	update_clk_alarm(&datetime);
   			  	//APP_DEBUG("time: %d-%d-%d %d:%d:%d\n",datetime.year,datetime.month,datetime.day,datetime.hour,datetime.minute,datetime.second);
 			}
 			else
@@ -949,6 +951,8 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 			datetime.second=BCDTODEC(pBuffer[pLocation+8]);
 			datetime.timezone=TIMEZONE;
   			Ql_SetLocalTime(&datetime);
+  			Ql_Sleep(20);
+  			update_clk_alarm(&datetime);
   			//APP_DEBUG("time: %d-%d-%d %d:%d:%d\n",datetime.year,datetime.month,datetime.day,datetime.hour,datetime.minute,datetime.second);
 		}
 		else
@@ -969,7 +973,7 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 		Parameter_Buffer[0] = 0;
 		Ql_SecureData_Store(PAR_BLOCK, Parameter_Buffer, 1);
 	}else{
-		APP_ERROR("parameter store OK!!\n");
+		APP_DEBUG("parameter store OK!!\n");
 	}
 	
 }

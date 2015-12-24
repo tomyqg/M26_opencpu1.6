@@ -209,7 +209,11 @@ void proc_main_task(s32 taskId)
                 break;
             case URC_MODULE_VOLTAGE_IND:
                 APP_DEBUG("<-- VBatt Voltage Ind: type=%d\r\n", msg.param2);
-                break;
+                break; 
+            case URC_ALARM_RING_IND:
+                APP_DEBUG("<-- alarm ring\r\n");
+                Ql_OS_SendMessage(subtask_ble_id, MSG_ID_CLK_ALARM, 0, 0);
+                break;   
             default:
                 APP_DEBUG("<-- Other URC: type=%d\r\n", msg.param1);
                 break;

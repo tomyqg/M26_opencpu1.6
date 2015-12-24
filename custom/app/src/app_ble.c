@@ -162,7 +162,12 @@ void proc_subtask_ble(s32 TaskId)
 				}
                 break;
             }
-			
+            case MSG_ID_CLK_ALARM:
+            {
+                APP_DEBUG(" receive alarm ring\r\n");
+                BLE_Send_PowerUp_Paired_GSM();
+                break;
+			}
             default:
                 break;
         }

@@ -36,9 +36,37 @@
 #include "ql_common.h"
 #include "ql_stdlib.h"
 #include "ql_error.h"
+//#include "app_debug.h"
 
 static s32 ATResponse_QALARM_Handler(char* line, u32 len, void* userData);
 
+s32 RIL_Alarm_Add(ST_Time* dateTime, u8 repeat, u8 power)
+{
+	char strAT[50] = {"\0"};
+	char strTimeZone[10];
+
+	if (NULL == dateTime)
+	{
+		return QL_RET_ERR_INVALID_PARAMETER;
+	}
+	Ql_memset(strAT, 0x0, sizeof(strAT));
+	if (dateTime->timezone >= 0)
+	{
+		Ql_sprintf(strTimeZone, "+%02d\0", dateTime->timezone);
+	} else {
+		Ql_sprintf(strTimeZone, "-%02d\0", dateTime->timezone);
+	}
+	Ql_sprintf(strAT, "AT+QALARM=1,\"%02d/%02d/%02d,%02d:%02d:%02d%s\",%d,%d", 
+		dateTime->year, dateTime->month, dateTime->day, dateTime->hour, dateTime->minute, dateTime->second, strTimeZone, repeat, power);
+	//APP_DEBUG("%s\r\n", strAT);
+	return Ql_RIL_SendATCmd(strAT, Ql_strlen(strAT), NULL, NULL,0);
+}
+
+s32 RIL_Alarm_Del(void)
+{
+	char strAT[] = "AT+QALARM=0\0";
+	return Ql_RIL_SendATCmd(strAT, Ql_strlen(strAT), NULL, NULL, 0);
+}
 
 s32 RIL_Alarm_Create(ST_Time* dateTime, u8 mode)
 {

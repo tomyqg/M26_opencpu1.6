@@ -25,6 +25,8 @@
 #ifndef __APP_SOCKET_H__
 #define __APP_SOCKET_H__
 
+#include "ql_time.h"
+
 /*****************************************************************
 * define process state
 ******************************************************************/
@@ -112,6 +114,8 @@ extern void Callback_Socket_Read(s32 socketId, s32 errCode, void* customParam );
 // the socket buffer is full. Application should stop sending socket data till this callback function
 // is invoked, which indicates application can continue to send data to socket.
 extern void Callback_Socket_Write(s32 socketId, s32 errCode, void* customParam );
+
+extern void update_clk_alarm(ST_Time* dateTime);
 
 #endif  //__APP_SOCKET_H__
 

@@ -145,25 +145,9 @@ void proc_subtask_gprs(s32 TaskId)
     			}else{
 					APP_ERROR("read parameter error or not store! Using default parameter.\r\n");
     			}
-				
 				ST_Time datetime;
-				u8 pBuffer[3];
-				Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_INDEX].data, 3);
-				//time start from 2000-1-1-00:00:00
-		    	datetime.year=16;
-				datetime.month=11;
-				datetime.day=25;
-				datetime.hour=BCDTODEC(pBuffer[2]);
-				datetime.minute=BCDTODEC(pBuffer[1]);
-				datetime.second=BCDTODEC(pBuffer[0]);
-				APP_DEBUG("hour=%d,min=%d,sec=%d\n",datetime.hour,datetime.minute,datetime.second);
-				datetime.timezone=TIMEZONE;
-				s32 iRet = RIL_Alarm_Create(&datetime, 1);
-				if(iRet != RIL_AT_SUCCESS)
-				{
-					APP_ERROR("Create alarm error ret:%d\n",iRet);
-				}
-				break;
+				Ql_GetLocalTime(&datetime);
+				update_clk_alarm(&datetime);
 			}	
 			
             case MSG_ID_GPRS_STATE:
@@ -640,5 +624,36 @@ void check_network_state(u32 state)
 	}
 }
 
+void update_clk_alarm(ST_Time* dateTime)
+{
+	u8 pBuffer[3];
+	s32 iRet;
+	u64 seconds1,seconds2;
+	//delete alarm
+	iRet = RIL_Alarm_Del();
+	if(iRet != RIL_AT_SUCCESS)
+	{
+		APP_ERROR("del alarm error ret:%d\n",iRet);
+	}
+	Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_INDEX].data, 3);
+	//get local time
+	//Ql_GetLocalTime(&datetime);
+	seconds1 = Ql_Mktime(dateTime);
+	dateTime->hour=BCDTODEC(pBuffer[2]);
+	dateTime->minute=BCDTODEC(pBuffer[1]);
+	dateTime->second=BCDTODEC(pBuffer[0]);
+	seconds2 = Ql_Mktime(dateTime);
+	if(seconds2 < seconds1 + 15)
+		dateTime->day++;
+	APP_DEBUG("alarm:year=%d,month=%d,day=%d,hour=%d,min=%d,sec=%d\n",
+				dateTime->year,dateTime->month,dateTime->day,dateTime->hour,dateTime->minute,dateTime->second);
+	dateTime->year = dateTime->year - 2000;
+	//datetime.timezone= 0;//TIMEZONE;
+	iRet = RIL_Alarm_Add(dateTime, 1, 0);
+	if(iRet != RIL_AT_SUCCESS)
+	{
+		APP_ERROR("add alarm error ret:%d\n",iRet);
+	}
+}
 
 #endif // __CUSTOMER_CODE__
