@@ -425,6 +425,7 @@ void Callback_Socket_Close(s32 socketId, s32 errCode, void* customParam )
 	//{
 		//APP_ERROR("<--Callback: TCP_Program again error,errCode=%d-->\r\n",ret);
 	//}
+	Ql_Timer_Stop(HB_TIMER_ID);
 	Ql_Timer_Start(NETWOEK_STATE_TIMER_ID,NETWOEK_STATE_TIMER_PERIOD,FALSE);
 }
 

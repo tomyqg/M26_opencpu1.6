@@ -60,7 +60,7 @@
 extern u8 g_imei[8];
 extern u8 g_imsi[8];
  
-static s16 g_msg_number = 0;
+static u16 g_msg_number = 0;
 
 static s8 hw_sw_version[2][4] = {
   {0x15,0x10,0x30,0x01},
