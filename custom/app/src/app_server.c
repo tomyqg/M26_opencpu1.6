@@ -89,7 +89,7 @@ Parameter gParmeter = {
 	 {0x010A,4,0},
 	 {0x0110,4,20},
 	 {0x0111,4,20},
-	 {0x0112,4,0},
+	 {0x0112,4,1},
 	 {0x0113,4,1},
 	 {0x0200,4,120},
 	 {0x0201,4,15},
@@ -962,6 +962,9 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 		
 		pLocation = pLocation + par_len + 3;
 	}
+
+	//update parameter to ble
+	Ql_OS_SendMessage(subtask_ble_id, MSG_ID_BLE_PARAMETER_UPDATA, 0, 0);
 
 	//save parameter
 	Ql_memcpy(Parameter_Buffer+1, &gParmeter, sizeof(gParmeter));

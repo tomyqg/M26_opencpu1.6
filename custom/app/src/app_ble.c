@@ -164,8 +164,14 @@ void proc_subtask_ble(s32 TaskId)
             }
             case MSG_ID_CLK_ALARM:
             {
-                APP_DEBUG(" receive alarm ring\r\n");
+                APP_DEBUG("receive alarm ring\r\n");
                 BLE_Send_PowerUp_Paired_GSM();
+                break;
+			}
+			case MSG_ID_BLE_PARAMETER_UPDATA:
+            {
+                APP_DEBUG("receive ble parameter updata!\r\n");
+                BLE_Send_Parameter();
                 break;
 			}
             default:
@@ -540,13 +546,26 @@ s32 BLE_Send_Adv_Start(void)
 
 s32 BLE_Send_Parameter(void)
 {
-	u8 msg_buf[3];
-    u16 length = 3;
+	u8 msg_buf[15];
+    u16 length = 15;
     s32 ret;
  
     msg_buf[0] = TOBLE_SET_PAR_ID;
-    msg_buf[1] = 0;
-	msg_buf[2] = 0;
+    msg_buf[1] = 13;
+	msg_buf[2] = 6;
+
+    msg_buf[3]  = 0x01;
+    msg_buf[4]  = 0x01;
+    msg_buf[5]  = gParmeter.parameter_8[BLE_DOWN_HEARTBEAT_INDEX].data;
+    msg_buf[6]  = 0x02;
+    msg_buf[7]  = 0x01;
+    msg_buf[8]  = gParmeter.parameter_8[BLE_UP_HEARTBEAT_INDEX].data;
+    msg_buf[9]  = 0x03;
+    msg_buf[10] = 0x01;
+    msg_buf[11] = gParmeter.parameter_8[QST_UNNORMAL_ADV_POLICY_INDEX].data;
+    msg_buf[12] = 0x04;
+    msg_buf[13] = 0x01;
+    msg_buf[14] = gParmeter.parameter_8[QST_ADV_LAST_TIME_INDEX].data;
 	 
     //Send msg
     ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
