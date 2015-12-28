@@ -457,6 +457,14 @@ static void gps_reader_parse( GpsReader* r )
 		if(gLocation_Policy.location_policy == DISTANCE_REPORT_LOCATION || 
 		   gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
 		{
+            s32 mbearing = gGpsLocation.bearing - r->fix.bearing;
+			if(ABS(mbearing) > gLocation_Policy.bearing_Interval)
+			{
+				r->callback();
+				r->flag = FALSE;
+				return;
+			}
+
 			float distance = get_distance(r->fix.latitude, r->fix.longitude, gGpsLocation.latitude, gGpsLocation.longitude);
 			if(distance >= gLocation_Policy.distance_Interval && r->callback)
 			{
