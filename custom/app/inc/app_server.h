@@ -196,6 +196,7 @@ typedef struct {
 
 typedef struct {
     Location_Policy gLocation_Policy;
+    u8 password[4];
 }SYS_CONFIG;
 extern SYS_CONFIG mSys_config;
 

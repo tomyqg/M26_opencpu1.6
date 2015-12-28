@@ -117,6 +117,8 @@ SYS_CONFIG mSys_config = {
     	100, //distance_Interval;
     	45,  //bearing_Interval;
 	},
+	//mSys_config.password
+	{{'0','0','0','0'}},
 };
 
 Alarm_Flag gAlarm_Flag = {
@@ -961,7 +963,30 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 		}
 		else
 		{
-			//set password
+			//save password
+			mSys_config.password[0] = pBuffer[pLocation+3];
+			mSys_config.password[1] = pBuffer[pLocation+4];
+			mSys_config.password[2] = pBuffer[pLocation+5];
+			mSys_config.password[3] = pBuffer[pLocation+6];
+			
+			u8 *Sys_Config_Buffer = (u8 *)Ql_MEM_Alloc(SYS_CONFIG_BLOCK_LEN);
+    		if (Sys_Config_Buffer == NULL)
+  			{
+  	 			APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,SYS_CONFIG_BLOCK_LEN);
+     			return;
+  			}
+			Ql_memcpy(Sys_Config_Buffer+1, &mSys_config, sizeof(mSys_config));
+			Sys_Config_Buffer[0] = SYS_CONFIG_STORED_FLAG;
+			s32 ret = Ql_SecureData_Store(SYS_CONFIG_BLOCK, Sys_Config_Buffer, SYS_CONFIG_BLOCK_LEN);
+			if(ret != QL_RET_OK)
+			{
+				APP_ERROR("Sys Config store fail!! errcode = %d\n",ret);
+				Sys_Config_Buffer[0] = 0;
+				Ql_SecureData_Store(SYS_CONFIG_BLOCK, Sys_Config_Buffer, 1);
+			}else{
+				APP_DEBUG("Sys Config store OK!!\n");
+			}
+			APP_DEBUG("save password %.*s\n",4,mSys_config.password);
 		}
 		
 		pLocation = pLocation + par_len + 3;

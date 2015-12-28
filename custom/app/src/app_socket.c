@@ -163,6 +163,14 @@ void proc_subtask_gprs(s32 TaskId)
     			}else{
 					APP_ERROR("read sys config error or not store! Using default.\r\n");
     			}
+
+    			APP_DEBUG("location_policy:%d,static_policy:%d,time_Interval:%d,distance_Interval:%d,bearing_Interval:%d,password:%.*s\n",
+    			mSys_config.gLocation_Policy.location_policy,
+    			mSys_config.gLocation_Policy.static_policy,
+    			mSys_config.gLocation_Policy.time_Interval,
+    			mSys_config.gLocation_Policy.distance_Interval,
+    			mSys_config.gLocation_Policy.bearing_Interval,
+    			4,mSys_config.password);
 			}	
 			
             case MSG_ID_GPRS_STATE:
