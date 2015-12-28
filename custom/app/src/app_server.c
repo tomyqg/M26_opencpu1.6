@@ -107,12 +107,16 @@ Parameter gParmeter = {
 
 Lac_CellID glac_ci;
 GpsLocation gGpsLocation;
-Location_Policy gLocation_Policy = {
-    1,   //location_policy;    
-    1,   //static_policy;
-    30,  //time_Interval;
-    100, //distance_Interval;
-    45,  //bearing_Interval;
+
+SYS_CONFIG mSys_config = {
+	//mSys_config.gLocation_Policy;
+	{
+    	1,   //location_policy;    
+    	1,   //static_policy;
+    	30,  //time_Interval;
+    	100, //distance_Interval;
+    	45,  //bearing_Interval;
+	},
 };
 
 Alarm_Flag gAlarm_Flag = {
@@ -1051,27 +1055,47 @@ void App_Set_Location_policy( u8* pBuffer, u16 length )
 {
 	//APP_DEBUG("setting location policy\n");
 
-	Ql_memcpy(&gLocation_Policy, pBuffer+17, 20);
+	Ql_memcpy(&mSys_config.gLocation_Policy, pBuffer+17, 20);
 
-	gLocation_Policy.location_policy = TOBIGENDIAN32(gLocation_Policy.location_policy);	
-	//APP_DEBUG("setting location policy %d\n",gLocation_Policy.location_policy);
+	mSys_config.gLocation_Policy.location_policy = TOBIGENDIAN32(mSys_config.gLocation_Policy.location_policy);	
+	//APP_DEBUG("setting location policy %d\n",mSys_config.gLocation_Policy.location_policy);
 
-	gLocation_Policy.static_policy = TOBIGENDIAN32(gLocation_Policy.static_policy);	
-	//APP_DEBUG("setting static policy %d\n",gLocation_Policy.static_policy);
+	mSys_config.gLocation_Policy.static_policy = TOBIGENDIAN32(mSys_config.gLocation_Policy.static_policy);	
+	//APP_DEBUG("setting static policy %d\n",mSys_config.gLocation_Policy.static_policy);
 
-	gLocation_Policy.time_Interval = TOBIGENDIAN32(gLocation_Policy.time_Interval);	
-	//APP_DEBUG("setting time policy %d\n",gLocation_Policy.time_Interval);
+	mSys_config.gLocation_Policy.time_Interval = TOBIGENDIAN32(mSys_config.gLocation_Policy.time_Interval);	
+	//APP_DEBUG("setting time policy %d\n",mSys_config.gLocation_Policy.time_Interval);
 
-	gLocation_Policy.distance_Interval = TOBIGENDIAN32(gLocation_Policy.distance_Interval);	
-	//APP_DEBUG("setting distance policy %d\n",gLocation_Policy.distance_Interval);
+	mSys_config.gLocation_Policy.distance_Interval = TOBIGENDIAN32(mSys_config.gLocation_Policy.distance_Interval);	
+	//APP_DEBUG("setting distance policy %d\n",mSys_config.gLocation_Policy.distance_Interval);
 
-	gLocation_Policy.bearing_Interval = TOBIGENDIAN32(gLocation_Policy.bearing_Interval);	
-	//APP_DEBUG("setting bearing policy %d\n",gLocation_Policy.bearing_Interval);
+	mSys_config.gLocation_Policy.bearing_Interval = TOBIGENDIAN32(mSys_config.gLocation_Policy.bearing_Interval);	
+	//APP_DEBUG("setting bearing policy %d\n",mSys_config.gLocation_Policy.bearing_Interval);
 
     //start a timer,repeat=FALSE;
-	if(gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+	if(mSys_config.gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || 
+	   mSys_config.gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
 	{
 		Ql_OS_SendMessage(subtask_gps_id, MSG_ID_GPS_TIMER_REPORT, 0, 0);
+	}
+
+	//save
+	u8 *Sys_Config_Buffer = (u8 *)Ql_MEM_Alloc(SYS_CONFIG_BLOCK_LEN);
+    if (Sys_Config_Buffer == NULL)
+  	{
+  	 	APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,SYS_CONFIG_BLOCK_LEN);
+     	return;
+  	}
+	Ql_memcpy(Sys_Config_Buffer+1, &mSys_config, sizeof(mSys_config));
+	Sys_Config_Buffer[0] = SYS_CONFIG_STORED_FLAG;
+	s32 ret = Ql_SecureData_Store(SYS_CONFIG_BLOCK, Sys_Config_Buffer, SYS_CONFIG_BLOCK_LEN);
+	if(ret != QL_RET_OK)
+	{
+		APP_ERROR("Sys Config store fail!! errcode = %d\n",ret);
+		Sys_Config_Buffer[0] = 0;
+		Ql_SecureData_Store(SYS_CONFIG_BLOCK, Sys_Config_Buffer, 1);
+	}else{
+		APP_DEBUG("Sys Config store OK!!\n");
 	}
 }
 

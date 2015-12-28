@@ -108,6 +108,10 @@ extern u8 gServer_State;
 #define NETWORK_TIME        0x0305
 #define PASSWORD            0x0400
 
+#define SYS_CONFIG_BLOCK       12
+#define SYS_CONFIG_BLOCK_LEN   100
+#define SYS_CONFIG_STORED_FLAG 0xF5
+
 typedef enum {
 	STOP_REPORT_LOCATION = 0,
     TIMER_REPORT_LOCATION,
@@ -189,7 +193,12 @@ typedef struct {
     u32 distance_Interval;
     u32 bearing_Interval;
 }Location_Policy;
-extern Location_Policy gLocation_Policy;
+
+typedef struct {
+    Location_Policy gLocation_Policy;
+}SYS_CONFIG;
+extern SYS_CONFIG mSys_config;
+
 extern GpsLocation gGpsLocation;
 
 /*********************************************************************

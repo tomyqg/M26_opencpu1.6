@@ -148,6 +148,21 @@ void proc_subtask_gprs(s32 TaskId)
 				ST_Time datetime;
 				Ql_GetLocalTime(&datetime);
 				update_clk_alarm(&datetime);
+
+				u8 *Sys_Config_Buffer = (u8 *)Ql_MEM_Alloc(SYS_CONFIG_BLOCK_LEN);
+    			if (Sys_Config_Buffer == NULL)
+  				{
+  	 				APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,SYS_CONFIG_BLOCK_LEN);
+     				return;
+  				}
+  				ret = Ql_SecureData_Read(SYS_CONFIG_BLOCK, Sys_Config_Buffer, SYS_CONFIG_BLOCK_LEN);
+    			if(ret >= (s32)(sizeof(mSys_config)) && Sys_Config_Buffer[0] == SYS_CONFIG_STORED_FLAG)
+    			{
+					APP_DEBUG("read sys config ok, ret = %d\n",ret);
+					Ql_memcpy(&mSys_config, Sys_Config_Buffer+1, sizeof(mSys_config));
+    			}else{
+					APP_ERROR("read sys config error or not store! Using default.\r\n");
+    			}
 			}	
 			
             case MSG_ID_GPRS_STATE:

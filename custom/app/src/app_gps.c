@@ -99,9 +99,9 @@ void proc_subtask_gps(s32 TaskId)
         APP_ERROR("\r\nfailed!!, Timer gps register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
     }
 	//start a timer,repeat=FALSE;
-	if(gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+	if(mSys_config.gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || mSys_config.gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
 	{
-		ret = Ql_Timer_Start(GPS_TIMER_ID,gLocation_Policy.time_Interval*1000,FALSE);
+		ret = Ql_Timer_Start(GPS_TIMER_ID,mSys_config.gLocation_Policy.time_Interval*1000,FALSE);
 		if(ret < 0)
 		{
 			APP_ERROR("\r\nfailed!!, Timer gps start fail ret=%d\r\n",ret);        
@@ -133,7 +133,7 @@ void proc_subtask_gps(s32 TaskId)
             case MSG_ID_GPS_TIMER_REPORT:
             {
                 APP_DEBUG("recv msg: start timer report location\n");
-                ret = Ql_Timer_Start(GPS_TIMER_ID,gLocation_Policy.time_Interval*1000,FALSE);
+                ret = Ql_Timer_Start(GPS_TIMER_ID,mSys_config.gLocation_Policy.time_Interval*1000,FALSE);
 				if(ret < 0)
 				{
 					APP_ERROR("\r\nfailed!!, Timer gps start fail ret=%d\r\n",ret);        
@@ -165,11 +165,11 @@ static void Timer_Handler(u32 timerId, void* param)
 		}
 
 		//start a timer,repeat=FALSE;
-		if(gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || 
-		   gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+		if(mSys_config.gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || 
+		   mSys_config.gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
 		{
 			u32 ret;
-			ret = Ql_Timer_Start(GPS_TIMER_ID,gLocation_Policy.time_Interval*1000,FALSE);
+			ret = Ql_Timer_Start(GPS_TIMER_ID,mSys_config.gLocation_Policy.time_Interval*1000,FALSE);
 			if(ret < 0)
 			{
 				APP_ERROR("\r\nfailed!!, Timer gps start fail ret=%d\r\n",ret);        
@@ -454,11 +454,11 @@ static void gps_reader_parse( GpsReader* r )
 		APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
     			   r->fix.latitude,r->fix.longitude,r->fix.altitude,r->fix.speed,r->fix.bearing);
 		#endif
-		if(gLocation_Policy.location_policy == DISTANCE_REPORT_LOCATION || 
-		   gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+		if(mSys_config.gLocation_Policy.location_policy == DISTANCE_REPORT_LOCATION || 
+		   mSys_config.gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
 		{
             s32 mbearing = gGpsLocation.bearing - r->fix.bearing;
-			if(ABS(mbearing) > gLocation_Policy.bearing_Interval)
+			if(ABS(mbearing) > mSys_config.gLocation_Policy.bearing_Interval)
 			{
 				r->callback();
 				r->flag = FALSE;
@@ -466,7 +466,7 @@ static void gps_reader_parse( GpsReader* r )
 			}
 
 			float distance = get_distance(r->fix.latitude, r->fix.longitude, gGpsLocation.latitude, gGpsLocation.longitude);
-			if(distance >= gLocation_Policy.distance_Interval && r->callback)
+			if(distance >= mSys_config.gLocation_Policy.distance_Interval && r->callback)
 			{
 				r->callback();
 				r->flag = FALSE;
@@ -477,7 +477,7 @@ static void gps_reader_parse( GpsReader* r )
 
 void GpsLocation_CallBack(void)
 {
-	if(mGpsReader[0].fix.speed == 0 && gLocation_Policy.static_policy == 1)
+	if(mGpsReader[0].fix.speed == 0 && mSys_config.gLocation_Policy.static_policy == 1)
 		return;
 		
 	//report to gprs task
