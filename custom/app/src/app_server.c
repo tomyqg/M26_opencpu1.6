@@ -1067,6 +1067,12 @@ void App_Set_Location_policy( u8* pBuffer, u16 length )
 
 	gLocation_Policy.bearing_Interval = TOBIGENDIAN32(gLocation_Policy.bearing_Interval);	
 	//APP_DEBUG("setting bearing policy %d\n",gLocation_Policy.bearing_Interval);
+
+    //start a timer,repeat=FALSE;
+	if(gLocation_Policy.location_policy == TIMER_REPORT_LOCATION || gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+	{
+		Ql_OS_SendMessage(subtask_gps_id, MSG_ID_GPS_TIMER_REPORT, 0, 0);
+	}
 }
 
 /*********************************************************************

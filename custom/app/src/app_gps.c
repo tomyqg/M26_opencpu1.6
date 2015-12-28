@@ -106,7 +106,7 @@ void proc_subtask_gps(s32 TaskId)
 		{
 			APP_ERROR("\r\nfailed!!, Timer gps start fail ret=%d\r\n",ret);        
 		}
-	}	
+	}
 
     //gps init
     gps_reader_init(mGpsReader);
@@ -128,6 +128,16 @@ void proc_subtask_gps(s32 TaskId)
 				//{
 					//GPRS_TCP_Program();
 				//}
+                break;
+            }
+            case MSG_ID_GPS_TIMER_REPORT:
+            {
+                APP_DEBUG("recv msg: start timer report location\n");
+                ret = Ql_Timer_Start(GPS_TIMER_ID,gLocation_Policy.time_Interval*1000,FALSE);
+				if(ret < 0)
+				{
+					APP_ERROR("\r\nfailed!!, Timer gps start fail ret=%d\r\n",ret);        
+				}
                 break;
             }
 
