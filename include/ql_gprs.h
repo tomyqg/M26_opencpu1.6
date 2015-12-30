@@ -36,9 +36,9 @@
 #ifndef __QL_GPRS_H__
 #define __QL_GPRS_H__
 
-#define MAX_GPRS_USER_NAME_LEN 32
-#define MAX_GPRS_PASSWORD_LEN  32
-#define MAX_GPRS_APN_LEN       100
+#define MAX_GPRS_USER_NAME_LEN 15
+#define MAX_GPRS_PASSWORD_LEN  15
+#define MAX_GPRS_APN_LEN       15
 
 
 typedef struct {

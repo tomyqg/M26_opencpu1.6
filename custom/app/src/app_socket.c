@@ -164,13 +164,14 @@ void proc_subtask_gprs(s32 TaskId)
 					APP_ERROR("read sys config error or not store! Using default.\r\n");
     			}
 
-    			APP_DEBUG("location_policy:%d,static_policy:%d,time_Interval:%d,distance_Interval:%d,bearing_Interval:%d,password:%.*s\n",
+    			APP_DEBUG("location_policy:%d,static_policy:%d,time_Interval:%d,distance_Interval:%d,bearing_Interval:%d,password:%c%c%c%c\n",
     			mSys_config.gLocation_Policy.location_policy,
     			mSys_config.gLocation_Policy.static_policy,
     			mSys_config.gLocation_Policy.time_Interval,
     			mSys_config.gLocation_Policy.distance_Interval,
     			mSys_config.gLocation_Policy.bearing_Interval,
-    			4,mSys_config.password);
+    			mSys_config.password[0],mSys_config.password[1],
+    			mSys_config.password[2],mSys_config.password[3]);
 			}	
 			
             case MSG_ID_GPRS_STATE:
@@ -244,7 +245,12 @@ s32 GPRS_Program(void)
     }
 
     //3. Configure PDP
-    ret = Ql_GPRS_Config(pdpCntxtId, &m_GprsConfig);
+    ST_GprsConfig GprsConfig;
+    Ql_memcpy(&GprsConfig,&m_GprsConfig,sizeof(ST_GprsConfig));
+    Ql_strcpy(GprsConfig.apnName,mSys_config.apnName);
+    Ql_strcpy(GprsConfig.apnPasswd,mSys_config.apnPasswd);
+    Ql_strcpy(GprsConfig.apnUserId,mSys_config.apnUserId);
+    ret = Ql_GPRS_Config(pdpCntxtId, &GprsConfig);
     if (GPRS_PDP_SUCCESS == ret)
     {
         APP_DEBUG("<-- Configure PDP context -->\r\n");

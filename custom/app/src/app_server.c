@@ -21,7 +21,7 @@
  *--------------------------------------------------------------------
  * 
  *********************************************************************/
-//#ifdef __CUSTOMER_CODE__ 
+#ifdef __CUSTOMER_CODE__ 
 /*********************************************************************
  * INCLUDES
  */
@@ -118,7 +118,10 @@ SYS_CONFIG mSys_config = {
     	45,  //bearing_Interval;
 	},
 	//mSys_config.password
-	{{'0','0','0','0'}},
+	{'1','2','3','4'},
+    "CMNET",    // APN name
+    "",         // User name for APN
+    "",         // Password for APN
 };
 
 Alarm_Flag gAlarm_Flag = {
@@ -545,16 +548,12 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
             				pBuffer[17],pBuffer[18],pBuffer[19],pBuffer[20],
             				TOSMALLENDIAN16(pBuffer[21],pBuffer[22]),msg_attribute-6,pBuffer+23);
             APP_DEBUG("\r\n<-- URL:%s-->\r\n",URL_Buffer);
-#if 0
-            ST_GprsConfig m_GprsConfig = {
-    			"CMNET",    // APN name
-    			"",         // User name for APN
-    			"",         // Password for APN
-    			0,
-    			NULL,
-    			NULL,
-			};
-#endif            
+    		ST_GprsConfig GprsConfig;
+    		Ql_memcpy(&GprsConfig,&m_GprsConfig,sizeof(ST_GprsConfig));
+    		Ql_strcpy(GprsConfig.apnName,mSys_config.apnName);
+    		Ql_strcpy(GprsConfig.apnPasswd,mSys_config.apnPasswd);
+    		Ql_strcpy(GprsConfig.apnUserId,mSys_config.apnUserId);
+    		
             ret = Ql_FOTA_StartUpgrade(URL_Buffer, &m_GprsConfig, NULL);
             if(ret != SOC_SUCCESS)
             {
@@ -1347,4 +1346,4 @@ void App_Set_Sleep_mode(u8* pBuffer,u16 length)
 	}
 }
 
-//#endif // __CUSTOMER_CODE__
+#endif // __CUSTOMER_CODE__

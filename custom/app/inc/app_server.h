@@ -28,6 +28,7 @@
 /*********************************************************************
  * INCLUDES
  */
+#include "ql_gprs.h"
 #include "app_gps.h"
 
 /*********************************************************************
@@ -197,6 +198,10 @@ typedef struct {
 typedef struct {
     Location_Policy gLocation_Policy;
     u8 password[4];
+    //ST_GprsConfig GprsConfig;
+    u8 apnName[MAX_GPRS_APN_LEN];
+    u8 apnUserId[MAX_GPRS_USER_NAME_LEN]; 
+    u8 apnPasswd[MAX_GPRS_PASSWORD_LEN];
 }SYS_CONFIG;
 extern SYS_CONFIG mSys_config;
 

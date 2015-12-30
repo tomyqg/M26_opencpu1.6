@@ -32,7 +32,7 @@
 /****************************************************************************
  * Task msg id Definition
  ***************************************************************************/
-#define SUB_TASK_NUM   2
+#define SUB_TASK_NUM   4
 
 //timer id
 #define NETWOEK_STATE_TIMER_ID             (TIMER_ID_USER_START + 105)
@@ -52,7 +52,8 @@ typedef enum {
 
 	MSG_ID_CLK_ALARM,  	                //MSG_ID_USER_START+0x107
 	MSG_ID_BLE_PARAMETER_UPDATA,  	    //MSG_ID_USER_START+0x108
-};
+	MSG_ID_NEW_SMS,
+} Enum_APP_MSG_ID;
 
 #define MSG_ID_MUTEX_TEST           	    MSG_ID_USER_START+0x151
 #define MSG_ID_SEMAPHORE_TEST           	MSG_ID_USER_START+0x152

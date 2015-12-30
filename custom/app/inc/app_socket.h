@@ -26,6 +26,7 @@
 #define __APP_SOCKET_H__
 
 #include "ql_time.h"
+#include "ql_gprs.h"
 
 /*****************************************************************
 * define process state
@@ -72,7 +73,7 @@ typedef enum {
 	STATE_GSM_Ok_GPRS_NET,
 	STATE_GSM_NO_GPS_FIX,
 	STATE_GSM_OK_GPS_FIX,
-};
+}Enum_GSM_STATU;
 
 #define PAR_BLOCK              13
 #define PAR_BLOCK_LEN          500
@@ -83,6 +84,7 @@ typedef enum {
 /************************************************************************/
 extern s32 g_SocketId;
 extern u8 Parameter_Buffer[PAR_BLOCK_LEN];
+extern ST_GprsConfig m_GprsConfig;
 
 /************************************************************************/
 /* Declarations for GPRS and TCP socket callback                        */
