@@ -2,7 +2,7 @@
  *
  * Filename:
  * ---------
- *   app_gps.h 
+ *   app_tokenizer.h 
  *
  * Project:
  * --------
@@ -23,16 +23,12 @@
  ****************************************************************************/
 
 
-#ifndef __APP_GPS_H__
-#define __APP_GPS_H__
+#ifndef __APP_TOKENIZER_H__
+#define __APP_TOKENIZER_H__
 
 /*********************************************************************
  * INCLUDES
  */
-#include "Ql_uart.h"
-#include "Ql_time.h"
-#include "Ql_timer.h"
-#include "app_tokenizer.h"
 
 /*********************************************************************
  * MACROS
@@ -41,39 +37,27 @@
 /*********************************************************************
  * CONSTANTS
  */
-#define GPS_UART_PORT           UART_PORT3
-#define GPS_UART_baudrate       9600
-
-#define GPS_TIMER_ID            (TIMER_ID_USER_START + 101)
 
 /*********************************************************************
  * TYPEDEFS
  */
-typedef struct {
-    s32  latitude;
-    s32  longitude;
-    s32  altitude;
-    s32  speed;
-    s32  bearing;
-    s32  starInusing;
-} GpsLocation;
- 
-#define  GPS_MAX_SIZE  83
-typedef void (*GpsLocation_cb)(void);
-typedef struct {
-    int     pos;
-    GpsLocation  fix;
-    GpsLocation_cb callback;
-	char    in[ GPS_MAX_SIZE+1 ];
-	bool flag;
-} GpsReader; 
-extern GpsReader mGpsReader[1];
 
-#define  MAX_GPS_TOKENS  21
+#define  TOKENIZER_READER_MAX_SIZE  100
+typedef struct {
+    s32     length;
+	u8      in[ TOKENIZER_READER_MAX_SIZE];
+} TokenizerReader;
+
+typedef struct {
+    const u8*  p;
+    const u8*  end;
+} Token;
+
+#define  MAX_TOKENS  10
 typedef struct {
     int     count;
-    Token   tokens[ MAX_GPS_TOKENS ];
-} GpsTokenizer;
+    Token   tokens[ MAX_TOKENS ];
+} Tokenizer;
 
 /*********************************************************************
  * VARIABLES
@@ -82,7 +66,12 @@ typedef struct {
 /*********************************************************************
  * FUNCTIONS
  */
- 
+
+void tokenizer_reader_init( TokenizerReader* r );
+s32 tokenizer_init( Tokenizer* t, const u8* p, const u8* end );
+Token tokenizer_get( Tokenizer* t, s32 index );
+
 #endif // End-of __APP_GPS_H__ 
+
 
 
