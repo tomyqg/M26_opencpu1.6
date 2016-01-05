@@ -119,9 +119,11 @@ SYS_CONFIG mSys_config = {
 	},
 	//mSys_config.password
 	{'1','2','3','4'},
-    "CMNET",    // APN name
-    "",         // User name for APN
-    "",         // Password for APN
+    "CMNET",          //APN name
+    "",               //User name for APN
+    "",               //Password for APN
+    {54,223,54,184},  //srv addr
+    8300,             //srv port
 };
 
 Alarm_Flag gAlarm_Flag = {

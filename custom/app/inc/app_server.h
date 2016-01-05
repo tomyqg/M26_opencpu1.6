@@ -202,6 +202,8 @@ typedef struct {
     u8 apnName[MAX_GPRS_APN_LEN];
     u8 apnUserId[MAX_GPRS_USER_NAME_LEN]; 
     u8 apnPasswd[MAX_GPRS_PASSWORD_LEN];
+    u8 srvAddress[4];
+	u16 srvPort;
 }SYS_CONFIG;
 extern SYS_CONFIG mSys_config;
 

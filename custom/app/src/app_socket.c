@@ -331,6 +331,7 @@ s32 TCP_Program(s32 pdpCntxtId)
 
     //3. Connect to server
     {
+		#if 0
         //3.1 Convert IP format
         u8 m_ipAddress[4]; 
         Ql_memset(m_ipAddress,0,5);
@@ -339,12 +340,13 @@ s32 TCP_Program(s32 pdpCntxtId)
         {
             APP_ERROR("<-- Fail to convert IP Address --> \r\n");
         }
-
+		#endif
         //3.2 Connect to server
-        APP_DEBUG("<-- Connecting to server(IP:%d.%d.%d.%d, port:%d)-->\r\n", m_ipAddress[0],m_ipAddress[1],m_ipAddress[2],m_ipAddress[3], m_SrvPort);
+        APP_DEBUG("<-- Connecting to server(IP:%d.%d.%d.%d, port:%d)-->\r\n", 
+        		  mSys_config.srvAddress[0],mSys_config.srvAddress[1],mSys_config.srvAddress[2],mSys_config.srvAddress[3], mSys_config.srvPort);
 		for(u8 i = 3; i > 0; i--)
 		{
-        	ret = Ql_SOC_ConnectEx(g_SocketId,(u32) m_ipAddress, m_SrvPort, TRUE);
+        	ret = Ql_SOC_ConnectEx(g_SocketId,(u32) mSys_config.srvAddress, mSys_config.srvPort, TRUE);
         	if (SOC_SUCCESS == ret)
         	{
             	APP_DEBUG("<-- Connect to server successfully -->\r\n");
