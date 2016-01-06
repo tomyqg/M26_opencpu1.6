@@ -107,6 +107,9 @@ extern u8 gServer_State;
 #define parameter_8_num     23
 #define parameter_12_num    5
 #define QST_NORMAL_ALARM    0x0104
+#define HWJ_SLEEP_TIME      0x0108
+#define HWJ_WAKE_TIME       0x0109
+#define HWJ_POWER_POLICY    0x010A
 #define NETWORK_TIME        0x0305
 #define PASSWORD            0x0400
 
@@ -129,6 +132,9 @@ typedef enum {
 	QST_UNNORMAL_WACKUP_TIM_INDEX    = 6,
 	QST_UNNORMAL_WACKUP_POLICY_INDEX = 7,
 	QST_WORKUP_TIME_INDEX        = 8,
+	HWJ_SLEEP_TIME_INDEX         = 10,
+	HWJ_WORKUP_TIME_INDEX        = 11,
+	HWJ_SLEEP_WORKUP_POLICY_INDEX    = 12,
 	BLE_DOWN_HEARTBEAT_INDEX     = 13,
 	BLE_UP_HEARTBEAT_INDEX       = 14,
 	QST_UNNORMAL_ADV_POLICY_INDEX    = 15,

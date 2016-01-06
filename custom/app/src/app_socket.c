@@ -78,6 +78,8 @@ s32 g_PdpCntxtId = -1;
 s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
 volatile Enum_TCPSTATE mTcpState = STATE_GPRS_UNKNOWN;
 u8 Parameter_Buffer[PAR_BLOCK_LEN] = {0};
+u8 alarm_on_off = 1;
+bool gsm_wake_sleep = TRUE;
 
 static ST_PDPContxt_Callback callback_gprs_func = 
 {
@@ -660,28 +662,82 @@ void update_clk_alarm(ST_Time* dateTime)
 {
 	u8 pBuffer[3];
 	s32 iRet;
-	u64 seconds1,seconds2;
+	u64 current_seconds,qst_seconds;
 	//delete alarm
 	iRet = RIL_Alarm_Del();
 	if(iRet != RIL_AT_SUCCESS)
 	{
 		APP_ERROR("del alarm error ret:%d\n",iRet);
 	}
+
 	Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_INDEX].data, 3);
-	//get local time
-	//Ql_GetLocalTime(&datetime);
-	seconds1 = Ql_Mktime(dateTime);
+	current_seconds = Ql_Mktime(dateTime);
 	dateTime->hour=BCDTODEC(pBuffer[2]);
 	dateTime->minute=BCDTODEC(pBuffer[1]);
 	dateTime->second=BCDTODEC(pBuffer[0]);
-	seconds2 = Ql_Mktime(dateTime);
-	if(seconds2 < seconds1 + 15)
-		dateTime->day++;
-	APP_DEBUG("alarm:year=%d,month=%d,day=%d,hour=%d,min=%d,sec=%d\n",
-				dateTime->year,dateTime->month,dateTime->day,dateTime->hour,dateTime->minute,dateTime->second);
+	qst_seconds = Ql_Mktime(dateTime);
+	
+	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data == 0)
+	{
+		if(qst_seconds < current_seconds + 15)
+			dateTime->day++;
+		alarm_on_off = 0;
+		APP_DEBUG("alarm_on_off =%d,hwj_power_policy = 0\n",alarm_on_off);
+	} else {
+		if(alarm_on_off == 1)
+		{
+			//set power off alarm
+			u64 off_time_seconds = current_seconds + gParmeter.parameter_8[HWJ_WORKUP_TIME_INDEX].data*60;
+			if(off_time_seconds >= qst_seconds && qst_seconds > current_seconds)
+			{
+				if(qst_seconds < current_seconds + 15)
+					dateTime->second += 15;
+				alarm_on_off = 0;
+				gsm_wake_sleep = TRUE;
+				APP_DEBUG("power off:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
+			} else {
+				Ql_MKTime2CalendarTime(off_time_seconds, dateTime);
+				APP_DEBUG("power off:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
+			}
+		} else if(alarm_on_off == 2) {
+			//set power up alarm, receive here,system will power off after 5s!!
+			u64 up_time_seconds = current_seconds + gParmeter.parameter_8[HWJ_SLEEP_TIME_INDEX].data*60;
+			if(up_time_seconds >= qst_seconds && qst_seconds > current_seconds)
+			{
+				if(qst_seconds < current_seconds + 15)
+					dateTime->second += 15;
+				alarm_on_off = 0;
+				gsm_wake_sleep = FALSE;
+				APP_DEBUG("power up:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
+			} else {
+				Ql_MKTime2CalendarTime(up_time_seconds, dateTime);
+				APP_DEBUG("power up:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
+			}
+		}
+	}
+
+	APP_DEBUG("alarm:year=%d,month=%d,day=%d,hour=%d,min=%d,sec=%d,power=%d\n",
+			   dateTime->year,dateTime->month,dateTime->day,dateTime->hour,dateTime->minute,dateTime->second,alarm_on_off);
 	dateTime->year = dateTime->year - 2000;
-	//datetime.timezone= 0;//TIMEZONE;
-	iRet = RIL_Alarm_Add(dateTime, 1, 0);
+	if(alarm_on_off == 0){
+		if(gsm_wake_sleep)
+			iRet = RIL_Alarm_Add(dateTime, 1, 0);
+		else
+			iRet = RIL_Alarm_Add(dateTime, 0, 2);
+	}else if(alarm_on_off == 1){
+		iRet = RIL_Alarm_Add(dateTime, 0, 0);
+	}else{
+		iRet = RIL_Alarm_Add(dateTime, 0, 2);
+		if(iRet != RIL_AT_SUCCESS)
+		{
+			APP_ERROR("add alarm error ret:%d\n",iRet);
+			return;
+		}
+		APP_DEBUG("system will power down after 1s\n");
+		Ql_Sleep(1000);
+		Ql_PowerDown(1);
+	}
+	
 	if(iRet != RIL_AT_SUCCESS)
 	{
 		APP_ERROR("add alarm error ret:%d\n",iRet);

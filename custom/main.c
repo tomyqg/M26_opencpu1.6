@@ -211,8 +211,32 @@ void proc_main_task(s32 taskId)
                 APP_DEBUG("<-- VBatt Voltage Ind: type=%d\r\n", msg.param2);
                 break; 
             case URC_ALARM_RING_IND:
-                APP_DEBUG("<-- alarm ring\r\n");
-                Ql_OS_SendMessage(subtask_ble_id, MSG_ID_CLK_ALARM, 0, 0);
+                APP_DEBUG("<-- alarm ring,alarm_on_off = %d\r\n",alarm_on_off);
+                if(alarm_on_off == 0)
+                {
+					Ql_OS_SendMessage(subtask_ble_id, MSG_ID_CLK_ALARM, 0, 0);
+                   	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data != 0)
+                	{   
+						if(gsm_wake_sleep){
+      						alarm_on_off = 1;
+						} else {
+							alarm_on_off = 2;
+						}
+						ST_Time datetime;
+						Ql_GetLocalTime(&datetime);
+						update_clk_alarm(&datetime);
+                	}
+                }else {
+					if(alarm_on_off == 1 &&
+					   gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data != 0)
+					{
+						//set power up time point,syste will power off after 5s
+						alarm_on_off = 2;
+						ST_Time datetime;
+						Ql_GetLocalTime(&datetime);
+						update_clk_alarm(&datetime);
+					}
+                }	
                 break;   
             default:
                 APP_DEBUG("<-- Other URC: type=%d\r\n", msg.param1);

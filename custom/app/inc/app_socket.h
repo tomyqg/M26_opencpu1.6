@@ -85,6 +85,8 @@ typedef enum {
 extern s32 g_SocketId;
 extern u8 Parameter_Buffer[PAR_BLOCK_LEN];
 extern ST_GprsConfig m_GprsConfig;
+extern u8 alarm_on_off;
+extern bool gsm_wake_sleep;
 
 /************************************************************************/
 /* Declarations for GPRS and TCP socket callback                        */

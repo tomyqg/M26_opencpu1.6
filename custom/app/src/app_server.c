@@ -920,6 +920,7 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 	APP_DEBUG("setting paramter number %d\n",num);
 	u16 pLocation = 19;
 	s32 ret;
+	bool need_update_alarm = FALSE;
 	for(u16 i = 0; i < num; i++)
 	{
 		u16 par_id = TOSMALLENDIAN16(pBuffer[pLocation],pBuffer[pLocation+1]);
@@ -991,11 +992,10 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 		}
 
 		//update alam
-		if(par_id == QST_NORMAL_ALARM)
+		if(par_id == QST_NORMAL_ALARM || par_id == HWJ_SLEEP_TIME ||
+		   par_id == HWJ_WAKE_TIME    || par_id == HWJ_POWER_POLICY)
 		{
-			ST_Time datetime;
-			Ql_GetLocalTime(&datetime);
-			update_clk_alarm(&datetime);
+			need_update_alarm = TRUE;
 		}
 		
 		pLocation = pLocation + par_len + 3;
@@ -1003,6 +1003,16 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 
 	//update parameter to ble
 	Ql_OS_SendMessage(subtask_ble_id, MSG_ID_BLE_PARAMETER_UPDATA, 0, 0);
+
+	//update alam
+	if(need_update_alarm)
+	{
+		if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data != 0)
+			alarm_on_off = 1;
+		ST_Time datetime;
+		Ql_GetLocalTime(&datetime);
+		update_clk_alarm(&datetime);
+	}
 
 	//save parameter
 	Ql_memcpy(Parameter_Buffer+1, &gParmeter, sizeof(gParmeter));
