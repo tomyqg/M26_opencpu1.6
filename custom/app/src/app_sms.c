@@ -54,6 +54,8 @@
 /*********************************************************************
  * VARIABLES
  */
+extern u8 g_imei[8];
+extern u32 battery;
 
 /*********************************************************************
  * FUNCTIONS
@@ -243,7 +245,9 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 			tok = tokenizer_get(tzer, 4);
 			mSys_config.srvPort = Ql_atoi(tok.p);
 			APP_DEBUG("set server(IP:%d.%d.%d.%d, port:%d)\n",
-        		      mSys_config.srvAddress[0],mSys_config.srvAddress[1],mSys_config.srvAddress[2],mSys_config.srvAddress[3], mSys_config.srvPort);
+        		      mSys_config.srvAddress[0],mSys_config.srvAddress[1],
+        		      mSys_config.srvAddress[2],mSys_config.srvAddress[3], 
+        		      mSys_config.srvPort);
         	s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         	if (iResult != RIL_AT_SUCCESS)
         	{
@@ -291,13 +295,15 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 				//App_CommonRsp_To_Server(TODEVICE_OTA_ID,msg_num,APP_RSP_FAILURE);
             }
             #endif
-			APP_DEBUG("set upgrade,file:%s,server:%s,port:%d\n",m_FileName,m_SrvADDR,m_SrvPort);
+			APP_DEBUG("set upgrade,file:%s,server:%s,port:%d\n",
+					   m_FileName,m_SrvADDR,m_SrvPort);
         	s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         	if (iResult != RIL_AT_SUCCESS)
         	{
         		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
         	}
-        }	
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "RESET", 5) )
     {
@@ -307,7 +313,10 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        Ql_Sleep(5000);
+        Ql_Reset(0);
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "FACTORY", 7) )
     {
@@ -317,27 +326,51 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        Parameter_Buffer[0] = 0;
+		Ql_SecureData_Store(PAR_BLOCK, Parameter_Buffer, 1);
+
+		Ql_SecureData_Store(SYS_CONFIG_BLOCK, Parameter_Buffer, 1);
+
+        Ql_Sleep(5000);
+        Ql_Reset(0);
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "VERSION", 7) )
     {
-		static u8* rMsg = "SET VERSION OK";
+		u8 rMsg[50];
+        Ql_sprintf(rMsg, "VERSION:%s\r\nBUILD:%s",VERSION,BUILD);
 		APP_DEBUG("get VERSION\n");
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "PARAM", 5) )
     {
-		static u8* rMsg = "GET PARAM OK";
+		u8 rMsg[150];
+		Ql_sprintf(rMsg,"IMEI:%02x%02x%02x%02x%02x%02x%02x%02x\r\nAPN:%s\r\nIP:%d.%d.%d.%d:%d\r\nHBT:%d\r\nRM:%d\r\nSR:%d\r\nTIMER:%d\r\nDIST:%d\r\nDIR:%d\r\n",
+						 g_imei[0],g_imei[1],g_imei[2],g_imei[3],
+						 g_imei[4],g_imei[5],g_imei[6],g_imei[7],
+						 mSys_config.apnName,
+						 mSys_config.srvAddress[0],mSys_config.srvAddress[1],
+						 mSys_config.srvAddress[2],mSys_config.srvAddress[3],
+						 mSys_config.srvPort,
+						 gParmeter.parameter_8[HEARTBEAT_INTERVAL_INDEX].data,
+						 mSys_config.gLocation_Policy.location_policy,
+						 mSys_config.gLocation_Policy.static_policy,
+						 mSys_config.gLocation_Policy.time_Interval,
+						 mSys_config.gLocation_Policy.distance_Interval,
+						 mSys_config.gLocation_Policy.bearing_Interval);
 		APP_DEBUG("get PARAM\n");
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "PARAMCONFIG", 11) )
     {
@@ -347,7 +380,39 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        
+        for(u8 i = 2; i < tzer[0].count; i++)
+        {
+			tok = tokenizer_get(tzer, 2);
+			if(!Ql_memcmp(tok.p, "RM:", 3))
+			{
+				mSys_config.gLocation_Policy.location_policy = Ql_atoi(tok.end);
+				APP_DEBUG("paramconfig RM=%d\n",mSys_config.gLocation_Policy.location_policy);
+			}
+			else if(!Ql_memcmp(tok.p, "SR:", 3))
+			{
+				mSys_config.gLocation_Policy.static_policy = Ql_atoi(tok.end);
+				APP_DEBUG("paramconfig SR=%d\n",mSys_config.gLocation_Policy.static_policy);
+			}
+			else if(!Ql_memcmp(tok.p, "TIMER:", 6))
+			{
+				mSys_config.gLocation_Policy.time_Interval = Ql_atoi(tok.end);
+				APP_DEBUG("paramconfig TIMER=%d\n",mSys_config.gLocation_Policy.time_Interval);
+			}
+			else if(!Ql_memcmp(tok.p, "DIST:", 5))
+			{
+				mSys_config.gLocation_Policy.distance_Interval = Ql_atoi(tok.end);
+				APP_DEBUG("paramconfig DIST=%d\n",mSys_config.gLocation_Policy.distance_Interval);
+			}
+			else if(!Ql_memcmp(tok.p, "DIR:", 4))
+			{
+				mSys_config.gLocation_Policy.bearing_Interval = Ql_atoi(tok.end);
+				APP_DEBUG("paramconfig DIR=%d\n",mSys_config.gLocation_Policy.bearing_Interval);
+			}
+        }
+        
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "WHERE", 5) )
     {
@@ -357,7 +422,8 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "123", 3) )
     {
@@ -367,17 +433,25 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "STATUS", 6) )
     {
-		static u8* rMsg = "SET STATUS OK";
+		u8 rMsg[100];
+		Ql_sprintf(rMsg,"BATTERY:%d\%%\r\n\GPRS:%s\r\nGSM SIGNAL:%s\r\nGPS:%s\r\nGPS SIGNAL:%s\r\n",
+						 battery,
+						 "NORMAL",
+						 "MIDDLE",
+						 "FIXED",
+						 "MIDDLE");
 		APP_DEBUG("get STATUS\n");
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "SLEEP", 5) )
     {
@@ -387,7 +461,8 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "WAKEUP", 6) )
     {
@@ -397,12 +472,18 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         if (iResult != RIL_AT_SUCCESS)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        }	
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "PWD", 3) )
     {
 		static u8* rMsg = "SET PASSWORD OK";
-		APP_DEBUG("set PASSWORD\n");
+		tok = tokenizer_get(tzer, 2);
+		mSys_config.password[0] = *(tok.p);
+		mSys_config.password[1] = *(tok.p + 1);
+		mSys_config.password[2] = *(tok.p + 2);
+		mSys_config.password[3] = *(tok.p + 3);
+		APP_DEBUG("set PASSWORD:%c%c%c%c\n",mSys_config.password[0],mSys_config.password[1],mSys_config.password[2],mSys_config.password[3]);
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
