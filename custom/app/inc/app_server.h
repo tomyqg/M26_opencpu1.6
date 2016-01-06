@@ -106,6 +106,7 @@ extern u8 gServer_State;
 
 #define parameter_8_num     23
 #define parameter_12_num    5
+#define QST_NORMAL_ALARM    0x0104
 #define NETWORK_TIME        0x0305
 #define PASSWORD            0x0400
 

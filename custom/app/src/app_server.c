@@ -989,6 +989,14 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 			}
 			APP_DEBUG("save password %.*s\n",4,mSys_config.password);
 		}
+
+		//update alam
+		if(par_id == QST_NORMAL_ALARM)
+		{
+			ST_Time datetime;
+			Ql_GetLocalTime(&datetime);
+			update_clk_alarm(&datetime);
+		}
 		
 		pLocation = pLocation + par_len + 3;
 	}
