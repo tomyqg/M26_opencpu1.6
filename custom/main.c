@@ -232,11 +232,12 @@ void proc_main_task(s32 taskId)
 					{
 						//set power up time point,syste will power off after 5s
 						alarm_on_off = 2;
+						APP_DEBUG("system power up alarm set,system will power off: %d\n",alarm_on_off);
 						ST_Time datetime;
 						Ql_GetLocalTime(&datetime);
 						update_clk_alarm(&datetime);
 					}
-                }	
+                }
                 break;   
             default:
                 APP_DEBUG("<-- Other URC: type=%d\r\n", msg.param1);

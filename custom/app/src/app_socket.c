@@ -78,8 +78,9 @@ s32 g_PdpCntxtId = -1;
 s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
 volatile Enum_TCPSTATE mTcpState = STATE_GPRS_UNKNOWN;
 u8 Parameter_Buffer[PAR_BLOCK_LEN] = {0};
-u8 alarm_on_off = 1;
-bool gsm_wake_sleep = TRUE;
+volatile u8 alarm_on_off = 1;
+volatile bool gsm_wake_sleep = TRUE;
+volatile bool keep_wake = FALSE;
 
 static ST_PDPContxt_Callback callback_gprs_func = 
 {
@@ -677,7 +678,7 @@ void update_clk_alarm(ST_Time* dateTime)
 	dateTime->second=BCDTODEC(pBuffer[0]);
 	qst_seconds = Ql_Mktime(dateTime);
 	
-	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data == 0)
+	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data == 0 || keep_wake)
 	{
 		if(qst_seconds < current_seconds + 15)
 			dateTime->day++;
@@ -723,7 +724,17 @@ void update_clk_alarm(ST_Time* dateTime)
 		if(gsm_wake_sleep)
 			iRet = RIL_Alarm_Add(dateTime, 1, 0);
 		else
+		{
 			iRet = RIL_Alarm_Add(dateTime, 0, 2);
+			if(iRet != RIL_AT_SUCCESS)
+			{
+				APP_ERROR("add alarm error ret:%d\n",iRet);
+				return;
+			}
+			APP_DEBUG("system will power down after 1s\n");
+			Ql_Sleep(1000);
+			Ql_PowerDown(1);
+		}	
 	}else if(alarm_on_off == 1){
 		iRet = RIL_Alarm_Add(dateTime, 0, 0);
 	}else{

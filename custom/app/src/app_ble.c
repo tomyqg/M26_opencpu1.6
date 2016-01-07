@@ -174,6 +174,12 @@ void proc_subtask_ble(s32 TaskId)
                 BLE_Send_Parameter();
                 break;
 			}
+			case MSG_ID_SYSTEM_REBOOT:
+            {
+                APP_DEBUG("receive ble system reboot!\r\n");
+                BLE_Send_Reboot();
+                break;
+			}
             default:
                 break;
         }

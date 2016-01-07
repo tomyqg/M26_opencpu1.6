@@ -1340,19 +1340,36 @@ void App_Set_Sleep_mode(u8* pBuffer,u16 length)
 					break;
 
 				case 1:
+				{
 					//
+					APP_DEBUG("keep wake up!!!\n");
+					keep_wake = TRUE;
+					ST_Time datetime;
+					Ql_GetLocalTime(&datetime);
+					update_clk_alarm(&datetime);
 					break;
-
+				}
 				case 2:
+				{
 					//
+					APP_DEBUG("sleep now!!\n");
+					alarm_on_off = 2;
+					keep_wake = FALSE;
+					ST_Time datetime;
+					Ql_GetLocalTime(&datetime);
+					update_clk_alarm(&datetime);
 					break;
-
+				}
 				case 3:
-					//
+					//reset
+					Ql_Sleep(500);
+					Ql_Reset(0);
 					break;
 
 				case 4:
-					//
+					//reboot system
+					APP_DEBUG("reboot system\n");
+					Ql_OS_SendMessage(subtask_ble_id, MSG_ID_SYSTEM_REBOOT, 0, 0);
 					break;
 
 				case 5:
