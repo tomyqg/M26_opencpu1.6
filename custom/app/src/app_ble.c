@@ -337,6 +337,12 @@ static void CallBack_UART_BLE(Enum_SerialPort port, Enum_UARTEventType msg, bool
                 
 				#if 1
     			{
+					if(RxBuf_BLE[0] != 0x55)
+					{
+						APP_DEBUG("UartFromBle: %.*s\n",totalBytes,RxBuf_BLE);
+						return;
+					}
+						
     				u8 strTemp[100] = {0};
     				u16 i = 0;
     				for(i = 0; i < totalBytes; i++)
@@ -345,6 +351,8 @@ static void CallBack_UART_BLE(Enum_SerialPort port, Enum_UARTEventType msg, bool
     				}
     				APP_DEBUG("UartFromBle: %s\n",strTemp);
     			}
+
+    			
 				#endif
 
 				Uart_BLE_Msg_Handle(RxBuf_BLE,totalBytes);
