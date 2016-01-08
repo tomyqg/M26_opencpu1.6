@@ -692,7 +692,7 @@ s32 App_Server_Register( void )
 	//body
   	u8 msg_body[20];
   	for(int i = 0; i < 4; i++)
-		msg_body[i] = 0xFF;
+		msg_body[i] = 0x00;
   
   	Ql_memcpy(msg_body+4,g_imsi,8);
   	Ql_memcpy(msg_body+12,hw_sw_version,8);
