@@ -1307,6 +1307,7 @@ void App_Ropert_Alarm(void)
 	//RSSI
 	u32 rssi,ber;
     RIL_NW_GetSignalQuality(&rssi, &ber);
+    rssi = 113-2*rssi;
     rssi = TOBIGENDIAN32(rssi);
 	Ql_memcpy(msg_body+46,&rssi,4);
 
