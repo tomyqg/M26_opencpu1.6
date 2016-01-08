@@ -902,7 +902,7 @@ void Uart_BLE_Msg_Parse(u8* pBuffer, u16 length)
 				//report to gprs task
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOST_DOWN, TRUE);
 			}
-			else if((gAlarm_Flag.alarm_flags & BV(ALARM_BIT_LOW_POWER)) && (ble_state == 0))
+			else if((gAlarm_Flag.alarm_flags & BV(ALARM_BIT_LOST_DOWN)) && (ble_state == 0))
 			{
 				//clean
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOST_DOWN, FALSE);
