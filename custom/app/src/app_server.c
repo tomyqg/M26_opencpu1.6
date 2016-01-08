@@ -1328,7 +1328,7 @@ void App_Ropert_Alarm(void)
 	if(!alarm_timer_started)
 	{
 		//start a timer
-		ret = Ql_Timer_Start(ALARM_TIMER_ID,gParmeter.parameter_8[ALARM_INTERVAL_INDEX].data*1000,FALSE);
+		ret = Ql_Timer_Start(ALARM_TIMER_ID,gParmeter.parameter_8[ALARM_INTERVAL_INDEX].data*60000,FALSE);
 		if(ret < 0)
 		{
 			APP_ERROR("\r\nfailed!!, Timer alarm start fail ret=%d\r\n",ret);
