@@ -89,7 +89,7 @@ Parameter gParmeter = {
 	 {0x010A,4,0},
 	 {0x0110,4,20},
 	 {0x0111,4,20},
-	 {0x0112,4,1},
+	 {0x0112,4,0},
 	 {0x0113,4,1},
 	 {0x0200,4,120},
 	 {0x0201,4,15},
@@ -875,8 +875,17 @@ void App_Report_Parameter(u16 msg_id, u16 msg_number)
 				msg_body[++j] = gParmeter.parameter_12[i].length >> 8;
 				msg_body[++j] = gParmeter.parameter_12[i].length;
 
-				Ql_memcpy((msg_body+j+1), gParmeter.parameter_12[i].data, 6);
-				j += 6;
+				//Ql_memcpy((msg_body+j+1), gParmeter.parameter_12[i].data, 6);
+				//j += 6;
+				//time start from 2000-1-1-00:00:00
+				ST_Time datetime;
+				Ql_GetLocalTime(&datetime);
+				msg_body[++j] = DECTOBCD(datetime.year -2000);
+				msg_body[++j] = DECTOBCD(datetime.month);
+				msg_body[++j] = DECTOBCD(datetime.day);
+				msg_body[++j] = DECTOBCD(datetime.hour);
+				msg_body[++j] = DECTOBCD(datetime.minute);
+				msg_body[++j] = DECTOBCD(datetime.second);
 	            #if 0
 				for(s8 i =9; i >= 0; i--)
 					APP_DEBUG("%02x",msg_body[j-i]);
