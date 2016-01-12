@@ -40,6 +40,7 @@
 #include "app_socket.h"
 #include "app_server.h"
 #include "app_gps.h"
+#include "app_ble.h"
 
 /*********************************************************************
  * MACROS
@@ -106,7 +107,14 @@ Parameter gParmeter = {
 };	 
 
 Lac_CellID glac_ci;
-GpsLocation gGpsLocation;
+GpsLocation gGpsLocation = {
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+};
 
 SYS_CONFIG mSys_config = {
 	//mSys_config.gLocation_Policy;
@@ -1008,6 +1016,20 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 		   par_id == HWJ_WAKE_TIME    || par_id == HWJ_POWER_POLICY)
 		{
 			need_update_alarm = TRUE;
+		}
+
+		if(par_id == BATTERY_LOW)
+		{
+			 if(battery < gParmeter.parameter_8[BATTERY_ALARM_INDEX].data)
+            {
+				//report to gprs task
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOW_POWER, TRUE);
+			}
+			else if(gAlarm_Flag.alarm_flags & BV(ALARM_BIT_LOW_POWER))
+			{
+				//clean
+				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOW_POWER, FALSE);
+			}
 		}
 		
 		pLocation = pLocation + par_len + 3;

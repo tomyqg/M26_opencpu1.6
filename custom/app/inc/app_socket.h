@@ -59,8 +59,8 @@ extern volatile Enum_TCPSTATE mTcpState;
 typedef enum {
     ALARM_BEGIN = 0,
     ALARM_BIT_LOW_POWER = 9,
-    ALARM_BIT_LOST_DOWN,
     ALARM_BIT_LOST_UP,
+    ALARM_BIT_LOST_DOWN,
     ALARM_BIT_SPEED_UP,
     ALARM_END
 }Enum_AlarmType;

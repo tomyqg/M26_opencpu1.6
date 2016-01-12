@@ -111,6 +111,7 @@ extern u8 gServer_State;
 #define HWJ_WAKE_TIME       0x0109
 #define HWJ_POWER_POLICY    0x010A
 #define NETWORK_TIME        0x0305
+#define BATTERY_LOW         0x0202
 #define PASSWORD            0x0400
 
 #define SYS_CONFIG_BLOCK       12
