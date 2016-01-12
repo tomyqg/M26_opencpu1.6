@@ -110,6 +110,10 @@ extern u8 gServer_State;
 #define HWJ_SLEEP_TIME      0x0108
 #define HWJ_WAKE_TIME       0x0109
 #define HWJ_POWER_POLICY    0x010A
+#define BLE_DOWN_HEART      0x0110
+#define BLE_UP_HEART        0x0111
+#define QST_ADV_POLICY      0x0112
+#define QST_ADV_LAST_TIME   0x0113
 #define NETWORK_TIME        0x0305
 #define BATTERY_LOW         0x0202
 #define PASSWORD            0x0400

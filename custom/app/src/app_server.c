@@ -941,6 +941,7 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 	u16 pLocation = 19;
 	s32 ret;
 	bool need_update_alarm = FALSE;
+	bool need_update_alarm_to_ble = FALSE;
 	for(u16 i = 0; i < num; i++)
 	{
 		u16 par_id = TOSMALLENDIAN16(pBuffer[pLocation],pBuffer[pLocation+1]);
@@ -1018,6 +1019,12 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 			need_update_alarm = TRUE;
 		}
 
+		if(par_id == BLE_DOWN_HEART || par_id == BLE_UP_HEART ||
+		   par_id == QST_ADV_POLICY    || par_id == QST_ADV_LAST_TIME)
+		{
+			need_update_alarm_to_ble = TRUE;
+		}
+
 		if(par_id == BATTERY_LOW)
 		{
 			 if(battery < gParmeter.parameter_8[BATTERY_ALARM_INDEX].data)
@@ -1036,7 +1043,8 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 	}
 
 	//update parameter to ble
-	Ql_OS_SendMessage(subtask_ble_id, MSG_ID_BLE_PARAMETER_UPDATA, 0, 0);
+	if(need_update_alarm_to_ble)
+		Ql_OS_SendMessage(subtask_ble_id, MSG_ID_BLE_PARAMETER_UPDATA, 0, 0);
 
 	//update alam
 	if(need_update_alarm)
