@@ -246,7 +246,7 @@ void App_Report_Location( void );
 void App_Set_Location_policy( u8* pBuffer, u16 length );
 s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number, u8 rsp);
 void update_alarm(u32 alarm_bit, u32 alarm);
-void App_Ropert_Alarm(void);
+void App_Ropert_Alarm(u32 alarm_flag);
 void Timer_Handler_Alarm(u32 timerId, void* param);
 void Timer_Handler_HB(u32 timerId, void* param);
 void App_Set_Sleep_mode(u8* pBuffer,u16 length);

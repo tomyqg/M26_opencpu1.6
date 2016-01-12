@@ -635,8 +635,8 @@ void Timer_Handler_Alarm(u32 timerId, void* param)
 		}
 		else
 		{
-			App_Ropert_Alarm();
-			gAlarm_Flag.alarm_flags_bk = gAlarm_Flag.alarm_flags_bk & gAlarm_Flag.alarm_flags;
+			gAlarm_Flag.alarm_flags_bk = 0;
+			App_Ropert_Alarm(gAlarm_Flag.alarm_flags);
 		}
     }
 }
@@ -1271,16 +1271,13 @@ void update_alarm(u32 alarm_bit, u32 alarm)
 {
 	if(alarm == 1)
 	{
-		if(gParmeter.parameter_8[ALARM_FLAG_INDEX].data & BV(alarm_bit))
+		gAlarm_Flag.alarm_flags = SET_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
+		if(gAlarm_Flag.alarm_flags_bk & BV(alarm_bit))
 		{
-			gAlarm_Flag.alarm_flags = SET_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
-			if(gAlarm_Flag.alarm_flags_bk & BV(alarm_bit))
-			{
-				return;
-			}	
-			App_Ropert_Alarm();
-			gAlarm_Flag.alarm_flags_bk = SET_BIT(gAlarm_Flag.alarm_flags_bk, alarm_bit);
+			return;
 		}
+		u32 alarm_flag = BV(alarm_bit);
+		App_Ropert_Alarm(alarm_flag);
 	}
 	else
 	{
@@ -1297,11 +1294,29 @@ void update_alarm(u32 alarm_bit, u32 alarm)
  *
  * @return  
  *********************************************************************/
-void App_Ropert_Alarm(void)
+void App_Ropert_Alarm(u32 alarm_flag)
 {
 	s32 ret;
+
+	alarm_flag = alarm_flag & gParmeter.parameter_8[ALARM_FLAG_INDEX].data;
+	gAlarm_Flag.alarm_flags_bk = gAlarm_Flag.alarm_flags_bk | alarm_flag;
+	APP_DEBUG("App_Ropert_Alarm: %d\n",alarm_flag);
+	if(alarm_flag == 0)
+	{
+		if(!alarm_timer_started)
+		{
+			//start a timer
+			ret = Ql_Timer_Start(ALARM_TIMER_ID,gParmeter.parameter_8[ALARM_INTERVAL_INDEX].data*60000,FALSE);
+			if(ret < 0)
+			{
+				APP_ERROR("\r\nfailed!!, Timer alarm start fail ret=%d\r\n",ret);
+			}else{
+				alarm_timer_started = TRUE;
+			}
+		}
+		return;
+	}
 		
-	APP_DEBUG("App_Ropert_Alarm\n");
 	//head
 	Server_Msg_Head m_Server_Msg_Head;
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
@@ -1314,8 +1329,8 @@ void App_Ropert_Alarm(void)
 	u8 *msg_body;
 	msg_body = (u8 *)Ql_MEM_Alloc(m_Server_Msg_Head.msg_length);
 	Ql_memset(msg_body, 0, m_Server_Msg_Head.msg_length);
-	
-	u32 alarm_flag = TOBIGENDIAN32(gAlarm_Flag.alarm_flags);
+
+	alarm_flag = TOBIGENDIAN32(alarm_flag);
 	Ql_memcpy(msg_body,&alarm_flag,4);
 	//status not use;
 	//Ql_memcpy(msg_body+4,&status,4);
