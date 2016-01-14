@@ -449,8 +449,16 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     }
     else if ( !Ql_memcmp(tok.p, "123", 3) )
     {
-		static u8* rMsg = "SET 123 OK";
 		APP_DEBUG("get 123\n");
+		u8 rMsg[150];
+		ST_Time datetime;
+		Ql_GetLocalTime(&datetime);
+		Ql_sprintf(rMsg,"http://iobox.baojia.com/sms/location?lat=%f&lon=%f&t=%d-%02d-%02d %02d:%02d:%02d&s=%d",
+						 ((double)gGpsLocation.latitude)/1000000,
+						 ((double)gGpsLocation.longitude)/1000000,
+						 datetime.year,datetime.month,datetime.day,
+						 datetime.hour,datetime.minute,datetime.second,
+						 gGpsLocation.speed);
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
