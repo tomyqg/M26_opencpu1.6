@@ -486,7 +486,12 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     else if ( !Ql_memcmp(tok.p, "SLEEP", 5) )
     {
 		static u8* rMsg = "SET SLEEP OK";
-		APP_DEBUG("get SLEEP\n");
+		APP_DEBUG("set SLEEP\n");
+		alarm_on_off = 2;
+		keep_wake = FALSE;
+		ST_Time datetime;
+		Ql_GetLocalTime(&datetime);
+		update_clk_alarm(&datetime);
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
@@ -497,7 +502,11 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     else if ( !Ql_memcmp(tok.p, "WAKEUP", 6) )
     {
 		static u8* rMsg = "SET WAKEUP OK";
-		APP_DEBUG("get WAKEUP\n");
+		APP_DEBUG("set WAKEUP\n");
+		keep_wake = TRUE;
+		ST_Time datetime;
+		Ql_GetLocalTime(&datetime);
+		update_clk_alarm(&datetime);
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
