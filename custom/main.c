@@ -89,6 +89,11 @@ void proc_main_task(s32 taskId)
     s_iMutexId = Ql_OS_CreateMutex("MyMutex");
 
     APP_DEBUG("OpenCPU: Customer Application\r\n");
+    do {
+    	u8 rMsg[50];
+    	Ql_sprintf(rMsg, "VERSION:%s\r\nBUILD:%s\r\n",VERSION,BUILD);
+    	Ql_UART_Write((Enum_SerialPort)(UART_PORT1), (u8*)(rMsg), Ql_strlen((const char *)(rMsg)));
+    } while(0);
 
     // START MESSAGE LOOP OF THIS TASK
     while(TRUE)
