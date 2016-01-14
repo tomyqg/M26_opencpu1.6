@@ -68,7 +68,7 @@ static s8 hw_sw_version[2][4] = {
   {0x15,0x10,0x30,0x01}
 };
 
-static u8 gRegister_Count = 9;
+static u8 gRegister_Count = 0;
 u8 gServer_State = SERVER_STATE_UNKNOW;
 
 bool greceived_heartbeat_rsp = TRUE;
@@ -603,17 +603,20 @@ void Timer_Handler_HB(u32 timerId, void* param)
 			//App_Heartbeat_To_Server();
 			Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[HEARTBEAT_INTERVAL_INDEX].data*1000,FALSE);
 			App_Heartbeat_Check();
-			gRegister_Count = 9;
+			gRegister_Count = 0;
 		}
-		else if(gServer_State == SERVER_STATE_REGISTERING && gRegister_Count > 0)
+		else if(gServer_State == SERVER_STATE_REGISTERING && gRegister_Count < gParmeter.parameter_8[TCP_RETRY_TIMES_INDEX].data)
 		{
 			App_Server_Register();
 		}
 		else
 		{
-			gRegister_Count = 9;
+			gRegister_Count = 0;
 			Ql_Timer_Stop(HB_TIMER_ID);
 			APP_ERROR("register server timeout for serveral times\r\n");
+			APP_DEBUG("%s:reboot after 1s\n",__func__);
+			Ql_Sleep(1000);
+			Ql_Reset(0);
 		}
     }
 }
@@ -716,7 +719,7 @@ s32 App_Server_Register( void )
 		APP_ERROR("\r\nfailed!!, Timer heartbeat start fail ret=%d\r\n",ret);        
 	}
 	gServer_State = SERVER_STATE_REGISTERING;
-	gRegister_Count--;
+	gRegister_Count++;
 
 	Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, 20);
 	
