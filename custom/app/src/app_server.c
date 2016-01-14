@@ -126,7 +126,7 @@ SYS_CONFIG mSys_config = {
     	45,  //bearing_Interval;
 	},
 	//mSys_config.password
-	{'1','2','3','4'},
+	{'0','0','0','0'},
     "CMNET",          //APN name
     "",               //User name for APN
     "",               //Password for APN
