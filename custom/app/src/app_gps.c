@@ -162,6 +162,12 @@ static void Timer_Handler(u32 timerId, void* param)
 				mGpsReader[0].callback();
 			}
 			mGpsReader[0].flag = FALSE;
+		} else {
+			Ql_memset(&mGpsReader[0].fix, 0, sizeof(GpsLocation));
+			if(mGpsReader[0].callback)
+			{
+				mGpsReader[0].callback();
+			}
 		}
 
 		//start a timer,repeat=FALSE;
