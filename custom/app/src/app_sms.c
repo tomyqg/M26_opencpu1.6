@@ -272,15 +272,23 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 			n = tok.end - tok.p;
 			Ql_memcpy(m_SrvADDR, tok.p, n);
             m_SrvADDR[n] = '\0';
+
+            //Convert IP format
+        	u8 m_ipAddress[4];
+        	Ql_memset(m_ipAddress,0,5);
+        	s32 ret = Ql_IpHelper_ConvertIpAddr(m_SrvADDR, (u32 *)m_ipAddress);
+        	if (SOC_SUCCESS != ret) // ip address is xxx.xxx.xxx.xxx
+        	{
+            	APP_ERROR("<-- Fail to convert IP Address --> \r\n");
+        	}
             
 			tok = tokenizer_get(tzer, 4);
 			m_SrvPort = Ql_atoi(tok.p);
-			#if 0
+			
 			u8 URL_Buffer[100];
-			s32 ret;
-            Ql_sprintf(URL_Buffer, "http://%d.%d.%d.%d:%d/%.*s",
-            				pBuffer[17],pBuffer[18],pBuffer[19],pBuffer[20],
-            				TOSMALLENDIAN16(pBuffer[21],pBuffer[22]),msg_attribute-6,pBuffer+23);
+            Ql_sprintf(URL_Buffer, "http://%d.%d.%d.%d:%d/%s",
+            				m_ipAddress[0],m_ipAddress[1],m_ipAddress[2],m_ipAddress[3],
+            				m_SrvPort,m_FileName);
             APP_DEBUG("\r\n<-- URL:%s-->\r\n",URL_Buffer);
     		ST_GprsConfig GprsConfig;
     		Ql_memcpy(&GprsConfig,&m_GprsConfig,sizeof(ST_GprsConfig));
@@ -292,9 +300,11 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
             if(ret != SOC_SUCCESS)
             {
 				APP_ERROR("\r\n<-- ota start upgrade fail ret:%d-->\r\n",ret);
-				//App_CommonRsp_To_Server(TODEVICE_OTA_ID,msg_num,APP_RSP_FAILURE);
+				APP_ERROR("system will reboot after 3s!!");
+				Ql_Sleep(3000);
+				Ql_Reset(0);
             }
-            #endif
+            
 			APP_DEBUG("set upgrade,file:%s,server:%s,port:%d\n",
 					   m_FileName,m_SrvADDR,m_SrvPort);
         	s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
