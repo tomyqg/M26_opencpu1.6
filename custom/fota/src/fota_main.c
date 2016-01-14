@@ -154,6 +154,9 @@ static bool Fota_Upgrade_States(Upgrade_State state, s32 fileDLPercent)
         case UP_UPGRADFAILED:
             UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Fota upgrade failed !!!! -->\r\n");
             FOTA_DBG_PRINT("<--Fota upgrade failed !!!! -->\r\n");
+            FOTA_DBG_PRINT("system will reboot after 3s!!");
+			Ql_Sleep(3000);
+			Ql_Reset(0);
             break;   
 
 

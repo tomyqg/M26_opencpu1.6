@@ -571,7 +571,10 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
             if(ret != SOC_SUCCESS)
             {
 				APP_ERROR("\r\n<-- ota start upgrade fail ret:%d-->\r\n",ret);
-				//App_CommonRsp_To_Server(TODEVICE_OTA_ID,msg_num,APP_RSP_FAILURE);
+				App_CommonRsp_To_Server(TODEVICE_OTA_ID,msg_num,APP_RSP_FAILURE);
+				APP_ERROR("system will reboot after 3s!!");
+				Ql_Sleep(3000);
+				Ql_Reset(0);
             }
         	break;
         }
