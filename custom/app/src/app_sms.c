@@ -426,8 +426,20 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     }
     else if ( !Ql_memcmp(tok.p, "WHERE", 5) )
     {
-		static u8* rMsg = "SET WHERE OK";
 		APP_DEBUG("get WHERE\n");
+		u8 rMsg[150];
+		ST_Time datetime;
+		Ql_GetLocalTime(&datetime);
+		Ql_sprintf(rMsg,"Lat:N%f\r\nLon:E%f\r\nCourse:%d\r\nSpeed:%d\r\nLac:%d\r\nCellID:%d\r\nDateTime:%d-%02d-%02d %02d:%02d:%02d\r\n",
+						 ((double)gGpsLocation.latitude)/1000000,
+						 ((double)gGpsLocation.longitude)/1000000,
+						 gGpsLocation.bearing,
+						 gGpsLocation.speed,
+						 TOSMALLENDIAN16_32(glac_ci.lac),
+						 TOSMALLENDIAN16_32(glac_ci.cell_id),
+						 datetime.year,datetime.month,datetime.day,
+						 datetime.hour,datetime.minute,datetime.second);
+		
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {

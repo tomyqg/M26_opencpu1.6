@@ -43,6 +43,7 @@
 						      (((X) & 0x000000ff) << 24))
 
 //to small_endian
+#define TOSMALLENDIAN16_32(X)       ((((X >> 16) & 0xff00) >> 8) | (((X >> 16) & 0x00ff) << 8))
 #define TOSMALLENDIAN16(X,Y)       (((X) << 8) | (Y))
 #define TOSMALLENDIAN32(A,B,C,D)   (((A) << 24) | \
                              	    ((B) << 16) | \
