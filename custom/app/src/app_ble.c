@@ -348,9 +348,8 @@ static void CallBack_UART_BLE(Enum_SerialPort port, Enum_UARTEventType msg, bool
                     return;
                 }
 
-				if(RxBuf_BLE[0] == 0x55 && RxBuf_BLE[RxBuf_BLE[2] +4] == 0x55)
+				if(RxBuf_BLE[0] == 0x55 && totalBytes >= 5 && RxBuf_BLE[totalBytes-1] == 0x55)
 				{
-					Uart_BLE_Msg_Handle(RxBuf_BLE,totalBytes);
 					#if 1
     			 	{
     					u8 strTemp[100] = {0};
@@ -362,20 +361,25 @@ static void CallBack_UART_BLE(Enum_SerialPort port, Enum_UARTEventType msg, bool
     					APP_DEBUG("UartFromBle: %s\n",strTemp);
     				}
 					#endif
+					if(ble_data_buf_len != 0)
+					{
+						Ql_memset(ble_data_buf, 0, BLE_SERIAL_RX_BUFFER_LEN);
+						ble_data_buf_len = 0;
+					}	
+					Uart_BLE_Msg_Handle(RxBuf_BLE,totalBytes);
 				}else{
 					Ql_memcpy(ble_data_buf+ble_data_buf_len, RxBuf_BLE, totalBytes);
 					ble_data_buf_len += totalBytes;
-					if(ble_data_buf[0] != 0x55)
+					if(ble_data_buf[0] != 0x55 || ble_data_buf_len > 40)
 					{
-						APP_DEBUG("UartFromBle: %.*s\n",ble_data_buf_len,ble_data_buf);
+						//APP_DEBUG("UartFromBle: %.*s\n",ble_data_buf_len,ble_data_buf);
 						Ql_memset(ble_data_buf, 0, BLE_SERIAL_RX_BUFFER_LEN);
 						ble_data_buf_len = 0;
 						return;
 					}
 
-					if(ble_data_buf_len >= 5 && ble_data_buf[ble_data_buf[2] +4] == 0x55)
+					if(ble_data_buf_len >= 5 && ble_data_buf[ble_data_buf_len-1] == 0x55)
 					{
-						Uart_BLE_Msg_Handle(ble_data_buf,ble_data_buf_len);
 						#if 1
     			 		{
     						u8 strTemp[100] = {0};
@@ -387,8 +391,10 @@ static void CallBack_UART_BLE(Enum_SerialPort port, Enum_UARTEventType msg, bool
     						APP_DEBUG("UartFromBle: %s\n",strTemp);
     					}
 						#endif
+						Uart_BLE_Msg_Handle(ble_data_buf,ble_data_buf_len);
 						Ql_memset(ble_data_buf, 0, BLE_SERIAL_RX_BUFFER_LEN);
 						ble_data_buf_len = 0;
+						return;
 					}
 				 }
             }
