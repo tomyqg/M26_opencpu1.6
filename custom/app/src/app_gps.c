@@ -57,6 +57,7 @@
 static char RxBuf_GPS[GPS_SERIAL_RX_BUFFER_LEN];
 GpsReader  mGpsReader[1];
 bool gps_info_out = FALSE;
+static bool gps_fix_status = FALSE;
 
 /*********************************************************************
  * FUNCTIONS
@@ -478,6 +479,12 @@ static void gps_reader_parse( GpsReader* r )
 				r->flag = FALSE;
 			}
 		}
+	}
+
+	if(gps_fix_status ^ r->flag)
+	{
+		gps_fix_status = r->flag;
+		Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPS_FIX_STATUS, gps_fix_status, 0);
 	}
 }
 

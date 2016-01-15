@@ -182,6 +182,17 @@ void proc_subtask_ble(s32 TaskId)
                 BLE_Send_Reboot();
                 break;
 			}
+			case MSG_ID_GPS_FIX_STATUS:
+            {
+                //APP_DEBUG("recv MSG: gprs state = %d, %d\r\n",subtask_msg.param1,mTcpState);
+                if (subtask_msg.param1)
+				{
+					BLE_Send_GSM_State(STATE_GSM_OK_GPS_FIX);
+				} else {
+					BLE_Send_GSM_State(STATE_GSM_NO_GPS_FIX);
+				}
+                break;
+            }
             default:
                 break;
         }
