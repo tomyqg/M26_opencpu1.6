@@ -27,6 +27,7 @@
 
 #include "ql_time.h"
 #include "ql_gprs.h"
+#include "app_server.h"
 
 /*****************************************************************
 * define process state
@@ -88,6 +89,9 @@ extern ST_GprsConfig m_GprsConfig;
 extern volatile u8 alarm_on_off;
 extern volatile bool gsm_wake_sleep;
 extern volatile bool keep_wake;
+extern u8  SrvADDR[MAX_SRV_LEN];
+extern u16 SrvPort;
+extern u8 ipAddress[4];
 
 /************************************************************************/
 /* Declarations for GPRS and TCP socket callback                        */

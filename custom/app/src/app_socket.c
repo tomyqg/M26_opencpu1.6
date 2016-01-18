@@ -63,8 +63,10 @@ ST_GprsConfig m_GprsConfig = {
 //static u8  m_SrvADDR[20] = "54.223.223.222\0";
 //static u32 m_SrvPort = 5605;
 //IBM
-static u8  m_SrvADDR[20] = "54.223.54.184\0";
-static u32 m_SrvPort = 8300;
+//u8  SrvADDR[MAX_SRV_LEN] = "54.223.54.184\0";
+u8  SrvADDR[MAX_SRV_LEN];
+u16 SrvPort;
+u8  ipAddress[4] = {0, 0, 0, 0};
 //static u8  m_SrvADDR[20] = "116.24.214.28\0";
 //static u32 m_SrvPort = 6800;
 
@@ -146,35 +148,46 @@ void proc_subtask_gprs(s32 TaskId)
 					APP_DEBUG("read parameter ok, ret = %d\n",ret);
 					Ql_memcpy(&gParmeter, Parameter_Buffer+1, sizeof(gParmeter));
     			}else{
-					APP_ERROR("read parameter error or not store! Using default parameter.\r\n");
+					APP_ERROR("read parameter error or not store! Using default.\r\n");
     			}
 				ST_Time datetime;
 				Ql_GetLocalTime(&datetime);
 				update_clk_alarm(&datetime);
 
-				u8 *Sys_Config_Buffer = (u8 *)Ql_MEM_Alloc(SYS_CONFIG_BLOCK_LEN);
-    			if (Sys_Config_Buffer == NULL)
+				u8 *Buffer = (u8 *)Ql_MEM_Alloc(SYS_CONFIG_BLOCK_LEN);
+    			if (Buffer == NULL)
   				{
   	 				APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,SYS_CONFIG_BLOCK_LEN);
      				return;
   				}
-  				ret = Ql_SecureData_Read(SYS_CONFIG_BLOCK, Sys_Config_Buffer, SYS_CONFIG_BLOCK_LEN);
-    			if(ret >= (s32)(sizeof(mSys_config)) && Sys_Config_Buffer[0] == SYS_CONFIG_STORED_FLAG)
+  				ret = Ql_SecureData_Read(SYS_CONFIG_BLOCK, Buffer, SYS_CONFIG_BLOCK_LEN);
+    			if(ret >= (s32)(sizeof(mSys_config)) && Buffer[0] == SYS_CONFIG_STORED_FLAG)
     			{
 					APP_DEBUG("read sys config ok, ret = %d\n",ret);
-					Ql_memcpy(&mSys_config, Sys_Config_Buffer+1, sizeof(mSys_config));
+					Ql_memcpy(&mSys_config, Buffer+1, sizeof(mSys_config));
     			}else{
 					APP_ERROR("read sys config error or not store! Using default.\r\n");
     			}
+    			
+				ret = Ql_SecureData_Read(SRV_CONFIG_BLOCK, Buffer, SRV_CONFIG_BLOCK_LEN);
+    			if(ret >= (s32)(sizeof(mSrv_config)) && Buffer[0] == SRV_CONFIG_STORED_FLAG)
+    			{
+					APP_DEBUG("read srv config ok, ret = %d\n",ret);
+					Ql_memcpy(&mSrv_config, Buffer+1, sizeof(mSrv_config));
+    			}else{
+					APP_ERROR("read srv config error or not store! Using default.\r\n");
+    			}
 
-    			APP_DEBUG("location_policy:%d,static_policy:%d,time_Interval:%d,distance_Interval:%d,bearing_Interval:%d,password:%c%c%c%c\n",
-    			mSys_config.gLocation_Policy.location_policy,
-    			mSys_config.gLocation_Policy.static_policy,
-    			mSys_config.gLocation_Policy.time_Interval,
-    			mSys_config.gLocation_Policy.distance_Interval,
-    			mSys_config.gLocation_Policy.bearing_Interval,
-    			mSys_config.password[0],mSys_config.password[1],
-    			mSys_config.password[2],mSys_config.password[3]);
+				if(gParmeter.parameter_8[SRV_MASTER_SLAVER_INDEX].data == 1)
+				{
+					//slave srv
+					Ql_strcpy(SrvADDR, mSrv_config.slaveSrvAddress);
+					SrvPort = mSrv_config.slaveSrvPort;
+				} else {
+					//master srv
+					Ql_strcpy(SrvADDR, mSrv_config.masterSrvAddress);
+					SrvPort = mSrv_config.masterSrvPort;
+				}
 			}	
 			
             case MSG_ID_GPRS_STATE:
@@ -334,22 +347,26 @@ s32 TCP_Program(s32 pdpCntxtId)
 
     //3. Connect to server
     {
-		#if 0
         //3.1 Convert IP format
-        u8 m_ipAddress[4]; 
-        Ql_memset(m_ipAddress,0,5);
-        ret = Ql_IpHelper_ConvertIpAddr(m_SrvADDR, (u32 *)m_ipAddress);
-        if (SOC_SUCCESS != ret) // ip address is xxx.xxx.xxx.xxx
+        APP_DEBUG("<-- Connect to server: %s port: %d -->\r\n",SrvADDR, SrvPort);
+        u32 iplength[1];
+        ret = Ql_IpHelper_ConvertIpAddr(SrvADDR, (u32 *)ipAddress);
+        if (ret != SOC_SUCCESS)
         {
-            APP_ERROR("<-- Fail to convert IP Address --> \r\n");
+        	ret = Ql_IpHelper_GetIPByHostNameEx(pdpCntxtId, 0, SrvADDR, iplength,(u32 *)ipAddress);
+            if(ret != SOC_SUCCESS)
+            {
+            	APP_ERROR("<-- Get ip by hostname failure:ret=%d-->\r\n",ret);
+            	return ret;
+            }     
         }
-		#endif
+		
         //3.2 Connect to server
         APP_DEBUG("<-- Connecting to server(IP:%d.%d.%d.%d, port:%d)-->\r\n", 
-        		  mSys_config.srvAddress[0],mSys_config.srvAddress[1],mSys_config.srvAddress[2],mSys_config.srvAddress[3], mSys_config.srvPort);
+        		  ipAddress[0],ipAddress[1],ipAddress[2],ipAddress[3], SrvPort);
 		for(u8 i = 3; i > 0; i--)
 		{
-        	ret = Ql_SOC_ConnectEx(g_SocketId,(u32) mSys_config.srvAddress, mSys_config.srvPort, TRUE);
+        	ret = Ql_SOC_ConnectEx(g_SocketId,(u32) ipAddress, SrvPort, TRUE);
         	if (SOC_SUCCESS == ret)
         	{
             	APP_DEBUG("<-- Connect to server successfully -->\r\n");

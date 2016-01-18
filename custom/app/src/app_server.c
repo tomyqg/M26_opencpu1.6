@@ -130,8 +130,13 @@ SYS_CONFIG mSys_config = {
     "CMNET",          //APN name
     "",               //User name for APN
     "",               //Password for APN
-    {54,223,54,184},  //srv addr
-    8300,             //srv port
+};
+
+SRV_CONFIG mSrv_config = {
+	"d.itmake.cn",
+	8300,
+	"d.itmake.cn",
+	8300,
 };
 
 Alarm_Flag gAlarm_Flag = {

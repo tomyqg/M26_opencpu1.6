@@ -218,42 +218,69 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     else if ( !Ql_memcmp(tok.p, "SERVER", 6) )
     {
 		static u8* rMsg = "SET SERVER OK";
-		u8  m_SrvADDR[16];
-		u8 m_ipAddress[4]; 
+		u8 flag;
 		if(tzer[0].count == 5)
 		{
 			tok = tokenizer_get(tzer, 2);
 			if(*(tok.p) == '0')
         	{
-				APP_DEBUG("set main server!");
+				flag = 0;
         	}
         	else if(*(tok.p) == '1')
         	{
-				APP_DEBUG("set slave server!");
+				flag = 1;
         	}
+        	
 			tok = tokenizer_get(tzer, 3);
-			Ql_memcpy(m_SrvADDR, tok.p, tok.end - tok.p);
-			m_SrvADDR[tok.end - tok.p] = '\0';
-        	Ql_memset(m_ipAddress,0,4);
-        	s32 ret = Ql_IpHelper_ConvertIpAddr(m_SrvADDR, (u32 *)m_ipAddress);
-        	if (SOC_SUCCESS != ret) // ip address is xxx.xxx.xxx.xxx
-        	{
-            	APP_ERROR("<-- Fail to convert IP Address --> \r\n");
-            	return;
-        	}
-        	Ql_memcpy(mSys_config.srvAddress, m_ipAddress, 4);
+			if(flag == 0)
+			{
+				Ql_memcpy(mSrv_config.masterSrvAddress, tok.p, tok.end - tok.p);
+				mSrv_config.masterSrvAddress[tok.end - tok.p] = '\0';
+			} else if(flag == 1){
+				Ql_memcpy(mSrv_config.slaveSrvAddress, tok.p, tok.end - tok.p);
+				mSrv_config.slaveSrvAddress[tok.end - tok.p] = '\0';
+			} else {
+				return;
+			}
+        	
 			tok = tokenizer_get(tzer, 4);
-			mSys_config.srvPort = Ql_atoi(tok.p);
-			APP_DEBUG("set server(IP:%d.%d.%d.%d, port:%d)\n",
-        		      mSys_config.srvAddress[0],mSys_config.srvAddress[1],
-        		      mSys_config.srvAddress[2],mSys_config.srvAddress[3], 
-        		      mSys_config.srvPort);
+			if(flag == 0)
+			{
+				mSrv_config.masterSrvPort = Ql_atoi(tok.p);
+				APP_DEBUG("set master server:%s port:%d\n",
+        		      mSrv_config.masterSrvAddress,mSrv_config.masterSrvPort);
+			} else if(flag == 1){
+				mSrv_config.slaveSrvPort = Ql_atoi(tok.p);
+				APP_DEBUG("set slave server:%s port:%d\n",
+        		      mSrv_config.slaveSrvAddress,mSrv_config.slaveSrvPort);
+			}
+			
         	s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         	if (iResult != RIL_AT_SUCCESS)
         	{
         		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
         	}
-        }	
+
+        	//save
+			u8 *Buffer = (u8 *)Ql_MEM_Alloc(SRV_CONFIG_BLOCK_LEN);
+    		if (Buffer == NULL)
+  			{
+  	 			APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,SRV_CONFIG_BLOCK_LEN);
+     			return;
+  			}
+			Ql_memcpy(Buffer+1, &mSrv_config, sizeof(mSrv_config));
+			Buffer[0] = SRV_CONFIG_STORED_FLAG;
+			s32 ret = Ql_SecureData_Store(SRV_CONFIG_BLOCK, Buffer, SRV_CONFIG_BLOCK_LEN);
+			if(ret != QL_RET_OK)
+			{
+				APP_ERROR("srv Config store fail!! errcode = %d\n",ret);
+				Buffer[0] = 0;
+				Ql_SecureData_Store(SRV_CONFIG_BLOCK, Buffer, 1);
+			}else{
+				APP_DEBUG("svr Config store OK!!\n");
+			}
+        }
+        return;
     }
     else if ( !Ql_memcmp(tok.p, "UPGRADE", 7) )
     {
@@ -342,6 +369,8 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 
 		Ql_SecureData_Store(SYS_CONFIG_BLOCK, Parameter_Buffer, 1);
 
+		Ql_SecureData_Store(SRV_CONFIG_BLOCK, Parameter_Buffer, 1);
+
         Ql_Sleep(5000);
         Ql_Reset(0);
         return;
@@ -365,9 +394,9 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 						 g_imei[0],g_imei[1],g_imei[2],g_imei[3],
 						 g_imei[4],g_imei[5],g_imei[6],g_imei[7],
 						 mSys_config.apnName,
-						 mSys_config.srvAddress[0],mSys_config.srvAddress[1],
-						 mSys_config.srvAddress[2],mSys_config.srvAddress[3],
-						 mSys_config.srvPort,
+						 ipAddress[0],ipAddress[1],
+						 ipAddress[2],ipAddress[3],
+						 SrvPort,
 						 gParmeter.parameter_8[HEARTBEAT_INTERVAL_INDEX].data,
 						 mSys_config.gLocation_Policy.location_policy,
 						 mSys_config.gLocation_Policy.static_policy,

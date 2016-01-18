@@ -119,6 +119,10 @@ extern u8 gServer_State;
 #define BATTERY_LOW         0x0202
 #define PASSWORD            0x0400
 
+#define SRV_CONFIG_BLOCK       11
+#define SRV_CONFIG_BLOCK_LEN   100
+#define SRV_CONFIG_STORED_FLAG 0xF5
+
 #define SYS_CONFIG_BLOCK       12
 #define SYS_CONFIG_BLOCK_LEN   100
 #define SYS_CONFIG_STORED_FLAG 0xF5
@@ -135,6 +139,7 @@ typedef enum {
     LOST_HEARTBEAT_RSP_MAX_INDEX = 1,
 	RSP_TIMEOUT_INDEX            = 2,
 	TCP_RETRY_TIMES_INDEX        = 3,
+	SRV_MASTER_SLAVER_INDEX      = 4,
 	QST_UNNORMAL_SLEEP_TIM_INDEX     = 5,
 	QST_UNNORMAL_WACKUP_TIM_INDEX    = 6,
 	QST_UNNORMAL_WACKUP_POLICY_INDEX = 7,
@@ -216,10 +221,17 @@ typedef struct {
     u8 apnName[MAX_GPRS_APN_LEN];
     u8 apnUserId[MAX_GPRS_USER_NAME_LEN]; 
     u8 apnPasswd[MAX_GPRS_PASSWORD_LEN];
-    u8 srvAddress[4];
-	u16 srvPort;
 }SYS_CONFIG;
 extern SYS_CONFIG mSys_config;
+
+#define   MAX_SRV_LEN     40
+typedef struct {
+    u8 masterSrvAddress[MAX_SRV_LEN];
+	u16 masterSrvPort;
+	u8 slaveSrvAddress[MAX_SRV_LEN];
+	u16 slaveSrvPort;
+}SRV_CONFIG;
+extern SRV_CONFIG mSrv_config;
 
 extern GpsLocation gGpsLocation;
 
