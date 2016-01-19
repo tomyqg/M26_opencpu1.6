@@ -249,10 +249,22 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 				mSrv_config.masterSrvPort = Ql_atoi(tok.p);
 				APP_DEBUG("set master server:%s port:%d\n",
         		      mSrv_config.masterSrvAddress,mSrv_config.masterSrvPort);
+        		if(gParmeter.parameter_8[SRV_MASTER_SLAVER_INDEX].data == 0)
+				{
+					Ql_strcpy(SrvADDR, mSrv_config.masterSrvAddress);
+					SrvPort = mSrv_config.masterSrvPort;
+					Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_SRV_CHANGED, 0, 0);
+				}
 			} else if(flag == 1){
 				mSrv_config.slaveSrvPort = Ql_atoi(tok.p);
 				APP_DEBUG("set slave server:%s port:%d\n",
         		      mSrv_config.slaveSrvAddress,mSrv_config.slaveSrvPort);
+        		if(gParmeter.parameter_8[SRV_MASTER_SLAVER_INDEX].data == 1)
+				{
+					Ql_strcpy(SrvADDR, mSrv_config.slaveSrvAddress);
+					SrvPort = mSrv_config.slaveSrvPort;
+					Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_SRV_CHANGED, 0, 0);
+				}      
 			}
 			
         	s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);

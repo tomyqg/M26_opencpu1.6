@@ -188,6 +188,8 @@ void proc_subtask_gprs(s32 TaskId)
 					Ql_strcpy(SrvADDR, mSrv_config.masterSrvAddress);
 					SrvPort = mSrv_config.masterSrvPort;
 				}
+				Ql_MEM_Free(Buffer);
+				break;
 			}	
 			
             case MSG_ID_GPRS_STATE:
@@ -229,6 +231,18 @@ void proc_subtask_gprs(s32 TaskId)
             {
 				APP_DEBUG("network state:%d\n",subtask_msg.param1);
 				check_network_state(subtask_msg.param1);
+				break;
+            }
+
+            case MSG_ID_SRV_CHANGED:
+            {
+				APP_DEBUG("msg: MSG_ID_SRV_CHANGED\n");
+				Ql_SOC_Close(g_SocketId);
+			    mTcpState = STATE_GPRS_ACTIVATED;
+			    Ql_Sleep(3000);
+			    //TCP_Program(g_PdpCntxtId);
+			    Ql_Reset(0);
+				break;
             }
             default:
                 break;
