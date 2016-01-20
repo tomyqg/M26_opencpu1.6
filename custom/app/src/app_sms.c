@@ -21,7 +21,7 @@
  *--------------------------------------------------------------------
  * 
  *********************************************************************/
-
+#ifdef __CUSTOMER_CODE__
 /*********************************************************************
  * INCLUDES
  */
@@ -594,4 +594,4 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 		APP_DEBUG("Sys Config store OK!!\n");
 	}
 }
- 
+#endif // __CUSTOMER_CODE__
