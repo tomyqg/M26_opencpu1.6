@@ -161,6 +161,16 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 	if(n != 4 || Ql_memcmp(mSys_config.password, tok.p, 4))
     {
 		APP_DEBUG("SMS password error\n");
+		tok = tokenizer_get(tzer, 0);
+		if ( !Ql_memcmp(tok.p, "PWD", 3) )
+    	{
+			u8* rMsg = "SET PASSWORD FAIL";
+			s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
+        	if (iResult != RIL_AT_SUCCESS)
+        	{
+        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	}
+		}	
 		return;
     }	
 
