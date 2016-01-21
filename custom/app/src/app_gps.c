@@ -490,7 +490,7 @@ static void gps_reader_parse( GpsReader* r )
 
 void GpsLocation_CallBack(void)
 {
-	if(mGpsReader[0].fix.speed == 0 && mSys_config.gLocation_Policy.static_policy == 1)
+	if(mGpsReader[0].fix.speed == 0 && !gMotional && mSys_config.gLocation_Policy.static_policy == 1)
 		return;
 		
 	//report to gprs task

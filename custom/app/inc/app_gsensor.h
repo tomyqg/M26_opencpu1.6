@@ -40,6 +40,7 @@
 #define GSENSOR_I2C_CHANNEL_NO       0
 #define GSENSOR_I2C_SLAVE_ADDR8BIT   0x30
 #define GSENSOR_I2C_SPEED            300
+#define GSENSOR_I2C_INT_ACTIVE       0
 
 #define BMA2x2_CHIP_ID_REG                      0x00
 #define BMA2x2_X_AXIS_LSB_REG                   0x02
@@ -107,7 +108,8 @@
 /*********************************************************************
  * FUNCTIONS
  */
-void gsensor_init(void); 
+void gsensor_init(void);
+void Timer_Handler_Gsensor(u32 timerId, void* param);
 
 #endif // End-of __APP_GSENSOR_H__ 
 

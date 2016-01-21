@@ -41,6 +41,9 @@
 #define NETWOEK_STATE_TIMER_ID             (TIMER_ID_USER_START + 105)
 #define NETWOEK_STATE_TIMER_PERIOD         30000   //30s
 
+#define MOTIONAL_STATIC_TIMER_ID           (TIMER_ID_USER_START + 106)
+#define MOTIONAL_STATIC_TIMER_PERIOD       30000   //30s
+
 typedef enum { 
 	//gprs 
 	MSG_ID_GPRS_STATE = MSG_ID_USER_START+0x100,

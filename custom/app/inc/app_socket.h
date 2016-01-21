@@ -92,6 +92,7 @@ extern volatile bool keep_wake;
 extern u8  SrvADDR[MAX_SRV_LEN];
 extern u16 SrvPort;
 extern u8 ipAddress[4];
+extern volatile bool gMotional;
 
 /************************************************************************/
 /* Declarations for GPRS and TCP socket callback                        */

@@ -29,6 +29,7 @@
 #include "ql_error.h"
 #include "ql_eint.h"
 #include "app_common.h"
+#include "app_socket.h"
 #include "app_gsensor.h"
 
 /*********************************************************************
@@ -46,7 +47,9 @@
 /*********************************************************************
  * VARIABLES
  */
-Enum_PinName pinname = PINNAME_CTS; 
+Enum_PinName pinname = PINNAME_CTS;
+static bool motional = FALSE;
+static volatile u8 motional_count = 0;
 
 /*********************************************************************
  * FUNCTIONS
@@ -60,9 +63,45 @@ static void callback_eint_handle(Enum_PinName eintPinName, Enum_PinLevel pinLeve
     APP_DEBUG("<--Eint callback: pin(%d), levle(%d)-->\r\n",eintPinName,pinLevel);
     //ret = Ql_EINT_GetLevel(eintPinName);
     //APP_DEBUG("<--Get Level, pin(%d), levle(%d)-->\r\n",eintPinName,ret);
+    if(pinLevel == GSENSOR_I2C_INT_ACTIVE)
+    {
+		motional_count++;
+		motional = TRUE;
+		APP_DEBUG("motional_count = %d\n",motional_count);
+		if(motional_count >= 10)
+		{
+			motional_count = 0;
+			gMotional = TRUE;
+			APP_DEBUG("device is motinal\n");
+		}	
+    }
     
     //unmask the specified EINT pin
     Ql_EINT_Unmask(pinname);
+}
+
+void Timer_Handler_Gsensor(u32 timerId, void* param)
+{
+	static u8 static_count = 0;
+    if(MOTIONAL_STATIC_TIMER_ID == timerId)
+    {
+		motional_count = 0;
+		static_count++;
+		APP_DEBUG("timer handler for gsensor,static_count = %d\n",static_count);
+		if(static_count >= 10 && motional == FALSE)
+		{
+			gMotional = FALSE;
+			static_count = 0;
+			APP_DEBUG("device is static\n");
+		}
+
+		if(motional)
+		{
+			static_count = 0;
+			motional = FALSE;
+		}
+		//Ql_Timer_Start(MOTIONAL_STATIC_TIMER_ID,MOTIONAL_STATIC_TIMER_PERIOD,FALSE);
+    }
 }
 
 static s32 gsensor_read_register(u8 registerAddr, u8 *buffer)
@@ -135,6 +174,7 @@ void gsensor_init(void)
 
 	//INT_EN_0, 0x07: slope inttreput x\y\z enable
     gsensor_write_register(BMA2x2_INT_ENABLE1_REG,0x07);
-    
+
+    Ql_Timer_Start(MOTIONAL_STATIC_TIMER_ID,MOTIONAL_STATIC_TIMER_PERIOD,TRUE);
 }
 #endif // __CUSTOMER_CODE__

@@ -38,6 +38,7 @@
 #include "app_server.h"
 #include "app_common.h"
 #include "app_gps.h"
+#include "app_gsensor.h"
 
 #define SOC_RECV_BUFFER_LEN   1460
 #define SRVADDR_BUFFER_LEN    100
@@ -83,6 +84,7 @@ u8 Parameter_Buffer[PAR_BLOCK_LEN] = {0};
 volatile u8 alarm_on_off = 1;
 volatile bool gsm_wake_sleep = TRUE;
 volatile bool keep_wake = FALSE;
+volatile bool gMotional = FALSE;
 
 static ST_PDPContxt_Callback callback_gprs_func = 
 {
@@ -130,6 +132,13 @@ void proc_subtask_gprs(s32 TaskId)
     if(ret <0)
     {
         APP_ERROR("\r\nfailed!!, Timer alarm register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
+    }
+
+    //register a timer for gsensor
+    ret = Ql_Timer_Register(MOTIONAL_STATIC_TIMER_ID, Timer_Handler_Gsensor, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",MOTIONAL_STATIC_TIMER_ID,ret);
     }
 
     //init gsensor
