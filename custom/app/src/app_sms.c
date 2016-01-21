@@ -570,12 +570,19 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     }
     else if ( !Ql_memcmp(tok.p, "PWD", 3) )
     {
-		static u8* rMsg = "SET PASSWORD OK";
+		u8* rMsg1 = "SET PASSWORD OK";
+		u8* rMsg2 = "SET PASSWORD FAIL";
+		u8* rMsg = rMsg1;
 		tok = tokenizer_get(tzer, 2);
-		mSys_config.password[0] = *(tok.p);
-		mSys_config.password[1] = *(tok.p + 1);
-		mSys_config.password[2] = *(tok.p + 2);
-		mSys_config.password[3] = *(tok.p + 3);
+		if( (tok.p - tok.end) == 4 )
+		{
+			mSys_config.password[0] = *(tok.p);
+			mSys_config.password[1] = *(tok.p + 1);
+			mSys_config.password[2] = *(tok.p + 2);
+			mSys_config.password[3] = *(tok.p + 3);
+		} else {
+			rMsg = rMsg2;
+		}	
 		APP_DEBUG("set PASSWORD:%c%c%c%c\n",mSys_config.password[0],mSys_config.password[1],mSys_config.password[2],mSys_config.password[3]);
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
