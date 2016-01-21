@@ -175,7 +175,8 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     }	
 
     tok = tokenizer_get(tzer, 0);
-    if ( !Ql_memcmp(tok.p, "APN", 3) )
+    u8 cmd_length = tok.p - tok.end;
+    if ( !Ql_memcmp(tok.p, "APN", 3) && cmd_length == 3)
     {
 		static u8* rMsg = "SET APN OK";
 		switch(tzer[0].count)
@@ -225,7 +226,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
         }
     } 
-    else if ( !Ql_memcmp(tok.p, "SERVER", 6) )
+    else if ( !Ql_memcmp(tok.p, "SERVER", 6) && cmd_length == 6)
     {
 		static u8* rMsg = "SET SERVER OK";
 		u8 flag;
@@ -304,7 +305,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "UPGRADE", 7) )
+    else if ( !Ql_memcmp(tok.p, "UPGRADE", 7) && cmd_length == 7)
     {
 		static u8* rMsg = "SET UPGRADE OK";
 		u8  m_FileName[20];
@@ -364,7 +365,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "RESET", 5) )
+    else if ( !Ql_memcmp(tok.p, "RESET", 5) && cmd_length == 5)
     {
 		static u8* rMsg = "RESET OK";
 		APP_DEBUG("set RESET\n");
@@ -377,7 +378,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         Ql_Reset(0);
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "FACTORY", 7) )
+    else if ( !Ql_memcmp(tok.p, "FACTORY", 7) && cmd_length == 7)
     {
 		static u8* rMsg = "FACTORY OK";
 		APP_DEBUG("set FACTORY\n");
@@ -397,7 +398,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         Ql_Reset(0);
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "VERSION", 7) )
+    else if ( !Ql_memcmp(tok.p, "VERSION", 7) && cmd_length == 7)
     {
 		u8 rMsg[50];
         Ql_sprintf(rMsg, "VERSION:%s\r\nBUILD:%s",VERSION,BUILD);
@@ -409,7 +410,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "PARAM", 5) )
+    else if ( !Ql_memcmp(tok.p, "PARAM", 5) && cmd_length == 5)
     {
 		u8 rMsg[150];
 		Ql_sprintf(rMsg,"IMEI:%02x%02x%02x%02x%02x%02x%02x%02x\r\nAPN:%s\r\nIP:%d.%d.%d.%d:%d\r\nHBT:%d\r\nRM:%d\r\nSR:%d\r\nTIMER:%d\r\nDIST:%d\r\nDIR:%d\r\n",
@@ -433,7 +434,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "PARAMCONFIG", 11) )
+    else if ( !Ql_memcmp(tok.p, "PARAMCONFIG", 11) && cmd_length == 11)
     {
 		static u8* rMsg = "SET PARAMCONFIG OK";
 		APP_DEBUG("set PARAM\n");
@@ -475,7 +476,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "WHERE", 5) )
+    else if ( !Ql_memcmp(tok.p, "WHERE", 5) && cmd_length == 5)
     {
 		APP_DEBUG("get WHERE\n");
 		u8 rMsg[150];
@@ -498,7 +499,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "123", 3) )
+    else if ( !Ql_memcmp(tok.p, "123", 3) && cmd_length == 3)
     {
 		APP_DEBUG("get 123\n");
 		u8 rMsg[150];
@@ -517,7 +518,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "STATUS", 6) )
+    else if ( !Ql_memcmp(tok.p, "STATUS", 6) && cmd_length == 6)
     {
 		u8 rMsg[100];
 		Ql_sprintf(rMsg,"BATTERY:%d\%%\r\n\GPRS:%s\r\nGSM SIGNAL:%s\r\nGPS:%s\r\nGPS SIGNAL:%s\r\n",
@@ -534,7 +535,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "SLEEP", 5) )
+    else if ( !Ql_memcmp(tok.p, "SLEEP", 5) && cmd_length == 5)
     {
 		static u8* rMsg = "SET SLEEP OK";
 		APP_DEBUG("set SLEEP\n");
@@ -553,7 +554,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 		update_clk_alarm(&datetime);
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "WAKEUP", 6) )
+    else if ( !Ql_memcmp(tok.p, "WAKEUP", 6) && cmd_length == 6)
     {
 		static u8* rMsg = "WAKEUP OK";
 		APP_DEBUG("set WAKEUP\n");
@@ -568,7 +569,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "PWD", 3) )
+    else if ( !Ql_memcmp(tok.p, "PWD", 3) && cmd_length == 3)
     {
 		u8* rMsg = "SET PASSWORD OK";
 		u8* rMsg2 = "SET PASSWORD FAIL";
@@ -595,6 +596,8 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
         }
+    } else {
+		return;
     }
 
     //save
