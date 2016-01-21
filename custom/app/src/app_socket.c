@@ -131,6 +131,9 @@ void proc_subtask_gprs(s32 TaskId)
     {
         APP_ERROR("\r\nfailed!!, Timer alarm register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
     }
+
+    //init gsensor
+    gsensor_init();
 	
     while(TRUE)
     {    
