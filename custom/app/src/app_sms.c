@@ -175,7 +175,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     }	
 
     tok = tokenizer_get(tzer, 0);
-    u8 cmd_length = tok.p - tok.end;
+    u8 cmd_length = tok.end - tok.p;
     if ( !Ql_memcmp(tok.p, "APN", 3) && cmd_length == 3 && (tzer[0].count <= 5))
     {
 		static u8* rMsg = "SET APN OK";
@@ -597,6 +597,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
         }
     } else {
+    	APP_DEBUG("sms cmd not match\n");
 		return;
     }
 
