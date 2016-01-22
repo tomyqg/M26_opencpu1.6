@@ -224,12 +224,12 @@ void proc_subtask_gprs(s32 TaskId)
 				APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
     			          mGpsReader[0].fix.latitude,mGpsReader[0].fix.longitude,mGpsReader[0].fix.altitude,mGpsReader[0].fix.speed,mGpsReader[0].fix.bearing);
 				#endif
-				gGpsLocation.latitude  = TOBIGENDIAN32(mGpsReader[0].fix.latitude);
-				gGpsLocation.longitude = TOBIGENDIAN32(mGpsReader[0].fix.longitude);
-				gGpsLocation.altitude = TOBIGENDIAN32(mGpsReader[0].fix.altitude);
-				gGpsLocation.speed = TOBIGENDIAN32(mGpsReader[0].fix.speed);
-				gGpsLocation.bearing = TOBIGENDIAN32(mGpsReader[0].fix.bearing);
-				gGpsLocation.starInusing = TOBIGENDIAN32(mGpsReader[0].fix.starInusing);
+				gGpsLocation.latitude  = mGpsReader[0].fix.latitude;
+				gGpsLocation.longitude = mGpsReader[0].fix.longitude;
+				gGpsLocation.altitude = mGpsReader[0].fix.altitude;
+				gGpsLocation.speed = mGpsReader[0].fix.speed;
+				gGpsLocation.bearing = mGpsReader[0].fix.bearing;
+				gGpsLocation.starInusing = mGpsReader[0].fix.starInusing;
 				App_Report_Location();
                 break;
             }

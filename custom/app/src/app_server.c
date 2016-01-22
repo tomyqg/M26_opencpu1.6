@@ -1099,6 +1099,15 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 void App_Report_Location( void )
 {
 	APP_DEBUG("App_Report_Location\n");
+	GpsLocation gpsLocation;
+
+	gpsLocation.latitude  = TOBIGENDIAN32(gGpsLocation.latitude);
+	gpsLocation.longitude = TOBIGENDIAN32(gGpsLocation.longitude);
+	gpsLocation.altitude = TOBIGENDIAN32(gGpsLocation.altitude);
+	gpsLocation.speed = TOBIGENDIAN32(gGpsLocation.speed);
+	gpsLocation.bearing = TOBIGENDIAN32(gGpsLocation.bearing);
+	gpsLocation.starInusing = TOBIGENDIAN32(gGpsLocation.starInusing);
+	
 	//head
 	Server_Msg_Head m_Server_Msg_Head;
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
@@ -1117,8 +1126,8 @@ void App_Report_Location( void )
 	//status not use;
 	//Ql_memcpy(msg_body+4,&status,4);
 	
-	Ql_memcpy(msg_body+8,&gGpsLocation,20);
-	Ql_memcpy(msg_body+34,&gGpsLocation.starInusing,4);
+	Ql_memcpy(msg_body+8,&gpsLocation,20);
+	Ql_memcpy(msg_body+34,&gpsLocation.starInusing,4);
 
 	//time start from 2000-1-1-00:00:00
 	ST_Time datetime;
@@ -1341,6 +1350,15 @@ void App_Ropert_Alarm(u32 alarm_flag)
 		}
 		return;
 	}
+
+	GpsLocation gpsLocation;
+
+	gpsLocation.latitude  = TOBIGENDIAN32(gGpsLocation.latitude);
+	gpsLocation.longitude = TOBIGENDIAN32(gGpsLocation.longitude);
+	gpsLocation.altitude = TOBIGENDIAN32(gGpsLocation.altitude);
+	gpsLocation.speed = TOBIGENDIAN32(gGpsLocation.speed);
+	gpsLocation.bearing = TOBIGENDIAN32(gGpsLocation.bearing);
+	gpsLocation.starInusing = TOBIGENDIAN32(gGpsLocation.starInusing);
 		
 	//head
 	Server_Msg_Head m_Server_Msg_Head;
@@ -1360,8 +1378,8 @@ void App_Ropert_Alarm(u32 alarm_flag)
 	//status not use;
 	//Ql_memcpy(msg_body+4,&status,4);
 	
-	Ql_memcpy(msg_body+8,&gGpsLocation,20);
-	Ql_memcpy(msg_body+34,&gGpsLocation.starInusing,4);
+	Ql_memcpy(msg_body+8,&gpsLocation,20);
+	Ql_memcpy(msg_body+34,&gpsLocation.starInusing,4);
 
 	//time start from 2000-1-1-00:00:00
 	ST_Time datetime;
