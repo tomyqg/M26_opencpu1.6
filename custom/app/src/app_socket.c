@@ -180,7 +180,12 @@ void proc_subtask_gprs(s32 TaskId)
     			}else{
 					APP_ERROR("read sys config error or not store! Using default.\r\n");
     			}
-    			
+
+                APP_DEBUG("password:%c%c%c%c\napnName:%s\napnUserId:%s\napnPasswd:%s\n",
+    					mSys_config.password[0],mSys_config.password[1],
+    					mSys_config.password[2],mSys_config.password[3],
+    					mSys_config.apnName,mSys_config.apnUserId,mSys_config.apnPasswd);
+
 				ret = Ql_SecureData_Read(SRV_CONFIG_BLOCK, Buffer, SRV_CONFIG_BLOCK_LEN);
     			if(ret >= (s32)(sizeof(mSrv_config)) && Buffer[0] == SRV_CONFIG_STORED_FLAG)
     			{
@@ -292,6 +297,8 @@ s32 GPRS_Program(void)
     Ql_strcpy(GprsConfig.apnName,mSys_config.apnName);
     Ql_strcpy(GprsConfig.apnPasswd,mSys_config.apnPasswd);
     Ql_strcpy(GprsConfig.apnUserId,mSys_config.apnUserId);
+    APP_DEBUG("apnName:%s\napnUserId:%s\napnPasswd:%s\n",
+    		GprsConfig.apnName,GprsConfig.apnUserId,GprsConfig.apnPasswd);
     ret = Ql_GPRS_Config(pdpCntxtId, &GprsConfig);
     if (GPRS_PDP_SUCCESS == ret)
     {
