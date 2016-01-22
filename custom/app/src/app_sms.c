@@ -155,7 +155,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 
     Ql_strcpy(aPhNum, pDeliverTextInfo->oa);
     tokenizer_init(tzer, pDeliverTextInfo->data, pDeliverTextInfo->data + pDeliverTextInfo->length);
-
+    APP_DEBUG("tokennizer.count = %d\n",tzer[0].count);
 	tok = tokenizer_get(tzer, 1);
 	n = tok.end - tok.p;
 	if(n != 4 || Ql_memcmp(mSys_config.password, tok.p, 4))
@@ -574,7 +574,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 		u8* rMsg = "SET PASSWORD OK";
 		u8* rMsg2 = "SET PASSWORD FAIL";
 		tok = tokenizer_get(tzer, 2);
-		if( (tok.p - tok.end) == 4 &&
+		if( (tok.end - tok.p) == 4 &&
 		     Ql_isdigit(*(tok.p)) && Ql_isdigit(*(tok.p + 1)) &&
 		     Ql_isdigit(*(tok.p + 2)) && Ql_isdigit(*(tok.p + 3)))
 		{

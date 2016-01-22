@@ -90,6 +90,15 @@ s32 tokenizer_init( Tokenizer* t, const u8* p, const u8* end )
         p = q;
     }
 
+    if(end[-1] == ',')
+    {
+		if (count < MAX_TOKENS) {
+        	t->tokens[count].p   = end;
+            t->tokens[count].end = end;
+            count += 1;
+        }
+    }
+
     t->count = count;
     return count;
 }
