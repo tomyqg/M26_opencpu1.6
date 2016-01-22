@@ -1049,6 +1049,11 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOW_POWER, FALSE);
 			}
 		}
+
+	    if(par_id == MASTER_SLAVE_SERVER)
+		{
+			 Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_SRV_CHANGED, 0, 0);
+		}
 		
 		pLocation = pLocation + par_len + 3;
 	}
@@ -1079,7 +1084,7 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 	}else{
 		APP_DEBUG("parameter store OK!!\n");
 	}
-	
+
 }
 
 /*********************************************************************

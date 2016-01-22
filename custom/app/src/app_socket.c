@@ -249,9 +249,9 @@ void proc_subtask_gprs(s32 TaskId)
             case MSG_ID_SRV_CHANGED:
             {
 				APP_DEBUG("msg: MSG_ID_SRV_CHANGED\n");
-				Ql_SOC_Close(g_SocketId);
-			    mTcpState = STATE_GPRS_ACTIVATED;
-			    Ql_Sleep(3000);
+				//Ql_SOC_Close(g_SocketId);
+			    //mTcpState = STATE_GPRS_ACTIVATED;
+			    Ql_Sleep(5000);
 			    //TCP_Program(g_PdpCntxtId);
 			    Ql_Reset(0);
 				break;
@@ -298,7 +298,7 @@ s32 GPRS_Program(void)
         APP_DEBUG("<-- Configure PDP context -->\r\n");
     }else{
         APP_DEBUG("<-- Fail to configure GPRS PDP, cause=%d. -->\r\n", ret);
-        return;
+        return ret;
     }
     
     u8 i = 3;

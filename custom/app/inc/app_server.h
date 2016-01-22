@@ -107,6 +107,7 @@ extern u8 gServer_State;
 
 #define parameter_8_num     23
 #define parameter_12_num    5
+#define MASTER_SLAVE_SERVER 0x0019
 #define QST_NORMAL_ALARM    0x0104
 #define HWJ_SLEEP_TIME      0x0108
 #define HWJ_WAKE_TIME       0x0109
