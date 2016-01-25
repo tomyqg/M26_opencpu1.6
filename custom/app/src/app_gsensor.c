@@ -68,7 +68,7 @@ static void callback_eint_handle(Enum_PinName eintPinName, Enum_PinLevel pinLeve
 		motional_count++;
 		motional = TRUE;
 		APP_DEBUG("motional_count = %d\n",motional_count);
-		if(motional_count >= 10)
+		if(motional_count >= 5)
 		{
 			motional_count = 0;
 			gMotional = TRUE;
@@ -171,6 +171,9 @@ void gsensor_init(void)
 
     //INT_MAP_0, 0x04:int1_slope to int1
     gsensor_write_register(BMA2x2_INT1_PAD_SEL_REG,0x04);
+
+    //INT_6, 0x0A: 
+    gsensor_write_register(BMA2x2_SLOPE_THRES_REG,0x0A);
 
 	//INT_EN_0, 0x07: slope inttreput x\y\z enable
     gsensor_write_register(BMA2x2_INT_ENABLE1_REG,0x07);
