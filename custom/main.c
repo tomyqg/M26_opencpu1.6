@@ -53,6 +53,7 @@ static u8 m_RxBuf_Uart1[SERIAL_RX_BUFFER_LEN];
 static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, bool level, void* customizedPara);
 static s32 ATResponse_Handler(char* line, u32 len, void* userData);
 static s32 GetIMEIandIMSI(void);
+static s32 gGprsState    = 0;   // GPRS state, 0= not REGISTERED, 1=REGISTERED
 
 char userdata[20];
 u8 g_imei[8],g_imsi[8];
@@ -73,6 +74,8 @@ void proc_main_task(s32 taskId)
 {
     s32 ret;
     ST_MSG msg;
+
+    gGprsState = 0;
 
     // Register & open UART port
     ret = Ql_UART_Register(m_myUartPort, CallBack_UART_Hdlr, NULL);
@@ -167,6 +170,7 @@ void proc_main_task(s32 taskId)
                      *         3 = Registration denied 
                      */
                    	APP_DEBUG("<-- Module GSM network status:%d-->\r\n",msg.param2);  
+                   	gGprsState = 0;
                 }
                 break;
 
@@ -176,18 +180,22 @@ void proc_main_task(s32 taskId)
             case URC_GPRS_NW_STATE_IND:
                 if (NW_STAT_REGISTERED == msg.param2 || NW_STAT_REGISTERED_ROAMING == msg.param2)
                 {
-                    APP_DEBUG("<-- Module has registered to GPRS network status:%d-->\r\n",msg.param2);
-					APP_DEBUG("lac:0x%x,cell_id:0x%x\n",glac_ci.lac,glac_ci.cell_id);
-                    // Module has registered to GPRS network,app can start to activate PDP and program TCP
-                    Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
-                    Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0);
+					if(gGprsState == 0)
+					{
+                    	APP_DEBUG("<-- Module has registered to GPRS network status:%d-->\r\n",msg.param2);
+						APP_DEBUG("lac:0x%x,cell_id:0x%x\n",glac_ci.lac,glac_ci.cell_id);
+						gGprsState = 1;
+                    	// Module has registered to GPRS network,app can start to activate PDP and program TCP
+                    	Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
+                    	Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0);
+                    }	
                 }else{
                     /* status: 0 = Not registered, module not currently search a new operator
                      *         2 = Not registered, but module is currently searching a new operator
                      *         3 = Registration denied 
                      */
                     APP_DEBUG("<-- GPRS network status:%d -->\r\n", msg.param2);
-                    
+                    gGprsState = 0;
                     // If GPRS drops down and currently socket connection is on line, app should close socket
                     // and check signal strength. And try to reset the module.
                     if (NW_STAT_NOT_REGISTERED == msg.param2 /*&& m_GprsActState*/)
