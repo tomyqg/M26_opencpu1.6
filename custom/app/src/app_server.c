@@ -490,9 +490,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 		    if(pBuffer[21] == SERVER_STATE_REGISTER_OK)
 			{ 
 				APP_DEBUG("register ok\n");
-			    gServer_State = SERVER_STATE_REGISTER_OK;
 			    Ql_Timer_Stop(HB_TIMER_ID);
-			    App_Heartbeat_To_Server();
 			
 			  	//set system time
 			  	ST_Time datetime;
@@ -505,10 +503,12 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
 				datetime.second=BCDTODEC(pBuffer[27]);
 				datetime.timezone=TIMEZONE;
   			  	Ql_SetLocalTime(&datetime);
-  			  	Ql_Sleep(20);
+  			  	Ql_Sleep(1000);
   			  	Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[HEARTBEAT_INTERVAL_INDEX].data*1000,FALSE);
   			  	update_clk_alarm(&datetime);
   			  	//APP_DEBUG("time: %d-%d-%d %d:%d:%d\n",datetime.year,datetime.month,datetime.day,datetime.hour,datetime.minute,datetime.second);
+  			  	gServer_State = SERVER_STATE_REGISTER_OK;
+  			  	App_Heartbeat_To_Server();
 			}
 			else
 			{
