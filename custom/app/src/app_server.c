@@ -1338,7 +1338,7 @@ void update_alarm(u32 alarm_bit, u32 alarm)
 	else
 	{
 		gAlarm_Flag.alarm_flags = CLE_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
-		APP_DEBUG("clear alarm flags bit:%d, alarm_flags: 0x%x",alarm_bit,gAlarm_Flag.alarm_flags);
+		APP_DEBUG("clear alarm flags bit:%d, alarm_flags: 0x%x\n",alarm_bit,gAlarm_Flag.alarm_flags);
 	}
 }
 
@@ -1357,7 +1357,6 @@ void App_Ropert_Alarm(u32 alarm_flag)
 
 	alarm_flag = alarm_flag & gParmeter.parameter_8[ALARM_FLAG_INDEX].data;
 	gAlarm_Flag.alarm_flags_bk = gAlarm_Flag.alarm_flags_bk | alarm_flag;
-	APP_DEBUG("App_Ropert_Alarm: %d\n",alarm_flag);
 	if(alarm_flag == 0)
 	{
 		if(!alarm_timer_started)
@@ -1426,7 +1425,7 @@ void App_Ropert_Alarm(u32 alarm_flag)
 	//pack msg
 	ret = Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
 	if(ret == APP_RET_OK){
-		APP_DEBUG("send App_Ropert_Alarm: %d OK\n",alarm_flag);
+		APP_DEBUG("send App_Ropert_Alarm: %d OK\n",TOBIGENDIAN32(alarm_flag));
   	} else {
 		APP_ERROR("send App_Ropert_Alarm: %d FAIL,errorCode = %d\n",ret);
   	}
