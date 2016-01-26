@@ -663,8 +663,7 @@ void Timer_Handler_Alarm(u32 timerId, void* param)
  *********************************************************************/
 s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number, u8 rsp)
 {
-	APP_DEBUG("App_CommonRsp_To_Server\n");
-
+    s32 ret;
     //head
 	Server_Msg_Head m_Server_Msg_Head;
 	m_Server_Msg_Head.protocol_version = PROTOCOL_VERSION;
@@ -681,8 +680,13 @@ s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number, u8 rsp)
     Ql_memcpy(msg_body+2,&msg_id,2);
     msg_body[4] = rsp;
   
-  	Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, m_Server_Msg_Head.msg_length);
-	return APP_RET_OK;
+  	ret = Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, m_Server_Msg_Head.msg_length);
+  	if(ret == APP_RET_OK){
+		APP_DEBUG("send App_CommonRsp_To_Server OK\n");
+  	} else {
+		APP_ERROR("send App_CommonRsp_To_Server FAIL,errorCode = %d\n",ret);
+  	}
+	return ret;
 }
 
 /*********************************************************************
@@ -696,7 +700,6 @@ s32 App_CommonRsp_To_Server( u16 msg_id, u16 msg_number, u8 rsp)
  *********************************************************************/
 s32 App_Server_Register( void )
 {
-	APP_DEBUG("register to server\n");
 
 	gServer_State = SERVER_STATE_UNKNOW;
 
@@ -726,9 +729,13 @@ s32 App_Server_Register( void )
 	gServer_State = SERVER_STATE_REGISTERING;
 	gRegister_Count++;
 
-	Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, 20);
-	
-	return APP_RET_OK;
+	ret = Server_Msg_Send(&m_Server_Msg_Head, 16, msg_body, 20);
+	if(ret == APP_RET_OK){
+		APP_DEBUG("send App_Server_Register OK\n");
+  	} else {
+		APP_ERROR("send App_Server_Register FAIL,errorCode = %d\n",ret);
+  	}
+	return ret;
 }
 
 /*********************************************************************
@@ -742,7 +749,7 @@ s32 App_Server_Register( void )
  *********************************************************************/
 void App_Heartbeat_To_Server( void )
 {
-	APP_DEBUG("heartbeat to server\n");
+	s32 ret;
 	
     //head
 	Server_Msg_Head m_Server_Msg_Head;
@@ -767,7 +774,12 @@ void App_Heartbeat_To_Server( void )
 	Ql_memset(msg_body+12,0xff,8);
 	  
 	//pack msg
-	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,20);
+	ret = Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,20);
+	if(ret == APP_RET_OK){
+		APP_DEBUG("send App_Heartbeat_To_Server OK\n");
+  	} else {
+		APP_ERROR("send App_Heartbeat_To_Server FAIL,errorCode = %d\n",ret);
+  	}
   
   	return;
 }
@@ -820,7 +832,7 @@ void App_Heartbeat_Check(void)
 void App_Report_Parameter(u16 msg_id, u16 msg_number)
 {
     u16 j;
-    APP_DEBUG("app report parameter\n");
+    s32 ret;
     
     //head
 	Server_Msg_Head m_Server_Msg_Head;
@@ -928,8 +940,13 @@ void App_Report_Parameter(u16 msg_id, u16 msg_number)
 
 	m_Server_Msg_Head.msg_length = j + 1;
 	//pack msg
-	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
-
+	ret = Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
+	if(ret == APP_RET_OK){
+		APP_DEBUG("send App_Report_Parameter OK\n");
+  	} else {
+		APP_ERROR("send App_Report_Parameter FAIL,errorCode = %d\n",ret);
+  	}
+	
 	Ql_MEM_Free(msg_body);
 	msg_body = NULL;
   
@@ -1098,7 +1115,7 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
  *********************************************************************/
 void App_Report_Location( void )
 {
-	APP_DEBUG("App_Report_Location\n");
+	s32 ret;
 	GpsLocation gpsLocation;
 
 	gpsLocation.latitude  = TOBIGENDIAN32(gGpsLocation.latitude);
@@ -1149,7 +1166,12 @@ void App_Report_Location( void )
 	Ql_memcpy(msg_body+46,&rssi,4);
 
 	//pack msg
-	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
+	ret = Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
+	if(ret == APP_RET_OK){
+		APP_DEBUG("send App_Report_Location OK\n");
+  	} else {
+		APP_ERROR("send App_Report_Location FAIL,errorCode = %d\n",ret);
+  	}
 	Ql_MEM_Free(msg_body);
 	msg_body = NULL;
 }
@@ -1402,7 +1424,13 @@ void App_Ropert_Alarm(u32 alarm_flag)
 	Ql_memcpy(msg_body+46,&rssi,4);
 
 	//pack msg
-	Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
+	ret = Server_Msg_Send(&m_Server_Msg_Head,16,msg_body,m_Server_Msg_Head.msg_length);
+	if(ret == APP_RET_OK){
+		APP_DEBUG("send App_Ropert_Alarm: %d OK\n",alarm_flag);
+  	} else {
+		APP_ERROR("send App_Ropert_Alarm: %d FAIL,errorCode = %d\n",ret);
+  	}
+  	
 	Ql_MEM_Free(msg_body);
 	msg_body = NULL;
 
