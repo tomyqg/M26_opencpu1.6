@@ -366,10 +366,10 @@ static float radian(float d)
 
 static float get_distance(float lat1, float lng1, float lat2, float lng2)  
 {  
-     float radLat1 = radian(lat1);  
-     float radLat2 = radian(lat2);  
+     float radLat1 = radian(lat1/1000000);  
+     float radLat2 = radian(lat2/1000000);  
      float a = radLat1 - radLat2;  
-     float b = radian(lng1) - radian(lng2);  
+     float b = radian(lng1/1000000) - radian(lng2/1000000);
 	 
      float dst = 2 * asin((sqrt(pow(sin(a / 2), 2) + cos(radLat1) * cos(radLat2) * pow(sin(b / 2), 2) )));  
      dst = dst * EARTH_RADIUS;
@@ -469,10 +469,12 @@ static void gps_reader_parse( GpsReader* r )
 			{
 				r->callback();
 				r->flag = FALSE;
+				APP_DEBUG("bearing report location bearing=%d\n",ABS(mbearing));
 				return;
 			}
 
 			float distance = get_distance(r->fix.latitude, r->fix.longitude, gGpsLocation.latitude, gGpsLocation.longitude);
+			APP_DEBUG("distance report location distance=%d\n",distance);
 			if(distance >= mSys_config.gLocation_Policy.distance_Interval && r->callback)
 			{
 				r->callback();
