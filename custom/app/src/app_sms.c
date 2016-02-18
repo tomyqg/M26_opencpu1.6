@@ -307,7 +307,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     }
     else if ( !Ql_memcmp(tok.p, "UPGRADE", 7) && cmd_length == 7 && tzer[0].count == 5)
     {
-		static u8* rMsg = "SET UPGRADE OK";
+		static u8* rMsg = "UPGRADE OK";
 		u8  m_FileName[20];
 		u8  m_SrvADDR[20];
 		u32 m_SrvPort;
@@ -535,7 +535,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     }
     else if ( !Ql_memcmp(tok.p, "SLEEP", 5) && cmd_length == 5 && tzer[0].count == 2)
     {
-		static u8* rMsg = "SET SLEEP OK";
+		static u8* rMsg = "SLEEP OK";
 		APP_DEBUG("set SLEEP\n");
 
 		s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
