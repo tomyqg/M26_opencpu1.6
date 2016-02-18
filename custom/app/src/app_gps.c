@@ -461,18 +461,22 @@ static void gps_reader_parse( GpsReader* r )
 		APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
     			   r->fix.latitude,r->fix.longitude,r->fix.altitude,r->fix.speed,r->fix.bearing);
 		#endif
-		if(mSys_config.gLocation_Policy.location_policy == DISTANCE_REPORT_LOCATION || 
-		   mSys_config.gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+
+		if(mSys_config.gLocation_Policy.location_policy != STOP_REPORT_LOCATION)
 		{
             s32 mbearing = gGpsLocation.bearing - r->fix.bearing;
+            APP_DEBUG("bearing report location bearing=%d\n",ABS(mbearing));
 			if(ABS(mbearing) > mSys_config.gLocation_Policy.bearing_Interval)
 			{
 				r->callback();
 				r->flag = FALSE;
-				APP_DEBUG("bearing report location bearing=%d\n",ABS(mbearing));
 				return;
 			}
-
+		}	
+		
+		if(mSys_config.gLocation_Policy.location_policy == DISTANCE_REPORT_LOCATION || 
+		   mSys_config.gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
+		{
 			float distance = get_distance(r->fix.latitude, r->fix.longitude, gGpsLocation.latitude, gGpsLocation.longitude);
 			APP_DEBUG("distance report location distance=%d\n",distance);
 			if(distance >= mSys_config.gLocation_Policy.distance_Interval && r->callback)
