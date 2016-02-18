@@ -496,9 +496,13 @@ static void gps_reader_parse( GpsReader* r )
 
 void GpsLocation_CallBack(void)
 {
-	if(mGpsReader[0].fix.speed == 0 && !gMotional && mSys_config.gLocation_Policy.static_policy == 1)
-		return;
-		
+	if(mSys_config.gLocation_Policy.static_policy == 1)
+	{
+		if(!gMotional && mGpsReader[0].fix.speed <= 7)
+			return;
+		else if (mGpsReader[0].fix.speed == 0)
+			return;
+	}
 	//report to gprs task
 	Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPS_REP_LOCATION, 0, 0);
 }
