@@ -446,35 +446,33 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         
         for(u8 i = 2; i < tzer[0].count; i++)
         {
-			tok = tokenizer_get(tzer, 2);
+			tok = tokenizer_get(tzer, i);
 			if(!Ql_memcmp(tok.p, "RM:", 3))
 			{
-				mSys_config.gLocation_Policy.location_policy = Ql_atoi(tok.end);
+				mSys_config.gLocation_Policy.location_policy = Ql_atoi(tok.p+3);
 				APP_DEBUG("paramconfig RM=%d\n",mSys_config.gLocation_Policy.location_policy);
 			}
 			else if(!Ql_memcmp(tok.p, "SR:", 3))
 			{
-				mSys_config.gLocation_Policy.static_policy = Ql_atoi(tok.end);
+				mSys_config.gLocation_Policy.static_policy = Ql_atoi(tok.p+3);
 				APP_DEBUG("paramconfig SR=%d\n",mSys_config.gLocation_Policy.static_policy);
 			}
 			else if(!Ql_memcmp(tok.p, "TIMER:", 6))
 			{
-				mSys_config.gLocation_Policy.time_Interval = Ql_atoi(tok.end);
+				mSys_config.gLocation_Policy.time_Interval = Ql_atoi(tok.p+6);
 				APP_DEBUG("paramconfig TIMER=%d\n",mSys_config.gLocation_Policy.time_Interval);
 			}
 			else if(!Ql_memcmp(tok.p, "DIST:", 5))
 			{
-				mSys_config.gLocation_Policy.distance_Interval = Ql_atoi(tok.end);
+				mSys_config.gLocation_Policy.distance_Interval = Ql_atoi(tok.p+5);
 				APP_DEBUG("paramconfig DIST=%d\n",mSys_config.gLocation_Policy.distance_Interval);
 			}
 			else if(!Ql_memcmp(tok.p, "DIR:", 4))
 			{
-				mSys_config.gLocation_Policy.bearing_Interval = Ql_atoi(tok.end);
+				mSys_config.gLocation_Policy.bearing_Interval = Ql_atoi(tok.p+4);
 				APP_DEBUG("paramconfig DIR=%d\n",mSys_config.gLocation_Policy.bearing_Interval);
 			}
         }
-        
-        return;
     }
     else if ( !Ql_memcmp(tok.p, "WHERE", 5) && cmd_length == 5 && tzer[0].count == 2)
     {
