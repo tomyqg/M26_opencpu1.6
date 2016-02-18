@@ -322,23 +322,12 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 			n = tok.end - tok.p;
 			Ql_memcpy(m_SrvADDR, tok.p, n);
             m_SrvADDR[n] = '\0';
-
-            //Convert IP format
-        	u8 m_ipAddress[4];
-        	Ql_memset(m_ipAddress,0,5);
-        	s32 ret = Ql_IpHelper_ConvertIpAddr(m_SrvADDR, (u32 *)m_ipAddress);
-        	if (SOC_SUCCESS != ret) // ip address is xxx.xxx.xxx.xxx
-        	{
-            	APP_ERROR("<-- Fail to convert IP Address --> \r\n");
-        	}
             
 			tok = tokenizer_get(tzer, 4);
 			m_SrvPort = Ql_atoi(tok.p);
 			
 			u8 URL_Buffer[100];
-            Ql_sprintf(URL_Buffer, "http://%d.%d.%d.%d:%d/%s",
-            				m_ipAddress[0],m_ipAddress[1],m_ipAddress[2],m_ipAddress[3],
-            				m_SrvPort,m_FileName);
+            Ql_sprintf(URL_Buffer, "http://%s:%d/%s",m_SrvADDR,m_SrvPort,m_FileName);
             APP_DEBUG("\r\n<-- URL:%s-->\r\n",URL_Buffer);
     		ST_GprsConfig GprsConfig;
     		Ql_memcpy(&GprsConfig,&m_GprsConfig,sizeof(ST_GprsConfig));
@@ -346,7 +335,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     		Ql_strcpy(GprsConfig.apnPasswd,mSys_config.apnPasswd);
     		Ql_strcpy(GprsConfig.apnUserId,mSys_config.apnUserId);
     		
-            ret = Ql_FOTA_StartUpgrade(URL_Buffer, &m_GprsConfig, NULL);
+            s32 ret = Ql_FOTA_StartUpgrade(URL_Buffer, &m_GprsConfig, NULL);
             if(ret != SOC_SUCCESS)
             {
 				APP_ERROR("\r\n<-- ota start upgrade fail ret:%d-->\r\n",ret);
