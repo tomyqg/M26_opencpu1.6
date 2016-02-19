@@ -333,6 +333,8 @@ static s32 gps_reader_update_altitude( GpsReader*  r, Token altitude, Token unit
         return -1;
 
     r->fix.altitude = str2float(tok.p, tok.end);
+    if(r->fix.altitude < 0)
+    	r->fix.altitude = 0;
     return 0;
 }
 
