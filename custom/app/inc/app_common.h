@@ -44,7 +44,7 @@ extern s8 hw_sw_version[2][4];
 #define NETWOEK_STATE_TIMER_PERIOD         30000   //30s
 
 #define MOTIONAL_STATIC_TIMER_ID           (TIMER_ID_USER_START + 106)
-#define MOTIONAL_STATIC_TIMER_PERIOD       30000   //30s
+#define MOTIONAL_STATIC_TIMER_PERIOD       6000   //6s
 
 typedef enum { 
 	//gprs 

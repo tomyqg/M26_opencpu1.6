@@ -501,8 +501,6 @@ void GpsLocation_CallBack(void)
 	{
 		if(!gMotional && mGpsReader[0].fix.speed <= 7)
 			return;
-		else if (mGpsReader[0].fix.speed == 0)
-			return;
 	}
 	//report to gprs task
 	Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPS_REP_LOCATION, 0, 0);
