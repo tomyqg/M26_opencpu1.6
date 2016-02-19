@@ -39,6 +39,7 @@
 #include "app_common.h"
 #include "app_gps.h"
 #include "app_gsensor.h"
+#include "app_ble.h"
 
 #define SOC_RECV_BUFFER_LEN   1460
 #define SRVADDR_BUFFER_LEN    100
@@ -751,7 +752,7 @@ void update_clk_alarm(ST_Time* dateTime)
 				APP_DEBUG("power off:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
 			}
 		} else if(alarm_on_off == 2) {
-			//set power up alarm, receive here,system will power off after 5s!!
+			//set power up alarm, receive here,system will power off!!
 			u64 up_time_seconds = current_seconds + gParmeter.parameter_8[HWJ_SLEEP_TIME_INDEX].data*60;
 			if(up_time_seconds >= qst_seconds && qst_seconds > current_seconds)
 			{
@@ -770,6 +771,11 @@ void update_clk_alarm(ST_Time* dateTime)
 	APP_DEBUG("alarm:year=%d,month=%d,day=%d,hour=%d,min=%d,sec=%d,power=%d\n",
 			   dateTime->year,dateTime->month,dateTime->day,dateTime->hour,dateTime->minute,dateTime->second,alarm_on_off);
 	dateTime->year = dateTime->year - 2000;
+
+	gsm_up_time[0] = dateTime->hour;
+	gsm_up_time[1] = dateTime->minute;
+	gsm_up_time[2] = dateTime->second;
+	
 	if(alarm_on_off == 0){
 		if(gsm_wake_sleep)
 			iRet = RIL_Alarm_Add(dateTime, 1, 0);
@@ -781,8 +787,9 @@ void update_clk_alarm(ST_Time* dateTime)
 				APP_ERROR("add alarm error ret:%d\n",iRet);
 				return;
 			}
-			APP_DEBUG("system will power down after 1s\n");
-			Ql_Sleep(1000);
+			APP_DEBUG("system will power down after 5s\n");
+			Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GSM_STATE, 0, 0);
+			Ql_Sleep(5000);
 			Ql_PowerDown(1);
 		}	
 	}else if(alarm_on_off == 1){
@@ -794,8 +801,9 @@ void update_clk_alarm(ST_Time* dateTime)
 			APP_ERROR("add alarm error ret:%d\n",iRet);
 			return;
 		}
-		APP_DEBUG("system will power down after 1s\n");
-		Ql_Sleep(1000);
+		APP_DEBUG("system will power down after 5s\n");
+		Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GSM_STATE, 0, 0);
+		Ql_Sleep(5000);
 		Ql_PowerDown(1);
 	}
 	

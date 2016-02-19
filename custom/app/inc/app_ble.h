@@ -96,6 +96,7 @@ typedef struct
  * VARIABLES
  */
 extern u32 battery;
+extern u8 gsm_up_time[3];
  
 /*********************************************************************
  * FUNCTIONS

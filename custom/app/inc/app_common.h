@@ -49,6 +49,7 @@ extern s8 hw_sw_version[2][4];
 typedef enum { 
 	//gprs 
 	MSG_ID_GPRS_STATE = MSG_ID_USER_START+0x100,
+	MSG_ID_GSM_STATE,
 	MSG_ID_IMEI_IMSI_OK,
 	MSG_ID_NETWORK_STATE,
 	MSG_ID_ALARM_REP,

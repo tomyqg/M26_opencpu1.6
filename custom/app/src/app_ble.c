@@ -63,6 +63,7 @@ u32 battery = 50;
 u32 ble_state;
 u8 ble_data_buf[BLE_SERIAL_RX_BUFFER_LEN];
 u8 ble_data_buf_len = 0;
+u8 gsm_up_time[3] = {0,0,0};
 
 /*********************************************************************
  * FUNCTIONS
@@ -191,6 +192,11 @@ void proc_subtask_ble(s32 TaskId)
 				} else {
 					BLE_Send_GSM_State(STATE_GSM_NO_GPS_FIX);
 				}
+                break;
+            }
+            case MSG_ID_GSM_STATE:
+            {
+				BLE_Send_GSM_State(STATE_GSM_POWEROFF_SLEEP);
                 break;
             }
             default:
@@ -565,17 +571,18 @@ s32 BLE_Send_Reboot_Paired(void)
 
 s32 BLE_Send_GSM_State(u8 state)
 {
-	u8 msg_buf[10];
-    u16 length = 10;
+	u8 msg_buf[6];
+    u16 length = 6;
     s32 ret;
  
     msg_buf[0] = TOBLE_GSM_STATUS_ID;
-    msg_buf[1] = 7;
+    msg_buf[1] = 4;
     //state
 	msg_buf[2] = state;
 	//time
-	msg_buf[3] = 1;
-	msg_buf[4] = 2;
+	msg_buf[3] = DECTOBCD(gsm_up_time[0]);
+	msg_buf[4] = DECTOBCD(gsm_up_time[1]);
+	msg_buf[5] = DECTOBCD(gsm_up_time[2]);
 	
     //Send msg
     ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
