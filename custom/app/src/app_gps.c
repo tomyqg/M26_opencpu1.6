@@ -423,6 +423,7 @@ static void gps_reader_parse( GpsReader* r )
         Token  tok_altitude      = gps_tokenizer_get(tzer,9);
         Token  tok_altitudeUnits = gps_tokenizer_get(tzer,10);
 
+		r->flag = FALSE;
         gps_reader_update_latlong(r,  tok_latitude,
                                       tok_latitudeHemi.p[0],
                                       tok_longitude,
@@ -436,9 +437,9 @@ static void gps_reader_parse( GpsReader* r )
         Token tok_bearing = gps_tokenizer_get(tzer,8);  
        
         if (tok_fixStatus.p[0] == 'A'){
-        	r->flag = TRUE;
             gps_reader_update_bearing( r, tok_bearing );
             gps_reader_update_speed ( r, tok_speed );
+            r->flag = TRUE;
             //r->fix.speed = 130;
             if(r->fix.speed > gParmeter.parameter_8[GPS_SPEED_UP_LIMITES_INDEX].data)
             {
