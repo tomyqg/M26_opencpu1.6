@@ -56,6 +56,8 @@
  */
 extern u8 g_imei[8];
 extern u32 battery;
+extern s32 gGprsState;
+extern bool gps_fix_status;
 
 /*********************************************************************
  * FUNCTIONS
@@ -508,13 +510,44 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     else if ( !Ql_memcmp(tok.p, "STATUS", 6) && cmd_length == 6 && tzer[0].count == 2)
     {
 		u8 rMsg[100];
+		u8 statusMsg[][12] = {
+			"NORMAL",
+			"EXCEPTIONAL",
+			"FIXED",
+			"UNFIXED",
+			"HIGH",
+			"MIDDLE",
+			"LOW"
+		};
+
+		u8 a = 1,b = 6,c = 3,d = 6;
+		
+		if(gGprsState == 1)
+			a = 0;
+
+		//RSSI
+		u32 rssi,ber;
+    	RIL_NW_GetSignalQuality(&rssi, &ber);
+    	if(rssi > 10 && rssi <= 20)
+			b = 5;
+		else if(rssi >20 && rssi <= 31)
+			b = 4;
+
+		if(gps_fix_status)
+			c = 2;
+
+		if(gGpsLocation.starInusing >=5 && gGpsLocation.starInusing < 7)
+			d = 5;
+		else if(gGpsLocation.starInusing >= 7)
+			d = 4;
+			
 		Ql_sprintf(rMsg,"BATTERY:%d\%%\r\n\GPRS:%s\r\nGSM SIGNAL:%s\r\nGPS:%s\r\nGPS SIGNAL:%s\r\n",
 						 battery,
-						 "NORMAL",
-						 "MIDDLE",
-						 "FIXED",
-						 "MIDDLE");
-		APP_DEBUG("get STATUS\n");
+						 statusMsg[a],
+						 statusMsg[b],
+						 statusMsg[c],
+						 statusMsg[d]);
+		APP_DEBUG("get STATUS, rssi = %d, starInusing = %d\n",rssi,gGpsLocation.starInusing);
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {

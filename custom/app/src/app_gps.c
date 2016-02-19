@@ -57,7 +57,7 @@
 static char RxBuf_GPS[GPS_SERIAL_RX_BUFFER_LEN];
 GpsReader  mGpsReader[1];
 bool gps_info_out = FALSE;
-static bool gps_fix_status = FALSE;
+bool gps_fix_status = FALSE;
 
 /*********************************************************************
  * FUNCTIONS
@@ -443,7 +443,7 @@ static void gps_reader_parse( GpsReader* r )
             gps_reader_update_bearing( r, tok_bearing );
             gps_reader_update_speed ( r, tok_speed );
             r->flag = TRUE;
-            //r->fix.speed = 130;
+            APP_DEBUG("gps speed = %d\n",r->fix.speed);
             if(r->fix.speed > gParmeter.parameter_8[GPS_SPEED_UP_LIMITES_INDEX].data)
             {
             	//report to gprs task

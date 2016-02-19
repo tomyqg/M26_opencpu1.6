@@ -53,7 +53,7 @@ static u8 m_RxBuf_Uart1[SERIAL_RX_BUFFER_LEN];
 static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, bool level, void* customizedPara);
 static s32 ATResponse_Handler(char* line, u32 len, void* userData);
 static s32 GetIMEIandIMSI(void);
-static s32 gGprsState    = 0;   // GPRS state, 0= not REGISTERED, 1=REGISTERED
+s32 gGprsState    = 0;   // GPRS state, 0= not REGISTERED, 1=REGISTERED
 
 char userdata[20];
 u8 g_imei[8],g_imsi[8];
