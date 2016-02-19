@@ -60,14 +60,14 @@ static void callback_eint_handle(Enum_PinName eintPinName, Enum_PinLevel pinLeve
     //mask the specified EINT pin.
     Ql_EINT_Mask(pinname);
     
-    APP_DEBUG("<--Eint callback: pin(%d), levle(%d)-->\r\n",eintPinName,pinLevel);
+    //APP_DEBUG("<--Eint callback: pin(%d), levle(%d)-->\r\n",eintPinName,pinLevel);
     //ret = Ql_EINT_GetLevel(eintPinName);
     //APP_DEBUG("<--Get Level, pin(%d), levle(%d)-->\r\n",eintPinName,ret);
     if(pinLevel == GSENSOR_I2C_INT_ACTIVE)
     {
 		motional_count++;
 		motional = TRUE;
-		APP_DEBUG("motional_count = %d\n",motional_count);
+		//APP_DEBUG("motional_count = %d\n",motional_count);
 		if(motional_count >= 5)
 		{
 			motional_count = 0;
@@ -87,7 +87,7 @@ void Timer_Handler_Gsensor(u32 timerId, void* param)
     {
 		motional_count = 0;
 		static_count++;
-		APP_DEBUG("timer handler for gsensor,static_count = %d\n",static_count);
+		//APP_DEBUG("timer handler for gsensor,static_count = %d\n",static_count);
 		if(static_count >= 10 && motional == FALSE)
 		{
 			gMotional = FALSE;

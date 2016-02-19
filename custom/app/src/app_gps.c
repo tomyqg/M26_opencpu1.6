@@ -430,6 +430,7 @@ static void gps_reader_parse( GpsReader* r )
                                       tok_longitudeHemi.p[0]);
         gps_reader_update_starInusing(r, tok_starInusing);
         gps_reader_update_altitude(r, tok_altitude, tok_altitudeUnits);
+        return;
     }   
 	else if ( !Ql_memcmp(tok.p, "RMC", 3) ) {
         Token tok_fixStatus = gps_tokenizer_get(tzer,2);  
@@ -479,7 +480,7 @@ static void gps_reader_parse( GpsReader* r )
 		   mSys_config.gLocation_Policy.location_policy == DIS_TIM_REPORT_LOCATION)
 		{
 			float distance = get_distance(r->fix.latitude, r->fix.longitude, gGpsLocation.latitude, gGpsLocation.longitude);
-			APP_DEBUG("distance report location distance=%d\n",distance);
+			APP_DEBUG("distance report location distance=%0.3fm\n",distance);
 			if(distance >= mSys_config.gLocation_Policy.distance_Interval && r->callback)
 			{
 				r->callback();

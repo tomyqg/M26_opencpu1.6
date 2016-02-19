@@ -802,7 +802,7 @@ void App_Heartbeat_Check(void)
   	}
   	else
   	{
-  		if(lost_hearbeat_rsp_count > gParmeter.parameter_8[LOST_HEARTBEAT_RSP_MAX_INDEX].data)
+  		if(lost_hearbeat_rsp_count >= gParmeter.parameter_8[LOST_HEARTBEAT_RSP_MAX_INDEX].data)
 		{
 			APP_DEBUG("lost hearbeat rsp count = %d\n",lost_hearbeat_rsp_count);
 	  		//hearbeat timeout
