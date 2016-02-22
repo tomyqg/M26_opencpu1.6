@@ -472,10 +472,10 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 		ST_Time datetime;
 		Ql_GetLocalTime(&datetime);
 		Ql_sprintf(rMsg,"Lat:N%f\r\nLon:E%f\r\nCourse:%d\r\nSpeed:%d\r\nLac:%d\r\nCellID:%d\r\nDateTime:%d-%02d-%02d %02d:%02d:%02d\r\n",
-						 ((double)gGpsLocation.latitude)/1000000,
-						 ((double)gGpsLocation.longitude)/1000000,
-						 gGpsLocation.bearing,
-						 gGpsLocation.speed,
+						 ((double)gValid_GpsLocation.latitude)/1000000,
+						 ((double)gValid_GpsLocation.longitude)/1000000,
+						 gValid_GpsLocation.bearing,
+						 gValid_GpsLocation.speed,
 						 TOSMALLENDIAN16_32(glac_ci.lac),
 						 TOSMALLENDIAN16_32(glac_ci.cell_id),
 						 datetime.year,datetime.month,datetime.day,

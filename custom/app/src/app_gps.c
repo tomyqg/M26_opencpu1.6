@@ -58,6 +58,14 @@ static char RxBuf_GPS[GPS_SERIAL_RX_BUFFER_LEN];
 GpsReader  mGpsReader[1];
 bool gps_info_out = FALSE;
 bool gps_fix_status = FALSE;
+GpsLocation gValid_GpsLocation = {
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+};
 
 /*********************************************************************
  * FUNCTIONS
@@ -465,6 +473,9 @@ static void gps_reader_parse( GpsReader* r )
 		APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
     			   r->fix.latitude,r->fix.longitude,r->fix.altitude,r->fix.speed,r->fix.bearing);
 		#endif
+
+		//save location 
+		Ql_memcpy(&gValid_GpsLocation, &r->fix, sizeof(GpsLocation));
 
 		if(mSys_config.gLocation_Policy.location_policy != STOP_REPORT_LOCATION)
 		{
