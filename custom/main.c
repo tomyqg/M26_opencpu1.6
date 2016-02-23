@@ -62,6 +62,7 @@ extern ST_GprsConfig m_GprsConfig;
 
 extern s32 RIL_SIM_GetIMEI(char* pIMEI, u32 pIMEILen);
 extern s32 RIL_SIM_GetIMSI(char* pIMSI, u32 pIMSILen);
+void Timer_Handler_LACCI(u32 timerId, void* param);
 
 s32  s_iMutexId = 0;
 
@@ -91,12 +92,20 @@ void proc_main_task(s32 taskId)
 
     s_iMutexId = Ql_OS_CreateMutex("MyMutex");
 
-    APP_DEBUG("OpenCPU: Customer Application\r\n");
+    APP_DEBUG("\r\nOpenCPU: Customer Application\r\n");
     do {
     	u8 rMsg[50];
     	Ql_sprintf(rMsg, "VERSION:%s\r\nBUILD:%s\r\n",VERSION,BUILD);
     	Ql_UART_Write((Enum_SerialPort)(UART_PORT1), (u8*)(rMsg), Ql_strlen((const char *)(rMsg)));
     } while(0);
+
+    //register a timer for lac and ci
+    ret = Ql_Timer_Register(GET_LACCI_TIMER_ID, Timer_Handler_LACCI, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",GET_LACCI_TIMER_ID,ret);
+    }
+    Ql_Timer_Start(GET_LACCI_TIMER_ID,GET_LACCI_TIMER_PERIOD,TRUE);
 
     // START MESSAGE LOOP OF THIS TASK
     while(TRUE)
@@ -183,7 +192,6 @@ void proc_main_task(s32 taskId)
 					if(gGprsState == 0)
 					{
                     	APP_DEBUG("<-- Module has registered to GPRS network status:%d-->\r\n",msg.param2);
-						APP_DEBUG("lac:0x%x,cell_id:0x%x\n",glac_ci.lac,glac_ci.cell_id);
 						gGprsState = 1;
                     	// Module has registered to GPRS network,app can start to activate PDP and program TCP
                     	Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
@@ -444,6 +452,17 @@ void MutextTest(int iTaskId)  //Two task Run this function at the same time
     Ql_Sleep(5000);                                                             
     APP_DEBUG("<--(TaskId=%d)Do not reboot with calling Ql_sleep-->\r\n", iTaskId);
     Ql_OS_GiveMutex(s_iMutexId);
+}
+
+void Timer_Handler_LACCI(u32 timerId, void* param)
+{
+	char buffer[30];
+    if(GET_LACCI_TIMER_ID == timerId)
+    {
+		RIL_SIM_LACCI(buffer, 30);
+		//APP_DEBUG("%s\n",buffer);
+		get_lac_cellid(buffer);
+    }
 }
 
 #endif // __CUSTOMER_CODE__

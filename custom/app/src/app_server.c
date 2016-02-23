@@ -1312,6 +1312,8 @@ void get_lac_cellid(char *s)
 		}	
 	}
 
+	APP_DEBUG("lac:0x%x,cell_id:0x%x\n",glac_ci.lac,glac_ci.cell_id);
+
 	glac_ci.lac = TOBIGENDIAN32(glac_ci.lac);
 	glac_ci.cell_id = TOBIGENDIAN32(glac_ci.cell_id);
 }
