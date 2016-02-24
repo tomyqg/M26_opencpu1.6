@@ -1379,12 +1379,12 @@ void App_Ropert_Alarm(u32 alarm_flag)
 
 	GpsLocation gpsLocation;
 
-	gpsLocation.latitude  = TOBIGENDIAN32(gGpsLocation.latitude);
-	gpsLocation.longitude = TOBIGENDIAN32(gGpsLocation.longitude);
-	gpsLocation.altitude = TOBIGENDIAN32(gGpsLocation.altitude);
-	gpsLocation.speed = TOBIGENDIAN32(gGpsLocation.speed);
-	gpsLocation.bearing = TOBIGENDIAN32(gGpsLocation.bearing);
-	gpsLocation.starInusing = TOBIGENDIAN32(gGpsLocation.starInusing);
+	gpsLocation.latitude  = TOBIGENDIAN32(gValid_GpsLocation.latitude);
+	gpsLocation.longitude = TOBIGENDIAN32(gValid_GpsLocation.longitude);
+	gpsLocation.altitude = TOBIGENDIAN32(gValid_GpsLocation.altitude);
+	gpsLocation.speed = TOBIGENDIAN32(gValid_GpsLocation.speed);
+	gpsLocation.bearing = TOBIGENDIAN32(gValid_GpsLocation.bearing);
+	gpsLocation.starInusing = TOBIGENDIAN32(gValid_GpsLocation.starInusing);
 		
 	//head
 	Server_Msg_Head m_Server_Msg_Head;

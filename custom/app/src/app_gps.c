@@ -452,6 +452,8 @@ static void gps_reader_parse( GpsReader* r )
             gps_reader_update_speed ( r, tok_speed );
             r->flag = TRUE;
             APP_DEBUG("gps speed = %d\n",r->fix.speed);
+            //save location 
+			Ql_memcpy(&gValid_GpsLocation, &r->fix, sizeof(GpsLocation));
             if(r->fix.speed > gParmeter.parameter_8[GPS_SPEED_UP_LIMITES_INDEX].data)
             {
             	//report to gprs task
@@ -473,9 +475,6 @@ static void gps_reader_parse( GpsReader* r )
 		APP_DEBUG("latitude = %d,longitude = %d,altitude  = %d,speed  = %d,bearing = %d\n",
     			   r->fix.latitude,r->fix.longitude,r->fix.altitude,r->fix.speed,r->fix.bearing);
 		#endif
-
-		//save location 
-		Ql_memcpy(&gValid_GpsLocation, &r->fix, sizeof(GpsLocation));
 
 		if(mSys_config.gLocation_Policy.location_policy != STOP_REPORT_LOCATION)
 		{
