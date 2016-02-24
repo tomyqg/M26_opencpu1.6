@@ -8,6 +8,8 @@
 #include "fota_ftp.h"
 #include "fota_http.h"
 #include "fota_main.h"
+#include "ril_sms.h"
+#include "ril.h"
 
 #ifdef __OCPU_FOTA_APP__  
 Upgrade_State  g_FOTA_State = FOTA_STATE_END;
@@ -26,6 +28,8 @@ static bool Fota_Upgrade_States(Upgrade_State state, s32 fileDLPercent);
 
 extern ST_ExtWatchdogCfg* Ql_WTD_GetWDIPinCfg(void);
 extern s32 Ql_GPRS_GetPDPCntxtState(u8 contextId);
+extern u8 g_imei[8];
+extern char aPhNum[RIL_SMS_PHONE_NUMBER_MAX_LEN];
 
 s32 Ql_FOTA_StartUpgrade(u8* url, ST_GprsConfig* apnCfg, Callback_Upgrade_State callbcak_UpgradeState_Ind)
 {
@@ -154,10 +158,19 @@ static bool Fota_Upgrade_States(Upgrade_State state, s32 fileDLPercent)
         case UP_UPGRADFAILED:
             UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Fota upgrade failed !!!! -->\r\n");
             FOTA_DBG_PRINT("<--Fota upgrade failed !!!! -->\r\n");
-            FOTA_DBG_PRINT("system will reboot after 3s!!");
-			Ql_Sleep(3000);
+            u8 buffer[100];
+			Ql_sprintf(buffer,"%02x%02x%02x%02x%02x%02x%02x%02x,UPGRADE FAIL!",
+					g_imei[0],g_imei[1],g_imei[2],g_imei[3],
+					g_imei[4],g_imei[5],g_imei[6],g_imei[7]);
+			s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,buffer,Ql_strlen(buffer),NULL);
+        	if (iResult != RIL_AT_SUCCESS)
+        	{
+        		FOTA_DBG_PRINT("RIL_SMS_SendSMS_Text FAIL!\r\n");
+        	}
+            FOTA_DBG_PRINT("system will reboot after 5s!!");
+			Ql_Sleep(5000);
 			Ql_Reset(0);
-            break;   
+            break;
 
 
         case UP_SYSTEM_REBOOT: // If fota upgrade is in this case, this function you can  return false or true, Notes:  
@@ -165,8 +178,17 @@ static bool Fota_Upgrade_States(Upgrade_State state, s32 fileDLPercent)
             // this case is important. return TRUE or FALSE, you can design by youself.
             UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Return TRUE, system will reboot, and upgrade  -->\r\n");
             UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Return FLASE, you must invoke Ql_FOTA_Update()  for upgrade !!!-->\r\n");
-            FOTA_DBG_PRINT("<--Return TRUE, system will reboot, and upgrade  -->\r\n");
-            FOTA_DBG_PRINT("<--Return FLASE, you must invoke Ql_FOTA_Update()  for upgrade !!!-->\r\n");
+            FOTA_DBG_PRINT("<--upgrade OK!!!system will reboot!!-->\r\n");
+            u8 buffer[100];
+			Ql_sprintf(buffer,"%02x%02x%02x%02x%02x%02x%02x%02x,UPGRADE SUCCESS!",
+					g_imei[0],g_imei[1],g_imei[2],g_imei[3],
+					g_imei[4],g_imei[5],g_imei[6],g_imei[7]);
+			s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,buffer,Ql_strlen(buffer),NULL);
+        	if (iResult != RIL_AT_SUCCESS)
+        	{
+        		FOTA_DBG_PRINT("RIL_SMS_SendSMS_Text FAIL!\r\n");
+        	}
+			Ql_Sleep(3000);
             return TRUE;// if return TRUE  the module will reboot ,and fota upgrade complete.
             //return FALSE; // if return False,  you must invoke Ql_FOTA_Update()  function before you want to reboot the system.
         }

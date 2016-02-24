@@ -58,6 +58,7 @@ extern u8 g_imei[8];
 extern u32 battery;
 extern s32 gGprsState;
 extern bool gps_fix_status;
+char aPhNum[RIL_SMS_PHONE_NUMBER_MAX_LEN];
 
 /*********************************************************************
  * FUNCTIONS
@@ -153,7 +154,6 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
     u8 n = 0;
     Tokenizer tzer[1];
     Token tok;
-    char aPhNum[RIL_SMS_PHONE_NUMBER_MAX_LEN] = {0,};
 
     Ql_strcpy(aPhNum, pDeliverTextInfo->oa);
     tokenizer_init(tzer, pDeliverTextInfo->data, pDeliverTextInfo->data + pDeliverTextInfo->length);
@@ -307,7 +307,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         }
         return;
     }
-    else if ( !Ql_memcmp(tok.p, "UPGRADE", 7) && cmd_length == 7 && tzer[0].count == 5)
+    else if ( !Ql_memcmp(tok.p, "UPGRADE", 7) && cmd_length == 7)
     {
 		static u8* rMsg = "UPGRADE OK";
 		u8  m_FileName[20];
@@ -347,12 +347,27 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
             if(ret != SOC_SUCCESS)
             {
 				APP_ERROR("\r\n<-- ota start upgrade fail ret:%d-->\r\n",ret);
-				APP_ERROR("system will reboot after 3s!!");
-				Ql_Sleep(3000);
+				u8 buffer[100];
+				Ql_sprintf(buffer,"%02x%02x%02x%02x%02x%02x%02x%02x,UPGRADE FAIL!",
+						 g_imei[0],g_imei[1],g_imei[2],g_imei[3],
+						 g_imei[4],g_imei[5],g_imei[6],g_imei[7]);
+				s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,buffer,Ql_strlen(buffer),NULL);
+        		if (iResult != RIL_AT_SUCCESS)
+        		{
+        			APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
+        		}
+				APP_ERROR("system will reboot after 5s!!");
+				Ql_Sleep(5000);
 				Ql_Reset(0);
             }
             
 			APP_DEBUG("set upgrade,file:%s,server:%s,port:%d\n",m_FileName,m_SrvADDR,m_SrvPort);
+        } else {
+			s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,"SMS CMD FAIL",Ql_strlen("SMS CMD FAIL"),NULL);
+        	if (iResult != RIL_AT_SUCCESS)
+        	{
+        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
+        	}
         }
         return;
     }
