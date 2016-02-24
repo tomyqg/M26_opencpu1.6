@@ -101,10 +101,9 @@ s32 HTTP_FotaMain(u8 contextId, u8* URL)
     ret = Ql_GPRS_ActivateEx(contextId, TRUE);
     if(GPRS_PDP_SUCCESS != ret && GPRS_PDP_ALREADY != ret)
     {
-
-        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--GPRS ACTIVATE FAILD return(err =%d)-->\r\n", ret);
         FOTA_DBG_PRINT("<-- Fail to activate GPRS -->\r\n");
+        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         return -1;
     }
     UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--GPRS ACTIVATE successfully(%d) -->\r\n", ret);
@@ -114,9 +113,9 @@ s32 HTTP_FotaMain(u8 contextId, u8* URL)
     httpContext_p->socketid = Ql_SOC_CreateEx(contextId,SOC_TYPE_TCP, Ql_OS_GetActiveTaskId(), Httpcallback_SOC_func);
     if(httpContext_p->socketid <0)
     {
-        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Create socket  FAILD return(err =%d) -->\r\n", httpContext_p->socketid);
         FOTA_DBG_PRINT("<-- Fail to create socket -->\r\n");
+        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         return -1;
     }
     UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Create socket successfully(%d) -->\r\n", ret);
@@ -138,9 +137,9 @@ s32 HTTP_FotaMain(u8 contextId, u8* URL)
                                 httpContext_p->hostname, sizeof(httpContext_p->hostname), &httpContext_p->hostport);
     if(!httpDecodeURL)
     {
-        FOTA_UPGRADE_IND(UP_URLDECODEFAIL,0,retValue);
         UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--HTTP DECODE URL FAILED !!!-->\r\n");
         FOTA_DBG_PRINT("<-- HTTP DECODE URL FAILED !!! -->\r\n");
+        FOTA_UPGRADE_IND(UP_URLDECODEFAIL,0,retValue);
     }
 
     if(httpContext_p->hostip[0] != 0) // host name is ip string
@@ -159,9 +158,9 @@ s32 HTTP_FotaMain(u8 contextId, u8* URL)
         }
         else
         {
-            FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
             UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Ql_IpHelper_ConvertIpAddr FAILD(err =%d)--> \r\n", ret);
             FOTA_DBG_PRINT("<--Ql_IpHelper_ConvertIpAddr FAILD --> \r\n");
+            FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
             return -1;
         }
     }
@@ -170,8 +169,9 @@ s32 HTTP_FotaMain(u8 contextId, u8* URL)
          ret = Ql_IpHelper_GetIPByHostName(contextId, 0,httpContext_p->hostname,Callback_GetIpByHostName);
          if(SOC_WOULDBLOCK != ret && SOC_SUCCESS != ret)
          {
-            FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
             UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Ql_IpHelper_GetIPByHostName failed (err =%d)--> \r\n", ret);
+			FOTA_DBG_PRINT("<--Ql_IpHelper_GetIPByHostName FAILD --> \r\n");
+            FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
          }
          
          //to do http_GetImagefilefromServer function in the Callback_GetIpByHostName callback function                
@@ -222,9 +222,9 @@ void http_GetImagefilefromServer()
     ret = Ql_SOC_ConnectEx(httpContext_p->socketid, (u32)(httpContext_p->hostipAddres), httpContext_p->hostport, TRUE);
     if(SOC_SUCCESS != ret)
     {
-        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Ql_SOC_ConnectEx  failed (err =%d)-->\r\n", ret);
         FOTA_DBG_PRINT("<--Ql_SOC_ConnectEx  failed -->\r\n");
+        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         return; 
     }
 
@@ -244,9 +244,9 @@ void http_GetImagefilefromServer()
             Ql_MEM_Free((void *)(httpContext_p->http_socketdata_p));
             httpContext_p->http_socketdata_p = NULL;
         }
-        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--http_SendHttpGetHead  failed (err =%d)-->\r\n", ret);
         FOTA_DBG_PRINT("<--http_SendHttpGetHead  failed -->\r\n");
+        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         return;
     }
     
@@ -498,9 +498,9 @@ cuntinuerecvdata:
 s8 http_RecvHttpChunkedBody(s32 socketid, bool bContinue)
 {
     bool retValue;
-    FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue) ;
     UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Don't support http chuned encode !!-->\r\n");
     FOTA_DBG_PRINT("<--Don't support http chuned encode !!-->\r\n");
+    FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue) ;
     return -1;
 }
 s8 http_RecvHttpBody(s32 socketid, bool bContinue)
@@ -612,9 +612,10 @@ cuntinuerecvbodydata:
 			ret = Ql_FOTA_Update();  // set a flag then reboot the system , then the will  auto upgrade app.bin. 
             if(ret != 0)
             {
-                FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
+                
                 UPGRADE_APP_DEBUG(FOTA_DBGBuffer, "<--Ql_FOTA_Update(ret =%d)-->\r\n",ret);     
                 FOTA_DBG_PRINT("<-- Ql_FOTA_Finish failed -->\r\n");
+                FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
                 return -1;
 // fota update failed
             }
@@ -736,8 +737,8 @@ void Callback_GetIpByHostName(u8 contexId, u8 requestId, s32 errCode,  u32 ipAdd
     }
     else
     {
-        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Callback_GetIpByHostName  FAILD (err =%d)-->\r\n", errCode);
+        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
     }
 }
 
@@ -747,10 +748,10 @@ void http_TimerCallback(u32 timerId, void* param)
     HttpMainContext_t *httpContext_p  = &httpMainContext;
     if(HTTP_GETREADTIMERID == timerId)// http send get head ,but server no response. or read data form http server no response
     {
-        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Http server no response !!-->\r\n");
         FOTA_DBG_PRINT("<--Http server no response !!-->\r\n");
         Ql_Sleep(100);
+        FOTA_UPGRADE_IND(UP_UPGRADFAILED,0,retValue);
         httpContext_p->httpGettimerstate = FALSE;
         if(NULL != httpContext_p->http_socketdata_p)
         {

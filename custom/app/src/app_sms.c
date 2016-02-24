@@ -107,7 +107,7 @@ static void Hdlr_RecvNewSMS(u32 nIndex)
     pTextInfo = Ql_MEM_Alloc(sizeof(ST_RIL_SMS_TextInfo));
     if (NULL == pTextInfo)
     {
-        APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", sizeof(ST_RIL_SMS_TextInfo), __func__, __LINE__);
+        APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%d\r\n", sizeof(ST_RIL_SMS_TextInfo), __func__, __LINE__);
         return;
     }
     Ql_memset(pTextInfo, 0x00, sizeof(ST_RIL_SMS_TextInfo));
@@ -170,7 +170,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 			s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         	if (iResult != RIL_AT_SUCCESS)
         	{
-        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         	}
 		}	
 		return;
@@ -225,7 +225,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
     } 
     else if ( !Ql_memcmp(tok.p, "SERVER", 6) && cmd_length == 6 && tzer[0].count == 5)
@@ -283,14 +283,14 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         	s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         	if (iResult != RIL_AT_SUCCESS)
         	{
-        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         	}
 
         	//save
 			u8 *Buffer = (u8 *)Ql_MEM_Alloc(SRV_CONFIG_BLOCK_LEN);
     		if (Buffer == NULL)
   			{
-  	 			APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,SRV_CONFIG_BLOCK_LEN);
+  	 			APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%d\r\n", __func__, __LINE__,SRV_CONFIG_BLOCK_LEN);
      			return;
   			}
 			Ql_memcpy(Buffer+1, &mSrv_config, sizeof(mSrv_config));
@@ -315,6 +315,12 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 		u32 m_SrvPort;
 		if(tzer[0].count == 5)
 		{
+		    s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
+        	if (iResult != RIL_AT_SUCCESS)
+        	{
+        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
+        	}
+        	
 			tok = tokenizer_get(tzer, 2);
 			n = tok.end - tok.p;
 			Ql_memcpy(m_FileName, tok.p, n);
@@ -330,7 +336,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 			
 			u8 URL_Buffer[100];
             Ql_sprintf(URL_Buffer, "http://%s:%d/%s",m_SrvADDR,m_SrvPort,m_FileName);
-            APP_DEBUG("\r\n<-- URL:%s-->\r\n",URL_Buffer);
+            APP_DEBUG("<-- URL:%s-->\r\n",URL_Buffer);
     		ST_GprsConfig GprsConfig;
     		Ql_memcpy(&GprsConfig,&m_GprsConfig,sizeof(ST_GprsConfig));
     		Ql_strcpy(GprsConfig.apnName,mSys_config.apnName);
@@ -346,13 +352,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 				Ql_Reset(0);
             }
             
-			APP_DEBUG("set upgrade,file:%s,server:%s,port:%d\n",
-					   m_FileName,m_SrvADDR,m_SrvPort);
-        	s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
-        	if (iResult != RIL_AT_SUCCESS)
-        	{
-        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
-        	}
+			APP_DEBUG("set upgrade,file:%s,server:%s,port:%d\n",m_FileName,m_SrvADDR,m_SrvPort);
         }
         return;
     }
@@ -363,7 +363,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         Ql_Sleep(5000);
         Ql_Reset(0);
@@ -376,7 +376,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         Parameter_Buffer[0] = 0;
 		Ql_SecureData_Store(PAR_BLOCK, Parameter_Buffer, 1);
@@ -397,7 +397,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         return;
     }
@@ -421,7 +421,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         return;
     }
@@ -432,7 +432,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         
         for(u8 i = 2; i < tzer[0].count; i++)
@@ -484,7 +484,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         return;
     }
@@ -503,7 +503,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         return;
     }
@@ -551,7 +551,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         return;
     }
@@ -563,7 +563,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 		s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
 
         Ql_Sleep(30000);
@@ -585,7 +585,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
         return;
     }
@@ -606,7 +606,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 			s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg2,Ql_strlen(rMsg2),NULL);
         	if (iResult != RIL_AT_SUCCESS)
         	{
-        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        		APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         	}
         	return;
 		}	
@@ -614,7 +614,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         s32 iResult = RIL_SMS_SendSMS_Text(aPhNum, Ql_strlen(aPhNum),LIB_SMS_CHARSET_GSM,rMsg,Ql_strlen(rMsg),NULL);
         if (iResult != RIL_AT_SUCCESS)
         {
-        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%u\r\n",iResult);
+        	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
     } else {
     	APP_DEBUG("sms cmd not match\n");
@@ -625,7 +625,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 	u8 *Sys_Config_Buffer = (u8 *)Ql_MEM_Alloc(SYS_CONFIG_BLOCK_LEN);
     if (Sys_Config_Buffer == NULL)
   	{
-  	 	APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,SYS_CONFIG_BLOCK_LEN);
+  	 	APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%d\r\n", __func__, __LINE__,SYS_CONFIG_BLOCK_LEN);
      	return;
   	}
   	APP_DEBUG("sizeof(mSys_config) = %d\n", sizeof(mSys_config));
