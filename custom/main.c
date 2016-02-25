@@ -56,6 +56,7 @@ static s32 GetIMEIandIMSI(void);
 s32 gGprsState    = 0;   // GPRS state, 0= not REGISTERED, 1=REGISTERED
 
 char userdata[20];
+char lac_ci_buffer[30];
 u8 g_imei[8],g_imsi[8];
 extern Lac_CellID glac_ci;
 extern ST_GprsConfig m_GprsConfig;
@@ -456,12 +457,26 @@ void MutextTest(int iTaskId)  //Two task Run this function at the same time
 
 void Timer_Handler_LACCI(u32 timerId, void* param)
 {
-	char buffer[30];
     if(GET_LACCI_TIMER_ID == timerId)
     {
-		RIL_SIM_LACCI(buffer, 30);
-		//APP_DEBUG("%s\n",buffer);
-		get_lac_cellid(buffer);
+#if 1    
+		RIL_SIM_LACCI(lac_ci_buffer, 30);
+		APP_DEBUG("%s\n",lac_ci_buffer);
+		get_lac_cellid(lac_ci_buffer);
+#else
+		Ql_Sleep(2000);
+
+        //AT+CGREG=2
+		Ql_RIL_SendATCmd("AT+CGREG=2", Ql_strlen("AT+CGREG=2"),ATResponse_Handler, NULL,0);
+		Ql_Sleep(120);
+
+		//AT+CGREG?
+		Ql_RIL_SendATCmd("AT+CGREG?", Ql_strlen("AT+CGREG?"),ATResponse_Handler, NULL,0);
+		Ql_Sleep(150);
+
+		//AT+CGREG=1
+		Ql_RIL_SendATCmd("AT+CGREG=1", Ql_strlen("AT+CGREG=1"),ATResponse_Handler, NULL,0);
+#endif
     }
 }
 

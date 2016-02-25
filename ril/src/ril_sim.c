@@ -29,7 +29,7 @@
 #include "ql_memory.h"
 #include "ril.h"
 #include "ql_error.h"
-//#include "app_debug.h"
+#include "app_debug.h"
 
 /*********************************************************************
  * MACROS
@@ -204,8 +204,10 @@ static s32 ATResponse_LACCI_Handler(char* line, u32 len, void* param)
 		if (p2)
 		{
 			if( (p2 - p1 -2) == 25)
+			{
 				Ql_memcpy(strImsi, p1 + 2, p2 - p1 -2);
-				
+				APP_DEBUG("%.*s\n",p2 - p1 -2,strImsi);
+			}	
 			return RIL_ATRSP_CONTINUE;
 		}
 		else
