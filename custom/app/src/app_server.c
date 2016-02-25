@@ -255,7 +255,7 @@ u8 server_msg_calculate_checkcode(u8 *pBuffer, u16 length)
     {
       checkCode = checkCode ^ pBuffer[i];
     }
-    return checkCode;
+    return ((checkCode == MSG_IDENTIFIER)?00:checkCode);
 }
 
 /*********************************************************************
