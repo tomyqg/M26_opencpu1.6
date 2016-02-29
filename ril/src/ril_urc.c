@@ -227,7 +227,7 @@ static void OnURCHandler_Network(const char* strURC, void* reserved)
         p1 = Ql_strstr(strURC, "\r\n+CGREG: ");
         p1 += Ql_strlen("\r\n+CGREG: ");
         p2 = Ql_strstr(p1, "\r\n");
-        if (p1 && p2)
+        if (p1 && p2 && (p2-p1) <= 1)
         {
             Ql_memset(strTmp, 0x0, sizeof(strTmp));
             Ql_memcpy(strTmp, p1, p2 - p1);

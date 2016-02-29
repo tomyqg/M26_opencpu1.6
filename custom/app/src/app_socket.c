@@ -114,6 +114,8 @@ void proc_subtask_gprs(s32 TaskId)
     
     APP_DEBUG("gprs_subtask_entry,subtaskId = %d\n",TaskId);
 
+    keep_wake = FALSE;
+
     //register a timer for heartbeat
     ret = Ql_Timer_Register(HB_TIMER_ID, Timer_Handler_HB, NULL);
     if(ret <0)
@@ -729,12 +731,16 @@ void update_clk_alarm(ST_Time* dateTime)
 	dateTime->second=BCDTODEC(pBuffer[0]);
 	qst_seconds = Ql_Mktime(dateTime);
 	
-	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data == 0 || keep_wake)
+	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data == 0 || keep_wake == TRUE)
 	{
 		if(qst_seconds < current_seconds + 15)
-			dateTime->day++;
+		{
+			qst_seconds += 86400;
+			Ql_MKTime2CalendarTime(qst_seconds, dateTime);
+		}	
 		alarm_on_off = 0;
-		APP_DEBUG("alarm_on_off =%d,hwj_power_policy = 0\n",alarm_on_off);
+		APP_DEBUG("keep wake = %d\n",keep_wake);
+		APP_DEBUG("alarm_on_off =%d,hwj_power_policy = %d\n",alarm_on_off,gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data);
 	} else {
 		if(alarm_on_off == 1)
 		{
@@ -743,7 +749,10 @@ void update_clk_alarm(ST_Time* dateTime)
 			if(off_time_seconds >= qst_seconds && qst_seconds > current_seconds)
 			{
 				if(qst_seconds < current_seconds + 15)
-					dateTime->second += 15;
+				{
+					qst_seconds += 15;
+					Ql_MKTime2CalendarTime(qst_seconds, dateTime);
+				}
 				alarm_on_off = 0;
 				gsm_wake_sleep = TRUE;
 				APP_DEBUG("power off:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
@@ -757,7 +766,10 @@ void update_clk_alarm(ST_Time* dateTime)
 			if(up_time_seconds >= qst_seconds && qst_seconds > current_seconds)
 			{
 				if(qst_seconds < current_seconds + 15)
-					dateTime->second += 15;
+				{
+					qst_seconds += 15;
+					Ql_MKTime2CalendarTime(qst_seconds, dateTime);
+				}
 				alarm_on_off = 0;
 				gsm_wake_sleep = FALSE;
 				APP_DEBUG("power up:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
