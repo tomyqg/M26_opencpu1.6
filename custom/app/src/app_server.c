@@ -610,7 +610,7 @@ void Timer_Handler_HB(u32 timerId, void* param)
 			App_Heartbeat_Check();
 			gRegister_Count = 0;
 		}
-		else if(gServer_State == SERVER_STATE_REGISTERING && gRegister_Count < gParmeter.parameter_8[TCP_RETRY_TIMES_INDEX].data)
+		else if(gServer_State == SERVER_STATE_REGISTERING && gRegister_Count < 5)
 		{
 			App_Server_Register();
 		}
@@ -721,7 +721,7 @@ s32 App_Server_Register( void )
 
 	//start a timer,repeat=true;
 	s32 ret;
-	ret = Ql_Timer_Start(HB_TIMER_ID,gParmeter.parameter_8[RSP_TIMEOUT_INDEX].data*1000,FALSE);
+	ret = Ql_Timer_Start(HB_TIMER_ID,HB_TIMER_PERIOD,FALSE);
 	if(ret < 0)
 	{
 		APP_ERROR("\r\nfailed!!, Timer heartbeat start fail ret=%d\r\n",ret);        

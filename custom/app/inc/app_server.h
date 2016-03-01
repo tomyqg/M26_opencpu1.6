@@ -97,7 +97,7 @@ extern u8 gServer_State;
 
 //heartbeat
 #define HB_TIMER_ID         (TIMER_ID_USER_START + 100)
-#define HB_TIMER_PERIOD     30000   //30s
+#define HB_TIMER_PERIOD     20000   //20s
 
 //alarm
 #define ALARM_TIMER_ID         (TIMER_ID_USER_START + 102)
