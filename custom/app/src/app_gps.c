@@ -457,11 +457,13 @@ static void gps_reader_parse( GpsReader* r )
             if(r->fix.speed > gParmeter.parameter_8[GPS_SPEED_UP_LIMITES_INDEX].data)
             {
             	//report to gprs task
+            	APP_DEBUG("gps speed up %d\n",gParmeter.parameter_8[GPS_SPEED_UP_LIMITES_INDEX].data);
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_SPEED_UP, TRUE);
 			}
 			else if(gAlarm_Flag.alarm_flags & BV(ALARM_BIT_SPEED_UP))
 			{
 				//clean
+				APP_DEBUG("gps speed clean %d\n",(gAlarm_Flag.alarm_flags & BV(ALARM_BIT_SPEED_UP)));
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_SPEED_UP, FALSE);
 			}
 		}

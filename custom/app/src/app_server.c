@@ -1433,7 +1433,7 @@ void App_Ropert_Alarm(u32 alarm_flag)
 	if(ret == APP_RET_OK){
 		APP_DEBUG("send App_Ropert_Alarm: %d OK\n",TOBIGENDIAN32(alarm_flag));
   	} else {
-		APP_ERROR("send App_Ropert_Alarm: %d FAIL,errorCode = %d\n",ret);
+		APP_ERROR("send App_Ropert_Alarm: %d FAIL,errorCode = %d\n",TOBIGENDIAN32(alarm_flag),ret);
   	}
   	
 	Ql_MEM_Free(msg_body);

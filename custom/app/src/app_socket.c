@@ -78,7 +78,7 @@ static s32 m_remain_len = 0;     // record the remaining number of bytes in send
 static char *m_pCurrentPos = NULL; 
 //static u8 m_tcp_state = STATE_NW_GET_SIMSTATE;
 
-s32 g_PdpCntxtId = -1;
+s32 g_PdpCntxtId = 0;
 s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
 volatile Enum_TCPSTATE mTcpState = STATE_GPRS_UNKNOWN;
 u8 Parameter_Buffer[PAR_BLOCK_LEN] = {0};
@@ -276,18 +276,10 @@ void proc_subtask_gprs(s32 TaskId)
 s32 GPRS_Program(void)
 {
 	s32 ret;
-    s32 pdpCntxtId;
-	
-    //1. get PDP context id
-    pdpCntxtId = Ql_GPRS_GetPDPContextId();
-    if (GPRS_PDP_ERROR == pdpCntxtId)
-    {
-        APP_ERROR("No PDP context is available\r\n");
-        return pdpCntxtId;
-    }
+    APP_DEBUG("using pdp=%d\n",g_PdpCntxtId);
     
     //2. Register GPRS callback
-    ret = Ql_GPRS_Register(pdpCntxtId, &callback_gprs_func, NULL);
+    ret = Ql_GPRS_Register(g_PdpCntxtId, &callback_gprs_func, NULL);
     if (GPRS_PDP_SUCCESS != ret)
     {
         APP_ERROR("<-- Fail to register GPRS, cause=%d. -->\r\n", ret);
@@ -302,10 +294,10 @@ s32 GPRS_Program(void)
     Ql_strcpy(GprsConfig.apnUserId,mSys_config.apnUserId);
     APP_DEBUG("apnName:%s\napnUserId:%s\napnPasswd:%s\n",
     		GprsConfig.apnName,GprsConfig.apnUserId,GprsConfig.apnPasswd);
-    ret = Ql_GPRS_Config(pdpCntxtId, &GprsConfig);
+    ret = Ql_GPRS_Config(g_PdpCntxtId, &GprsConfig);
     if (GPRS_PDP_SUCCESS == ret)
     {
-        APP_DEBUG("<-- Configure PDP context -->\r\n");
+        APP_DEBUG("<-- Configure PDP context success -->\r\n");
     }else{
         APP_DEBUG("<-- Fail to configure GPRS PDP, cause=%d. -->\r\n", ret);
         return ret;
@@ -315,7 +307,7 @@ s32 GPRS_Program(void)
 	do
 	{
     	//4. Activate GPRS PDP context
-    	ret = Ql_GPRS_ActivateEx(pdpCntxtId, TRUE);
+    	ret = Ql_GPRS_ActivateEx(g_PdpCntxtId, TRUE);
     	if (ret == GPRS_PDP_SUCCESS)
     	{
         	mTcpState = STATE_GPRS_ACTIVATED;
@@ -336,7 +328,7 @@ s32 GPRS_Program(void)
 	}while(--i);	
 
 	if(i)
-		return pdpCntxtId;
+		return GPRS_PDP_SUCCESS;
 	else
 	{
 		return ret;
@@ -442,13 +434,12 @@ s32 GPRS_TCP_Program(void)
     if(mTcpState != STATE_GPRS_UNKNOWN)
     	return SOC_SUCCESS;
 
-    g_PdpCntxtId = GPRS_Program();
-    if(g_PdpCntxtId < 0)
+    ret = GPRS_Program();
+    if(ret < 0)
     {
 		APP_ERROR("<-- Fail to get pdpCntxtId. -->\r\n");
-		return g_PdpCntxtId;
+		return ret;
     }
-    APP_DEBUG("g_PdpCntxtId = %d\n",g_PdpCntxtId);
 
     ret = TCP_Program(g_PdpCntxtId);
 	if(ret != SOC_SUCCESS)
