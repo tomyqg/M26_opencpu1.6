@@ -221,7 +221,8 @@ void proc_subtask_gprs(s32 TaskId)
 					s32 ret = GPRS_TCP_Program();
 					if(ret != SOC_SUCCESS)
 					{
-						//need to reboot
+						Ql_Sleep(100);
+						Ql_Reset(0);
 					}
 				}
                 break;
