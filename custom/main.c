@@ -66,6 +66,7 @@ extern s32 RIL_SIM_GetIMSI(char* pIMSI, u32 pIMSILen);
 void Timer_Handler_LACCI(u32 timerId, void* param);
 
 s32  s_iMutexId = 0;
+s32 speed = 20;
 
 /************************************************************************/
 /*                                                                      */
@@ -404,6 +405,19 @@ static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, boo
 						if(Ql_isdigit(*pCh))
 						{
 							gps_info_out = (*pCh - '0')?TRUE:FALSE;
+                        	return;
+                        }
+                        return;
+                    }
+
+                    //speed
+                    if (Ql_strstr((char*)m_RxBuf_Uart1, "AT+SPEED="))
+                    {
+						pCh = m_RxBuf_Uart1 + 9;
+						if(Ql_isdigit(*pCh))
+						{
+							speed = Ql_atoi(pCh);
+							APP_DEBUG("set speed = %d\n",speed);
                         	return;
                         }
                         return;

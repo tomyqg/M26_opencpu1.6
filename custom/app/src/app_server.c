@@ -1342,7 +1342,8 @@ void update_alarm(u32 alarm_bit, u32 alarm)
 	else
 	{
 		gAlarm_Flag.alarm_flags = CLE_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
-		APP_DEBUG("clear alarm flags bit:%d, alarm_flags: 0x%x\n",alarm_bit,gAlarm_Flag.alarm_flags);
+		gAlarm_Flag.alarm_flags_bk= CLE_BIT(gAlarm_Flag.alarm_flags_bk, alarm_bit);
+		APP_DEBUG("clear alarm flags bit:%d, alarm_flags: 0x%x, alarm_flags_bk: 0x%x\n",alarm_bit,gAlarm_Flag.alarm_flags,gAlarm_Flag.alarm_flags);
 	}
 }
 

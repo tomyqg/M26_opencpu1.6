@@ -66,6 +66,7 @@ GpsLocation gValid_GpsLocation = {
 	0,
 	0
 };
+extern s32 speed;
 
 /*********************************************************************
  * FUNCTIONS
@@ -451,6 +452,7 @@ static void gps_reader_parse( GpsReader* r )
             gps_reader_update_bearing( r, tok_bearing );
             gps_reader_update_speed ( r, tok_speed );
             r->flag = TRUE;
+            //r->fix.speed = speed;
             APP_DEBUG("gps speed = %d\n",r->fix.speed);
             //save location 
 			Ql_memcpy(&gValid_GpsLocation, &r->fix, sizeof(GpsLocation));
