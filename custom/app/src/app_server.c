@@ -1287,9 +1287,12 @@ void get_lac_cellid(char *s)
 			glac_ci.lac += (u32)((*(p1+i) - '0')<<(16-i*4));
 		}
 		else
-		{   char c;
-			c = Ql_toupper(*(p1+i));
-			glac_ci.lac += (u32)((c - 'A')<<(16-i*4)) + 10;
+		{   
+			char c = *(p1+i);
+		    if( c >= 'a' && c <= 'f')
+				c = Ql_toupper(c);	
+			
+			glac_ci.lac += (u32)(((c - 'A') + 10)<<(16-i*4));
 		}	
 	}
 
@@ -1305,10 +1308,12 @@ void get_lac_cellid(char *s)
 			glac_ci.cell_id += (u32)((*(p1+i) - '0')<<(16-i*4));
 		}
 		else
-		{   char c = *(p1+i);
+		{   
+			char c = *(p1+i);
 		    if( c >= 'a' && c <= 'f')
-				c = Ql_toupper(*(p1+i));
-			glac_ci.cell_id += (u32)((c - 'A')<<(16-i*4)) + 10;
+				c = Ql_toupper(c);
+			
+			glac_ci.cell_id += (u32)(((c - 'A') + 10)<<(16-i*4));
 		}	
 	}
 

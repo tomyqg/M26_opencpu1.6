@@ -422,6 +422,13 @@ static void CallBack_UART_Hdlr(Enum_SerialPort port, Enum_UARTEventType msg, boo
                         }
                         return;
                     }
+
+                    
+                    if (Ql_strstr((char*)m_RxBuf_Uart1, "+CGREG: 2,1,"))
+                    {
+						//get_lac_cellid(m_RxBuf_Uart1);
+                        return;
+                    }
                     
                     ret = Ql_RIL_SendATCmd((char*)m_RxBuf_Uart1, totalBytes, ATResponse_Handler, NULL, 0);
                 }
