@@ -456,6 +456,57 @@ bool Server_Msg_Verify_Checkcode(u8 *pBuffer, u16 length)
     return TRUE;
 }
 
+static bool Ota_Upgrade_States(Upgrade_State state, s32 fileDLPercent)
+{
+    switch(state)
+    {
+        case UP_START:
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<-- Fota start to Upgrade -->\r\n");
+            FOTA_DBG_PRINT("<-- Fota start to Upgrade -->\r\n");
+            break;
+        case UP_FOTAINITFAIL:
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<-- Fota Init failed!! -->\r\n");
+            FOTA_DBG_PRINT("<-- Fota Init failed!! -->\r\n");
+            break;
+        case UP_CONNECTING:
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<-- connecting to the server-->\r\n");
+            FOTA_DBG_PRINT("<-- connecting to the server-->\r\n");
+            break; 
+        case UP_CONNECTED:
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<-- conneced to the server now -->\r\n");
+            FOTA_DBG_PRINT("<-- conneced to the server now -->\r\n");
+            break; 
+        case UP_GETTING_FILE:
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<-- getting the bin file (%d) -->\r\n", fileDLPercent);
+            FOTA_DBG_PRINT("<-- getting the bin file  -->\r\n");
+            break;     
+        case UP_GET_FILE_OK:
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--file down OK (%d) -->\r\n", fileDLPercent);
+            FOTA_DBG_PRINT("<--file down OK -->\r\n");
+            break;  
+        case UP_UPGRADFAILED:
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Fota upgrade failed !!!! -->\r\n");
+            FOTA_DBG_PRINT("<--Fota upgrade failed !!!! -->\r\n");
+            FOTA_DBG_PRINT("system will reboot after 5s!!");
+			Ql_Sleep(5000);
+			Ql_Reset(0);
+            break;
+
+        case UP_SYSTEM_REBOOT: // If fota upgrade is in this case, this function you can  return false or true, Notes:  
+        {
+            // this case is important. return TRUE or FALSE, you can design by youself.
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Return TRUE, system will reboot, and upgrade  -->\r\n");
+            UPGRADE_APP_DEBUG(FOTA_DBGBuffer,"<--Return FLASE, you must invoke Ql_FOTA_Update()  for upgrade !!!-->\r\n");
+            FOTA_DBG_PRINT("<--upgrade OK!!!system will reboot!!-->\r\n");
+            return TRUE;// if return TRUE  the module will reboot ,and fota upgrade complete.
+            //return FALSE; // if return False,  you must invoke Ql_FOTA_Update()  function before you want to reboot the system.
+        }
+        default:
+            break;
+    }
+    return TRUE;
+}
+
 /*********************************************************************
  * @fn      Server_Msg_Parse
  *
@@ -572,7 +623,7 @@ void Server_Msg_Parse(u8* pBuffer, u16 length)
     		Ql_strcpy(GprsConfig.apnPasswd,mSys_config.apnPasswd);
     		Ql_strcpy(GprsConfig.apnUserId,mSys_config.apnUserId);
     		
-            ret = Ql_FOTA_StartUpgrade(URL_Buffer, &m_GprsConfig, NULL);
+            ret = Ql_FOTA_StartUpgrade(URL_Buffer, &m_GprsConfig, Ota_Upgrade_States);
             if(ret != SOC_SUCCESS)
             {
 				APP_ERROR("\r\n<-- ota start upgrade fail ret:%d-->\r\n",ret);
