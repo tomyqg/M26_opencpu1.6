@@ -102,9 +102,6 @@ static ST_SOC_Callback callback_soc_func=
     Callback_Socket_Write
 };
 
-void Timer_Handler_Network_State(u32 timerId, void* param);
-void check_network_state(u32 state);
-
 /**************************************************************
 * the gprs sub task
 ***************************************************************/
@@ -122,13 +119,6 @@ void proc_subtask_gprs(s32 TaskId)
     if(ret <0)
     {
         APP_ERROR("\r\nfailed!!, Timer heartbeat register: timer(%d) fail ,ret = %d\r\n",HB_TIMER_ID,ret);
-    }
-
-    //register a timer for network state checkout
-    ret = Ql_Timer_Register(NETWOEK_STATE_TIMER_ID, Timer_Handler_Network_State, NULL);
-    if(ret <0)
-    {
-        APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",NETWOEK_STATE_TIMER_ID,ret);
     }
 
     //register a timer for alarm
@@ -257,17 +247,20 @@ void proc_subtask_gprs(s32 TaskId)
             case MSG_ID_NETWORK_STATE:
             {
 				APP_DEBUG("network state:%d\n",subtask_msg.param1);
-				check_network_state(subtask_msg.param1);
+				Ql_Sleep(1000);
+				s32 ret = GPRS_TCP_Program();
+				if(ret != SOC_SUCCESS)
+				{
+					Ql_Sleep(100);
+					Ql_Reset(0);
+				}
 				break;
             }
 
             case MSG_ID_SRV_CHANGED:
             {
 				APP_DEBUG("msg: MSG_ID_SRV_CHANGED\n");
-				//Ql_SOC_Close(g_SocketId);
-			    //mTcpState = STATE_GPRS_ACTIVATED;
 			    Ql_Sleep(5000);
-			    //TCP_Program(g_PdpCntxtId);
 			    Ql_Reset(0);
 				break;
             }
@@ -320,7 +313,24 @@ s32 GPRS_TCP_Program(void)
        			APP_ERROR("<--configure GPRS param failure,ret=%d.-->\r\n",ret);
      		}
                 
-   			mTcpState = STATE_GPRS_ACTIVATE;
+   			mTcpState = STATE_SOC_REGISTER;
+      	}
+      	case STATE_SOC_REGISTER:
+        {
+        	ret = Ql_SOC_Register(callback_soc_func, NULL);
+          	if (SOC_SUCCESS == ret)
+        	{
+         		APP_DEBUG("<--Register socket callback function successfully.-->\r\n");
+              	mTcpState = STATE_GPRS_ACTIVATE;
+         	}else if (SOC_ALREADY == ret)
+        	{
+              	APP_DEBUG("<--Socket callback function has already been registered,ret=%d.-->\r\n",ret);
+               	mTcpState = STATE_GPRS_ACTIVATE;
+          	}else
+           	{
+           		APP_ERROR("<--Register Socket callback function failure,ret=%d.-->\r\n",ret);
+           		return ret;
+           	}
       	}
    		case STATE_GPRS_ACTIVATE:
     	{
@@ -331,14 +341,14 @@ s32 GPRS_TCP_Program(void)
     			ret = Ql_GPRS_ActivateEx(g_PdpCntxtId, TRUE);
     			if (ret == GPRS_PDP_SUCCESS)
     			{
-        			mTcpState = STATE_SOC_REGISTER;
+        			mTcpState = STATE_SOC_CREATE;
         			APP_DEBUG("<-- Activate GPRS successfully. -->\r\n");
         			break;
     			}
     			else if (ret == GPRS_PDP_ALREADY)
 				{
 					// GPRS has been activating...
-					mTcpState = STATE_SOC_REGISTER;
+					mTcpState = STATE_SOC_CREATE;
 					APP_DEBUG("<-- GPRS has been activating. -->\r\n");
 					break;
 				}else{
@@ -350,23 +360,6 @@ s32 GPRS_TCP_Program(void)
 
 			if(!i)
 				return ret;
-      	}
-      	case STATE_SOC_REGISTER:
-        {
-        	ret = Ql_SOC_Register(callback_soc_func, NULL);
-          	if (SOC_SUCCESS == ret)
-        	{
-         		APP_DEBUG("<--Register socket callback function successfully.-->\r\n");
-              	mTcpState = STATE_SOC_CREATE;
-         	}else if (SOC_ALREADY == ret)
-        	{
-              	APP_DEBUG("<--Socket callback function has already been registered,ret=%d.-->\r\n",ret);
-               	mTcpState = STATE_SOC_CREATE;
-          	}else
-           	{
-           		APP_ERROR("<--Register Socket callback function failure,ret=%d.-->\r\n",ret);
-           		return ret;
-           	}
       	}
        	case STATE_SOC_CREATE:
       	{
@@ -416,7 +409,7 @@ s32 GPRS_TCP_Program(void)
 
         	if(mTcpState != STATE_SOC_CONNECTED)
         	{
-				APP_DEBUG("<-- Connect to server failure,close socket -->\r\n");
+				APP_DEBUG("<-- Connect to server failure,close socket, ret=%d -->\r\n",ret);
 				Ql_SOC_Close(g_SocketId);
 				g_SocketId = -1;
 				mTcpState = STATE_GPRS_ACTIVATE;
@@ -474,22 +467,11 @@ void Callback_Socket_Close(s32 socketId, s32 errCode, void* customParam )
 	APP_ERROR("<--Callback: socket close by remote side,errCode=%d-->\r\n",errCode);
 	Ql_SOC_Close(socketId);
     gServer_State = SERVER_STATE_UNKNOW;
-    mTcpState = STATE_GPRS_ACTIVATE;
-    //Ql_Sleep(100);
-    //Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
-	//mTcpState = STATE_GPRS_REGISTER;
+    Ql_Timer_Stop(HB_TIMER_ID);
+    mTcpState = STATE_SOC_CREATE;
 
     //send msg
-    //Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_NETWORK_STATE, mTcpState, 0);
-
-
-    //ret = TCP_Program(g_PdpCntxtId);
-	//if(ret != SOC_SUCCESS)
-	//{
-		//APP_ERROR("<--Callback: TCP_Program again error,errCode=%d-->\r\n",ret);
-	//}
-	Ql_Timer_Stop(HB_TIMER_ID);
-	Ql_Timer_Start(NETWOEK_STATE_TIMER_ID,NETWOEK_STATE_TIMER_PERIOD,FALSE);
+    Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_NETWORK_STATE, mTcpState, 0);
 }
 
 //
@@ -536,58 +518,6 @@ void Callback_Socket_Read(s32 socketId, s32 errCode, void* customParam )
 
 void Callback_Socket_Write(s32 socketId, s32 errCode, void* customParam )
 {
-}
-
-void Timer_Handler_Network_State(u32 timerId, void* param)
-{
-    if(NETWOEK_STATE_TIMER_ID == timerId)
-    {
-		s32 ret;
-		//ret = TCP_Program(g_PdpCntxtId);
-		if(ret != SOC_SUCCESS)
-		{
-			APP_DEBUG("%s:reboot\n",__func__);
-			Ql_Sleep(500);
-			Ql_Reset(0);
-	    }
-	}
-}
-
-void check_network_state(u32 state)
-{
-	static s32 count = 3;
-	s32 ret;
-	switch(state)
-	{
-		case STATE_GPRS_REGISTER:
-		{
-			APP_DEBUG("socket close by remote side %s\n",__func__);
-			mTcpState = STATE_GPRS_REGISTER;
-			APP_DEBUG("1 start newwork state timer\n");
-			//TCP_Program(g_PdpCntxtId);
-			ret = GPRS_TCP_Program();
-			if(ret != SOC_SUCCESS)
-				mTcpState = STATE_GPRS_REGISTER;
-			APP_DEBUG("2 start newwork state timer\n");
-			count--;
-			if(count > 0)
-			{
-				APP_DEBUG("start newwork state timer\n");
-				Ql_Timer_Start(NETWOEK_STATE_TIMER_ID,NETWOEK_STATE_TIMER_PERIOD,FALSE);
-			}
-			else
-			{
-				//soc can't work
-				APP_DEBUG("false start newwork state timer\n");
-			}
-			break;
-		}
-		default:
-		{
-			count = 3;
-			break;
-		}	
-	}
 }
 
 void update_clk_alarm(ST_Time* dateTime)
