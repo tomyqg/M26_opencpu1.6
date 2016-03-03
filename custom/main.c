@@ -180,6 +180,8 @@ void proc_main_task(s32 taskId)
                      *         2 = Not registered, but module is currently searching a new operator
                      *         3 = Registration denied 
                      */
+                    Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
+                    Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0); 
                    	APP_DEBUG("<-- Module GSM network status:%d-->\r\n",msg.param2);  
                    	gGprsState = 0;
                 }
@@ -206,6 +208,8 @@ void proc_main_task(s32 taskId)
                      */
                     APP_DEBUG("<-- GPRS network status:%d -->\r\n", msg.param2);
                     gGprsState = 0;
+                    Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
+                    Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0); 
                     // If GPRS drops down and currently socket connection is on line, app should close socket
                     // and check signal strength. And try to reset the module.
                     if (NW_STAT_NOT_REGISTERED == msg.param2 /*&& m_GprsActState*/)

@@ -224,6 +224,11 @@ void proc_subtask_gprs(s32 TaskId)
 						Ql_Sleep(100);
 						Ql_Reset(0);
 					}
+				} else {
+						Ql_SOC_Close(g_SocketId);
+    					gServer_State = SERVER_STATE_UNKNOW;
+    					mTcpState = STATE_GPRS_UNKNOWN;
+						Ql_Timer_Stop(HB_TIMER_ID);
 				}
                 break;
             }
@@ -645,27 +650,13 @@ void Timer_Handler_Network_State(u32 timerId, void* param)
     if(NETWOEK_STATE_TIMER_ID == timerId)
     {
 		s32 ret;
-		volatile static u8 network_state_count = 10;
-		if(network_state_count > 0)
+		ret = TCP_Program(g_PdpCntxtId);
+		if(ret != SOC_SUCCESS)
 		{
-			APP_DEBUG("%s count = %d\n",__func__,network_state_count);
-			network_state_count--;
-			ret = TCP_Program(g_PdpCntxtId);
-			if(ret != SOC_SUCCESS)
-			{
-				//APP_ERROR("<--Callback: TCP_Program again error,errCode=%d-->\r\n",ret);
-				Ql_Timer_Start(NETWOEK_STATE_TIMER_ID,NETWOEK_STATE_TIMER_PERIOD,FALSE);
-				return;
-			}
-	    } else {
-			//reboot
-			network_state_count = 10;
 			APP_DEBUG("%s:reboot\n",__func__);
-			Ql_Sleep(50);
+			Ql_Sleep(500);
 			Ql_Reset(0);
 	    }
-	    network_state_count = 10;
-	    APP_DEBUG("%s 2 count = %d\n",__func__,network_state_count);
 	}
 }
 
