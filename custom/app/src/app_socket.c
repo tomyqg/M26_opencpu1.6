@@ -217,6 +217,7 @@ void proc_subtask_gprs(s32 TaskId)
 					}
 				} else {
 						Ql_SOC_Close(g_SocketId);
+						Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
     					gServer_State = SERVER_STATE_UNKNOW;
     					mTcpState = STATE_GPRS_REGISTER;
 						Ql_Timer_Stop(HB_TIMER_ID);
