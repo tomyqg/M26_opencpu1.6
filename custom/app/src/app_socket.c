@@ -410,18 +410,22 @@ s32 GPRS_TCP_Program(void)
 
         	if(mTcpState != STATE_SOC_CONNECTED)
         	{
-				APP_DEBUG("<-- Connect to server failure,close socket, ret=%d -->\r\n",ret);
-				Ql_SOC_Close(g_SocketId);
-				g_SocketId = -1;
-				mTcpState = STATE_GPRS_ACTIVATE;
+				APP_DEBUG("<-- Connect to server failure,ret=%d -->\r\n",ret);
              	if(ret == SOC_BEARER_FAIL)  
                	{
-                   	mTcpState = STATE_GPRS_DEACTIVATE;
+                   	mTcpState = STATE_GPRS_ACTIVATE;
+                   	Ql_GPRS_Deactivate(g_PdpCntxtId);
+                   	Ql_SOC_Close(g_SocketId);
               	}
             	else
             	{
                    	mTcpState = STATE_SOC_CREATE;
+                   	Ql_SOC_Close(g_SocketId);
              	}
+
+             	//send msg
+    			Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_NETWORK_STATE, mTcpState, 0);
+    			return SOC_SUCCESS;
           	}
     	}      	
     }
