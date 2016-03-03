@@ -468,8 +468,8 @@ void Callback_GPRS_Actived(u8 contexId, s32 errCode, void* customParam)
 void CallBack_GPRS_Deactived(u8 contextId, s32 errCode, void* customParam )
 {
     APP_ERROR("<--CallBack: deactived GPRS (may drops down),errCode=%d-->\r\n",errCode);
-    Ql_Sleep(500);
-    Ql_Reset(0);
+    //Ql_Sleep(500);
+    //Ql_Reset(0);
 }
 
 //

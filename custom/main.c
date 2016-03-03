@@ -255,7 +255,7 @@ void proc_main_task(s32 taskId)
 					{
 						//set power up time point,syste will power off after 5s
 						alarm_on_off = 2;
-						APP_DEBUG("set system power up alarm");
+						APP_DEBUG("set system power up alarm\n");
 						ST_Time datetime;
 						Ql_GetLocalTime(&datetime);
 						update_clk_alarm(&datetime);
