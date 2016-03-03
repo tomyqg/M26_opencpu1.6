@@ -57,6 +57,15 @@ ST_GprsConfig m_GprsConfig = {
     NULL,
     NULL,
 };
+//Configure PDP
+ST_GprsConfig GprsConfig = {
+    "CMNET",    // APN name
+    "",         // User name for APN
+    "",         // Password for APN
+    0,
+    NULL,
+    NULL,
+};
 
 /************************************************************************/
 /* Definition for Server IP Address and Socket Port Number              */
@@ -80,7 +89,7 @@ static char *m_pCurrentPos = NULL;
 
 s32 g_PdpCntxtId = 0;
 s32 g_SocketId = -1;  // Store socket Id that returned by Ql_SOC_Create()
-volatile Enum_TCPSTATE mTcpState = STATE_GPRS_UNKNOWN;
+volatile Enum_TCPSTATE mTcpState = STATE_GPRS_REGISTER;
 u8 Parameter_Buffer[PAR_BLOCK_LEN] = {0};
 volatile u8 alarm_on_off = 1;
 volatile bool gsm_wake_sleep = TRUE;
@@ -227,7 +236,7 @@ void proc_subtask_gprs(s32 TaskId)
 				} else {
 						Ql_SOC_Close(g_SocketId);
     					gServer_State = SERVER_STATE_UNKNOW;
-    					mTcpState = STATE_GPRS_UNKNOWN;
+    					mTcpState = STATE_GPRS_REGISTER;
 						Ql_Timer_Stop(HB_TIMER_ID);
 				}
                 break;
@@ -316,14 +325,14 @@ s32 GPRS_Program(void)
     	ret = Ql_GPRS_ActivateEx(g_PdpCntxtId, TRUE);
     	if (ret == GPRS_PDP_SUCCESS)
     	{
-        	mTcpState = STATE_GPRS_ACTIVATED;
+        	mTcpState = STATE_GPRS_ACTIVATE;
         	APP_DEBUG("<-- Activate GPRS successfully. -->\r\n");
         	break;
     	}
 		else if (ret == GPRS_PDP_ALREADY)
 		{
 			// GPRS has been activating...
-			mTcpState = STATE_GPRS_ACTIVATED;
+			mTcpState = STATE_GPRS_ACTIVATE;
 			APP_DEBUG("<-- GPRS has been activating. -->\r\n");
 			break;
 		}else{
@@ -346,14 +355,14 @@ s32 TCP_Program(s32 pdpCntxtId)
 	s32 ret;
 	s32 cgreg = 0;
 
-	if(mTcpState != STATE_GPRS_ACTIVATED)
+	if(mTcpState != STATE_GPRS_ACTIVATE)
     	return SOC_ERROR;
 
     ret = RIL_NW_GetGPRSState(&cgreg);
     //APP_DEBUG("<--Network State:cgreg=%d-->\r\n",cgreg);
     if((cgreg != NW_STAT_REGISTERED) && (cgreg != NW_STAT_REGISTERED_ROAMING))
     {
-     	mTcpState = STATE_GPRS_UNKNOWN;
+     	mTcpState = STATE_GPRS_REGISTER;
      	Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
     }	
     	
@@ -372,7 +381,7 @@ s32 TCP_Program(s32 pdpCntxtId)
     g_SocketId = Ql_SOC_Create(pdpCntxtId, SOC_TYPE_TCP);
     if (g_SocketId >= 0)
     {
-		mTcpState = STATE_SOC_CREATED;
+		mTcpState = STATE_SOC_CREATE;
         APP_DEBUG("<-- Create socket successfully, socket id=%d. -->\r\n", g_SocketId);
     }else{
         APP_ERROR("<-- Fail to create socket, cause=%d. -->\r\n", g_SocketId);
@@ -416,7 +425,7 @@ s32 TCP_Program(s32 pdpCntxtId)
         {
 			APP_DEBUG("<-- Connect to server failure,close socket -->\r\n");
 			Ql_SOC_Close(g_SocketId);
-			mTcpState = STATE_GPRS_ACTIVATED;
+			mTcpState = STATE_GPRS_ACTIVATE;
 			return ret;
         }
     }
@@ -432,12 +441,172 @@ s32 TCP_Program(s32 pdpCntxtId)
     }	
 }
 
+#if 1
 s32 GPRS_TCP_Program(void)
 {
     s32 ret;
     APP_DEBUG("%s:mTcpState = %d\n",__func__,mTcpState);
 
-    if(mTcpState != STATE_GPRS_UNKNOWN)
+    switch( mTcpState )
+    {
+		case STATE_GPRS_REGISTER:
+		{
+			//Register GPRS callback
+    		ret = Ql_GPRS_Register(g_PdpCntxtId, &callback_gprs_func, NULL);
+        	if (GPRS_PDP_SUCCESS == ret)
+        	{
+         		APP_DEBUG("<--Register GPRS callback function successfully.-->\r\n");
+         		mTcpState = STATE_GPRS_CONFIG;
+            }else if (GPRS_PDP_ALREADY == ret)
+         	{
+             	APP_DEBUG("<--GPRS callback function has already been registered.-->\r\n");
+             	mTcpState = STATE_GPRS_CONFIG;
+             	ret = GPRS_PDP_SUCCESS;
+        	}else
+      		{
+       			APP_ERROR("<--Register GPRS callback function failure,ret=%d.-->\r\n",ret);
+       			return ret;
+       		}
+   		}
+        case STATE_GPRS_CONFIG:
+        {
+    		Ql_strcpy(GprsConfig.apnName,mSys_config.apnName);
+    		Ql_strcpy(GprsConfig.apnPasswd,mSys_config.apnPasswd);
+    		Ql_strcpy(GprsConfig.apnUserId,mSys_config.apnUserId);
+    		APP_DEBUG("apnName:%s\napnUserId:%s\napnPasswd:%s\n",
+    				GprsConfig.apnName,GprsConfig.apnUserId,GprsConfig.apnPasswd);
+
+    		ret = Ql_GPRS_Config(g_PdpCntxtId, &GprsConfig);
+     		if (GPRS_PDP_SUCCESS == ret)
+     		{
+    			APP_DEBUG("<--configure GPRS param successfully.-->\r\n");
+    		}else
+     		{
+       			APP_ERROR("<--configure GPRS param failure,ret=%d.-->\r\n",ret);
+     		}
+                
+   			mTcpState = STATE_GPRS_ACTIVATE;
+      	}
+   		case STATE_GPRS_ACTIVATE:
+    	{
+  			u8 i = 3;
+			do
+			{
+    			//Activate GPRS PDP context
+    			ret = Ql_GPRS_ActivateEx(g_PdpCntxtId, TRUE);
+    			if (ret == GPRS_PDP_SUCCESS)
+    			{
+        			mTcpState = STATE_SOC_REGISTER;
+        			APP_DEBUG("<-- Activate GPRS successfully. -->\r\n");
+        			break;
+    			}
+    			else if (ret == GPRS_PDP_ALREADY)
+				{
+					// GPRS has been activating...
+					mTcpState = STATE_SOC_REGISTER;
+					APP_DEBUG("<-- GPRS has been activating. -->\r\n");
+					break;
+				}else{
+					// Fail to activate GPRS, error code is in "ret".
+					APP_ERROR("<-- Fail to activate GPRS cause=%d. -->\r\n",ret);
+					Ql_Sleep(100);
+				}
+			}while(--i);	
+
+			if(!i)
+				return ret;
+      	}
+      	case STATE_SOC_REGISTER:
+        {
+        	ret = Ql_SOC_Register(callback_soc_func, NULL);
+          	if (SOC_SUCCESS == ret)
+        	{
+         		APP_DEBUG("<--Register socket callback function successfully.-->\r\n");
+              	mTcpState = STATE_SOC_CREATE;
+         	}else if (SOC_ALREADY == ret)
+        	{
+              	APP_DEBUG("<--Socket callback function has already been registered,ret=%d.-->\r\n",ret);
+               	mTcpState = STATE_SOC_CREATE;
+          	}else
+           	{
+           		APP_ERROR("<--Register Socket callback function failure,ret=%d.-->\r\n",ret);
+           		return ret;
+           	}
+      	}
+       	case STATE_SOC_CREATE:
+      	{
+			//Create socket
+    		g_SocketId = Ql_SOC_Create(g_PdpCntxtId, SOC_TYPE_TCP);
+    		if (g_SocketId >= 0)
+    		{
+				mTcpState = STATE_SOC_CONNECT;
+        		APP_DEBUG("<-- Create socket successfully, socket id=%d. -->\r\n", g_SocketId);
+    		}else{
+        		APP_ERROR("<-- Fail to create socket, cause=%d. -->\r\n", g_SocketId);
+        		return g_SocketId;
+    		}
+      	}      	
+      	case STATE_SOC_CONNECT:
+       	{
+       	    //Convert IP format
+        	APP_DEBUG("<-- Connect to server: %s port: %d -->\r\n",SrvADDR, SrvPort);
+        	u32 iplength[1];
+        	ret = Ql_IpHelper_ConvertIpAddr(SrvADDR, (u32 *)ipAddress);
+        	if (ret != SOC_SUCCESS)
+        	{
+        		ret = Ql_IpHelper_GetIPByHostNameEx(g_PdpCntxtId, 0, SrvADDR, iplength,(u32 *)ipAddress);
+            	if(ret != SOC_SUCCESS)
+            	{
+            		APP_ERROR("<-- Get ip by hostname failure:ret=%d-->\r\n",ret);
+            		return ret;
+            	}
+        	}
+		
+        	//Connect to server
+        	APP_DEBUG("<-- Connecting to server(IP:%d.%d.%d.%d, port:%d)-->\r\n", 
+        		  		ipAddress[0],ipAddress[1],ipAddress[2],ipAddress[3], SrvPort);
+			for(u8 i = 3; i > 0; i--)
+			{
+        		ret = Ql_SOC_ConnectEx(g_SocketId,(u32) ipAddress, SrvPort, TRUE);
+        		if (SOC_SUCCESS == ret)
+        		{
+            		APP_DEBUG("<-- Connect to server successfully -->\r\n");
+            		mTcpState = STATE_SOC_CONNECTED;
+            		break;
+        		}else{
+            		//APP_ERROR("<-- Fail to connect to server, cause=%d -->\r\n", ret);
+            		Ql_Sleep(200);
+        		}
+        	}
+
+        	if(mTcpState != STATE_SOC_CONNECTED)
+        	{
+				APP_DEBUG("<-- Connect to server failure,close socket -->\r\n");
+				Ql_SOC_Close(g_SocketId);
+				g_SocketId = -1;
+				mTcpState = STATE_GPRS_ACTIVATE;
+             	if(ret == SOC_BEARER_FAIL)  
+               	{
+                   	mTcpState = STATE_GPRS_DEACTIVATE;
+              	}
+            	else
+            	{
+                   	mTcpState = STATE_SOC_CREATE;
+             	}
+          	}
+    	}      	
+    }
+	//register to server
+    App_Server_Register();
+	return ret;   
+}
+#else
+s32 GPRS_TCP_Program(void)
+{
+    s32 ret;
+    APP_DEBUG("%s:mTcpState = %d\n",__func__,mTcpState);
+
+    if(mTcpState != STATE_GPRS_REGISTER)
     	return SOC_SUCCESS;
 
     ret = GPRS_Program();
@@ -458,6 +627,7 @@ s32 GPRS_TCP_Program(void)
 	
 	return ret;   
 }
+#endif
 
 //
 //becase using *Ex, so this callback will not to being invoked.
@@ -497,10 +667,10 @@ void Callback_Socket_Close(s32 socketId, s32 errCode, void* customParam )
 	APP_ERROR("<--Callback: socket close by remote side,errCode=%d-->\r\n",errCode);
 	Ql_SOC_Close(socketId);
     gServer_State = SERVER_STATE_UNKNOW;
-    mTcpState = STATE_GPRS_ACTIVATED;
+    mTcpState = STATE_GPRS_ACTIVATE;
     //Ql_Sleep(100);
     //Ql_GPRS_DeactivateEx(g_PdpCntxtId, TRUE);
-	//mTcpState = STATE_GPRS_UNKNOWN;
+	//mTcpState = STATE_GPRS_REGISTER;
 
     //send msg
     //Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_NETWORK_STATE, mTcpState, 0);
@@ -666,15 +836,15 @@ void check_network_state(u32 state)
 	s32 ret;
 	switch(state)
 	{
-		case STATE_GPRS_UNKNOWN:
+		case STATE_GPRS_REGISTER:
 		{
 			APP_DEBUG("socket close by remote side %s\n",__func__);
-			mTcpState = STATE_GPRS_UNKNOWN;
+			mTcpState = STATE_GPRS_REGISTER;
 			APP_DEBUG("1 start newwork state timer\n");
 			//TCP_Program(g_PdpCntxtId);
 			ret = GPRS_TCP_Program();
 			if(ret != SOC_SUCCESS)
-				mTcpState = STATE_GPRS_UNKNOWN;
+				mTcpState = STATE_GPRS_REGISTER;
 			APP_DEBUG("2 start newwork state timer\n");
 			count--;
 			if(count > 0)
