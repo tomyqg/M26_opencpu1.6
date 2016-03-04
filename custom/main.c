@@ -64,6 +64,7 @@ extern ST_GprsConfig m_GprsConfig;
 extern s32 RIL_SIM_GetIMEI(char* pIMEI, u32 pIMEILen);
 extern s32 RIL_SIM_GetIMSI(char* pIMSI, u32 pIMSILen);
 void Timer_Handler_LACCI(u32 timerId, void* param);
+void Timer_Handler_GPRS_Check(u32 timerId, void* param);
 
 s32  s_iMutexId = 0;
 s32 speed = 20;
@@ -108,6 +109,13 @@ void proc_main_task(s32 taskId)
         APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",GET_LACCI_TIMER_ID,ret);
     }
     Ql_Timer_Start(GET_LACCI_TIMER_ID,GET_LACCI_TIMER_PERIOD,TRUE);
+
+    //register a timer gprs network check
+    ret = Ql_Timer_Register(GPRS_NETWOEK_STATE_TIMER_ID, Timer_Handler_GPRS_Check, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",GPRS_NETWOEK_STATE_TIMER_ID,ret);
+    }
 
     // START MESSAGE LOOP OF THIS TASK
     while(TRUE)
@@ -174,6 +182,7 @@ void proc_main_task(s32 taskId)
                 if (NW_STAT_REGISTERED == msg.param2 || NW_STAT_REGISTERED_ROAMING == msg.param2)
                 {
                     APP_DEBUG("<-- Module has registered to GSM network status:%d-->\r\n",msg.param2);
+                    Ql_Timer_Start(GPRS_NETWOEK_STATE_TIMER_ID,gParmeter.parameter_8[GPRS_STATE_CHECK_INDEX].data*60000,FALSE);
                 }else{
                     //APP_DEBUG("<-- GSM network status:%d -->\r\n", msg.param2);
                     /* status: 0 = Not registered, module not currently search a new operator
@@ -183,6 +192,10 @@ void proc_main_task(s32 taskId)
                     Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
                     Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0); 
                    	APP_DEBUG("<-- Module GSM network status:%d-->\r\n",msg.param2);  
+					if(gGprsState == 1)
+					{
+						Ql_Timer_Start(GPRS_NETWOEK_STATE_TIMER_ID,gParmeter.parameter_8[GPRS_STATE_CHECK_INDEX].data*60000,FALSE);
+					}
                    	gGprsState = 0;
                 }
                 break;
@@ -197,6 +210,7 @@ void proc_main_task(s32 taskId)
 					{
                     	APP_DEBUG("<-- Module has registered to GPRS network status:%d-->\r\n",msg.param2);
 						gGprsState = 1;
+						Ql_Timer_Stop(GPRS_NETWOEK_STATE_TIMER_ID);
                     	// Module has registered to GPRS network,app can start to activate PDP and program TCP
                     	Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
                     	Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0);
@@ -207,6 +221,10 @@ void proc_main_task(s32 taskId)
                      *         3 = Registration denied 
                      */
                     APP_DEBUG("<-- GPRS network status:%d -->\r\n", msg.param2);
+                   	if(gGprsState == 1)
+					{
+						Ql_Timer_Start(GPRS_NETWOEK_STATE_TIMER_ID,gParmeter.parameter_8[GPRS_STATE_CHECK_INDEX].data*60000,FALSE);
+					}
                     gGprsState = 0;
                     Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
                     Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0); 
@@ -483,25 +501,20 @@ void MutextTest(int iTaskId)  //Two task Run this function at the same time
 void Timer_Handler_LACCI(u32 timerId, void* param)
 {
     if(GET_LACCI_TIMER_ID == timerId)
-    {
-#if 1    
+    {   
 		RIL_SIM_LACCI(lac_ci_buffer, 30);
-		APP_DEBUG("%s\n",lac_ci_buffer);
+		//APP_DEBUG("%s\n",lac_ci_buffer);
 		get_lac_cellid(lac_ci_buffer);
-#else
-		Ql_Sleep(2000);
+    }
+}
 
-        //AT+CGREG=2
-		Ql_RIL_SendATCmd("AT+CGREG=2", Ql_strlen("AT+CGREG=2"),ATResponse_Handler, NULL,0);
-		Ql_Sleep(120);
-
-		//AT+CGREG?
-		Ql_RIL_SendATCmd("AT+CGREG?", Ql_strlen("AT+CGREG?"),ATResponse_Handler, NULL,0);
-		Ql_Sleep(150);
-
-		//AT+CGREG=1
-		Ql_RIL_SendATCmd("AT+CGREG=1", Ql_strlen("AT+CGREG=1"),ATResponse_Handler, NULL,0);
-#endif
+void Timer_Handler_GPRS_Check(u32 timerId, void* param)
+{
+    if(GPRS_NETWOEK_STATE_TIMER_ID == timerId)
+    {   
+		APP_DEBUG("gprs connect timeout,system will reboot\n");
+		Ql_Sleep(1000);
+		Ql_Reset(0);
     }
 }
 
