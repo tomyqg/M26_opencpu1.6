@@ -378,7 +378,7 @@ static void CallBack_UART_BLE(Enum_SerialPort port, Enum_UARTEventType msg, bool
 					ble_data_buf_len += totalBytes;
 					if(ble_data_buf[0] != 0x55 || ble_data_buf_len > 40)
 					{
-						//APP_DEBUG("UartFromBle: %.*s\n",ble_data_buf_len,ble_data_buf);
+						APP_DEBUG("UartFromBle: %.*s\n",ble_data_buf_len,ble_data_buf);
 						Ql_memset(ble_data_buf, 0, BLE_SERIAL_RX_BUFFER_LEN);
 						ble_data_buf_len = 0;
 						return;
