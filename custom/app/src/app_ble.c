@@ -919,6 +919,15 @@ void Uart_BLE_Msg_Parse(u8* pBuffer, u16 length)
         case FROMBLE_BATTARY_ID:
             Uart2BLE_Common_Response(FROMBLE_BATTARY_ID,RSP_OK);
             battery = pBuffer[3];
+            mLoc_Par.battery = battery;
+            s32 ret = Ql_SecureData_Store(LOC_PAR_BLOCK, &mLoc_Par, LOC_PAR_BLOCK_LEN);
+			if(ret != QL_RET_OK)
+			{
+				APP_ERROR("loc parameter store fail!! errcode = %d\n",ret);
+			}else{
+				APP_DEBUG("loc parameter store OK!!\n");
+			}
+			
             if(battery < gParmeter.parameter_8[BATTERY_ALARM_INDEX].data)
             {
 				//report to gprs task

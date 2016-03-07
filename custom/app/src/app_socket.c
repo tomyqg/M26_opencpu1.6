@@ -199,6 +199,17 @@ void proc_subtask_gprs(s32 TaskId)
 					Ql_strcpy(SrvADDR, mSrv_config.masterSrvAddress);
 					SrvPort = mSrv_config.masterSrvPort;
 				}
+
+				//local parameter
+				ret = Ql_SecureData_Read(LOC_PAR_BLOCK, Buffer, LOC_PAR_BLOCK_LEN);
+    			if(ret == LOC_PAR_BLOCK_LEN)
+    			{
+					Ql_memcpy(&mLoc_Par, Buffer, LOC_PAR_BLOCK_LEN);
+					APP_DEBUG("loc_par.battery = %d\n",mLoc_Par.battery);
+    			} else {
+					APP_ERROR("read local parameter error! Using default ret=%d.\r\n",ret);
+    			}
+				
 				Ql_MEM_Free(Buffer);
 				break;
 			}	

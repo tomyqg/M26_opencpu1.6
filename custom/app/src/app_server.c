@@ -139,6 +139,10 @@ SRV_CONFIG mSrv_config = {
 	8300,
 };
 
+LOC_PAR mLoc_Par = {
+	50
+};
+
 Alarm_Flag gAlarm_Flag = {
 	0x0,
 	0x0,

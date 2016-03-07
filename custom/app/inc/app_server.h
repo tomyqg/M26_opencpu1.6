@@ -120,6 +120,9 @@ extern u8 gServer_State;
 #define BATTERY_LOW         0x0202
 #define PASSWORD            0x0400
 
+#define LOC_PAR_BLOCK          1
+#define LOC_PAR_BLOCK_LEN      1
+
 #define SRV_CONFIG_BLOCK       11
 #define SRV_CONFIG_BLOCK_LEN   100
 #define SRV_CONFIG_STORED_FLAG 0xF5
@@ -234,6 +237,11 @@ typedef struct {
 	u16 slaveSrvPort;
 }SRV_CONFIG;
 extern SRV_CONFIG mSrv_config;
+
+typedef struct {
+    u8 battery;
+}LOC_PAR;
+extern LOC_PAR mLoc_Par;
 
 extern GpsLocation gGpsLocation;
 
