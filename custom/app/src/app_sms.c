@@ -145,6 +145,7 @@ static void Hdlr_RecvNewSMS(u32 nIndex)
         return;
     }
 	Parse_SMS_Data(pDeliverTextInfo);
+	Ql_Sleep(1500);
     Ql_MEM_Free(pTextInfo);
     return;
 }

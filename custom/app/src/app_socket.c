@@ -542,11 +542,18 @@ void update_clk_alarm(ST_Time* dateTime)
 	s32 iRet;
 	u64 current_seconds,qst_seconds;
 	//delete alarm
-	iRet = RIL_Alarm_Del();
-	if(iRet != RIL_AT_SUCCESS)
+	for(u8 i =1; i <= 5; i++)
 	{
-		APP_ERROR("del alarm error ret:%d\n",iRet);
-	}
+		iRet = RIL_Alarm_Del();
+		if(iRet == RIL_AT_SUCCESS)
+		{
+			APP_DEBUG("del alarm ok!!\n");
+			break;
+		} else {
+			APP_ERROR("del alarm error ret:%d\n",iRet);
+			Ql_Sleep(200*i);
+		}
+	}	
 
 	Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_INDEX].data, 3);
 	current_seconds = Ql_Mktime(dateTime);
