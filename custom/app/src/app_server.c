@@ -170,6 +170,7 @@ void Timer_Handler(u32 timerId, void* param);
 s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
                     u8 *msg_body, u16 msg_body_len)
 {
+  bool force_send = FALSE;
   u8 *msg_buff, *msg_send_buff;
   u16 msg_buff_len = 3+msg_head_lenght+msg_body_len;
   u16 msg_send_buff_len;
@@ -181,6 +182,11 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
   {
   	 APP_ERROR("%s/%d:Ql_MEM_Alloc FAIL! size:%u\r\n", __func__, __LINE__,msg_buff_len);
      return APP_RET_ERR_MEM_OLLOC;
+  }
+
+  if(msg_head->msg_id == TOSERVER_REGISTER_ID)
+  {
+	 force_send = TRUE;
   }
   
   //change head to bg_endian
@@ -221,7 +227,7 @@ s32 Server_Msg_Send(Server_Msg_Head *msg_head, u16 msg_head_lenght,
     APP_DEBUG("\r\n");
   #endif
 
-  if(gServer_State != SERVER_STATE_REGISTER_OK && gServer_State != SERVER_STATE_REGISTERING)
+  if(gServer_State != SERVER_STATE_REGISTER_OK && force_send == FALSE)
   {
 	return APP_RET_ERR_SEV_NOT_REGISTER;
   }	

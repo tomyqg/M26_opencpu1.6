@@ -561,6 +561,8 @@ void update_clk_alarm(ST_Time* dateTime)
 	dateTime->minute=BCDTODEC(pBuffer[1]);
 	dateTime->second=BCDTODEC(pBuffer[0]);
 	qst_seconds = Ql_Mktime(dateTime);
+
+	APP_DEBUG("keep wake = %d\n",((keep_wake == TRUE) ? 1:0));
 	
 	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data == 0 || keep_wake == TRUE)
 	{
@@ -570,7 +572,6 @@ void update_clk_alarm(ST_Time* dateTime)
 			Ql_MKTime2CalendarTime(qst_seconds, dateTime);
 		}	
 		alarm_on_off = 0;
-		APP_DEBUG("keep wake = %d\n",keep_wake);
 		APP_DEBUG("alarm_on_off =%d,hwj_power_policy = %d\n",alarm_on_off,gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data);
 	} else {
 		if(alarm_on_off == 1)
