@@ -1391,13 +1391,18 @@ void update_alarm(u32 alarm_bit, u32 alarm)
 {
 	if(alarm == 1)
 	{
+		u32 alarm_flag = BV(alarm_bit);
+		alarm_flag = alarm_flag & gParmeter.parameter_8[ALARM_FLAG_INDEX].data;
+		if(alarm_flag == 0)
+		{
+			return;
+		}
 		gAlarm_Flag.alarm_flags = SET_BIT(gAlarm_Flag.alarm_flags, alarm_bit);
 		if(gAlarm_Flag.alarm_flags_bk & BV(alarm_bit))
 		{
 			return;
 		}
-		u32 alarm_flag = BV(alarm_bit);
-		App_Ropert_Alarm(alarm_flag);
+		App_Ropert_Alarm(gAlarm_Flag.alarm_flags);
 	}
 	else
 	{
@@ -1421,7 +1426,6 @@ void App_Ropert_Alarm(u32 alarm_flag)
 	s32 ret;
 
 	alarm_flag = alarm_flag & gParmeter.parameter_8[ALARM_FLAG_INDEX].data;
-	gAlarm_Flag.alarm_flags_bk = gAlarm_Flag.alarm_flags_bk | alarm_flag;
 	if(alarm_flag == 0)
 	{
 		if(!alarm_timer_started)
@@ -1437,7 +1441,8 @@ void App_Ropert_Alarm(u32 alarm_flag)
 		}
 		return;
 	}
-
+	gAlarm_Flag.alarm_flags_bk = alarm_flag;
+    
 	GpsLocation gpsLocation;
 
 	gpsLocation.latitude  = TOBIGENDIAN32(gValid_GpsLocation.latitude);
