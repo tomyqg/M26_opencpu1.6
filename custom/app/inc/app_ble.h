@@ -82,6 +82,11 @@
 #define BLE_UART_HEARBEAT_TIMER_ID   (TIMER_ID_USER_START + 104)
 #define BLE_UART_HEARBEAT_INTERVAL   30*1000
 
+typedef enum { 
+	BLE_STATE_OK = 0,
+	BLE_STATE_DIS = 1,
+} Enum_BLE_STATE;
+
 /*********************************************************************
  * TYPEDEFS
  */
@@ -97,6 +102,7 @@ typedef struct
  */
 extern u32 battery;
 extern u8 gsm_up_time[3];
+extern u32 ble_state;
  
 /*********************************************************************
  * FUNCTIONS

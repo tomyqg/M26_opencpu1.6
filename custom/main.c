@@ -44,6 +44,7 @@
 #include "app_socket.h"
 #include "app_server.h"
 #include "app_tokenizer.h"
+#include "app_ble.h"
 
 #define SERIAL_RX_BUFFER_LEN  2048
 
@@ -190,11 +191,11 @@ void proc_main_task(s32 taskId)
                      *         3 = Registration denied 
                      */
                     Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
-                    Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0); 
                    	APP_DEBUG("<-- Module GSM network status:%d-->\r\n",msg.param2);  
 					if(gGprsState == 1)
 					{
 						Ql_Timer_Start(GPRS_NETWOEK_STATE_TIMER_ID,gParmeter.parameter_8[GPRS_STATE_CHECK_INDEX].data*60000,FALSE);
+						Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0); 
 					}
                    	gGprsState = 0;
                 }
@@ -224,10 +225,10 @@ void proc_main_task(s32 taskId)
                    	if(gGprsState == 1)
 					{
 						Ql_Timer_Start(GPRS_NETWOEK_STATE_TIMER_ID,gParmeter.parameter_8[GPRS_STATE_CHECK_INDEX].data*60000,FALSE);
+						Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0); 
 					}
                     gGprsState = 0;
                     Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_GPRS_STATE, msg.param2, 0);
-                    Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GPRS_STATE, msg.param2, 0); 
                     // If GPRS drops down and currently socket connection is on line, app should close socket
                     // and check signal strength. And try to reset the module.
                     if (NW_STAT_NOT_REGISTERED == msg.param2 /*&& m_GprsActState*/)
@@ -257,31 +258,17 @@ void proc_main_task(s32 taskId)
                 break; 
             case URC_ALARM_RING_IND:
                 APP_DEBUG("<-- alarm ring,alarm_on_off = %d\r\n",alarm_on_off);
-                if(alarm_on_off == 0)
+                if(alarm_on_off == 0 && ble_state == BLE_STATE_OK)
                 {
-					Ql_OS_SendMessage(subtask_ble_id, MSG_ID_CLK_ALARM, 0, 0);
-                   	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data != 0)
-                	{   
-						if(gsm_wake_sleep){
-      						alarm_on_off = 1;
-						} else {
-							alarm_on_off = 2;
-						}
-						ST_Time datetime;
-						Ql_GetLocalTime(&datetime);
-						update_clk_alarm(&datetime);
-                	}
-                }else {
-					if(alarm_on_off == 1 &&
-					   gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data != 0)
-					{
-						//set power up time point,syste will power off after 5s
-						alarm_on_off = 2;
-						APP_DEBUG("set system power up alarm\n");
-						ST_Time datetime;
-						Ql_GetLocalTime(&datetime);
-						update_clk_alarm(&datetime);
-					}
+					APP_DEBUG("send msg to power off QST\n");
+					Ql_OS_SendMessage(subtask_ble_id, MSG_ID_POWER_OFF_GSM, 0, 0);
+                }else if(alarm_on_off == 1 && ble_state == BLE_STATE_DIS){
+					//set power up time point,syste will power off after 5s
+					alarm_on_off = 2;
+					APP_DEBUG("set system power up alarm\n");
+					ST_Time datetime;
+					Ql_GetLocalTime(&datetime);
+					update_clk_alarm(&datetime);
                 }
                 break;   
             default:

@@ -60,7 +60,7 @@ static bool have_start_timer_rsp = FALSE;
 static UART_MSG last_uart_send;
 static SList gSList_BLE;
 u32 battery = 50;
-u32 ble_state;
+u32 ble_state = BLE_STATE_OK;
 u8 ble_data_buf[BLE_SERIAL_RX_BUFFER_LEN];
 u8 ble_data_buf_len = 0;
 u8 gsm_up_time[3] = {0,0,0};
@@ -197,6 +197,11 @@ void proc_subtask_ble(s32 TaskId)
             case MSG_ID_GSM_STATE:
             {
 				BLE_Send_GSM_State(STATE_GSM_POWEROFF_SLEEP);
+                break;
+            }
+            case MSG_ID_POWER_OFF_GSM:
+            {
+				BLE_Send_PowerOff_GSM();
                 break;
             }
             default:
@@ -953,16 +958,24 @@ void Uart_BLE_Msg_Parse(u8* pBuffer, u16 length)
         case FROMBLE_BLE_STATUS_ID:
             Uart2BLE_Common_Response(FROMBLE_BLE_STATUS_ID,RSP_OK);
             ble_state = pBuffer[3];
-            if(ble_state == 1)
+            if(ble_state == BLE_STATE_DIS)
             {
+				alarm_on_off = 1;
+				ST_Time datetime;
+				Ql_GetLocalTime(&datetime);
+				update_clk_alarm(&datetime);
 				//report to gprs task
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOST_DOWN, TRUE);
 			}
-			else if((gAlarm_Flag.alarm_flags & BV(ALARM_BIT_LOST_DOWN)) && (ble_state == 0))
+			else if(ble_state == BLE_STATE_OK)
 			{
+				alarm_on_off = 0;
+				ST_Time datetime;
+				Ql_GetLocalTime(&datetime);
+				update_clk_alarm(&datetime);
 				//clean
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOST_DOWN, FALSE);
-			}
+			}	
             break;  
 			
         case FROMBLE_SW_TRANFRER_ID:

@@ -136,7 +136,7 @@ void proc_subtask_gprs(s32 TaskId)
     }
 
     //init gsensor
-    gsensor_init();
+    //gsensor_init();
 	
     while(TRUE)
     {    
@@ -538,7 +538,7 @@ void Callback_Socket_Write(s32 socketId, s32 errCode, void* customParam )
 
 void update_clk_alarm(ST_Time* dateTime)
 {
-	u8 pBuffer[3];
+	s32 tmp;
 	s32 iRet;
 	u64 current_seconds,qst_seconds;
 	//delete alarm
@@ -553,64 +553,29 @@ void update_clk_alarm(ST_Time* dateTime)
 			APP_ERROR("del alarm error ret:%d\n",iRet);
 			Ql_Sleep(200*i);
 		}
-	}	
-
-	Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_INDEX].data, 3);
-	current_seconds = Ql_Mktime(dateTime);
-	dateTime->hour=BCDTODEC(pBuffer[2]);
-	dateTime->minute=BCDTODEC(pBuffer[1]);
-	dateTime->second=BCDTODEC(pBuffer[0]);
-	qst_seconds = Ql_Mktime(dateTime);
+	}
 
 	APP_DEBUG("keep wake = %d\n",((keep_wake == TRUE) ? 1:0));
-	
-	if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data == 0 || keep_wake == TRUE)
+	if(keep_wake == TRUE)
+		return;
+
+	//Ql_memcpy(pBuffer, &gParmeter.parameter_8[QST_WORKUP_TIME_INDEX].data, 3);
+	current_seconds = Ql_Mktime(dateTime);
+
+	if(ble_state == BLE_STATE_OK)
 	{
-		if(qst_seconds < current_seconds + 15)
-		{
-			qst_seconds += 86400;
-			Ql_MKTime2CalendarTime(qst_seconds, dateTime);
-		}	
+		qst_seconds = current_seconds + gParmeter.parameter_8[QST_NORMAL_WACKUP_TIM_INDEX].data*60;
 		alarm_on_off = 0;
-		APP_DEBUG("alarm_on_off =%d,hwj_power_policy = %d\n",alarm_on_off,gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data);
-	} else {
-		if(alarm_on_off == 1)
-		{
-			//set power off alarm
-			u64 off_time_seconds = current_seconds + gParmeter.parameter_8[HWJ_WORKUP_TIME_INDEX].data*60;
-			if(off_time_seconds >= qst_seconds && qst_seconds > current_seconds)
-			{
-				if(qst_seconds < current_seconds + 15)
-				{
-					qst_seconds += 15;
-					Ql_MKTime2CalendarTime(qst_seconds, dateTime);
-				}
-				alarm_on_off = 0;
-				gsm_wake_sleep = TRUE;
-				APP_DEBUG("power off:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
-			} else {
-				Ql_MKTime2CalendarTime(off_time_seconds, dateTime);
-				APP_DEBUG("power off:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
-			}
-		} else if(alarm_on_off == 2) {
-			//set power up alarm, receive here,system will power off!!
-			u64 up_time_seconds = current_seconds + gParmeter.parameter_8[HWJ_SLEEP_TIME_INDEX].data*60;
-			if(up_time_seconds >= qst_seconds && qst_seconds > current_seconds)
-			{
-				if(qst_seconds < current_seconds + 15)
-				{
-					qst_seconds += 15;
-					Ql_MKTime2CalendarTime(qst_seconds, dateTime);
-				}
-				alarm_on_off = 0;
-				gsm_wake_sleep = FALSE;
-				APP_DEBUG("power up:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
-			} else {
-				Ql_MKTime2CalendarTime(up_time_seconds, dateTime);
-				APP_DEBUG("power up:alarm_on_off =%d,hwj_power_policy = 1\n",alarm_on_off);
-			}
-		}
+		APP_DEBUG("set normal power off time alarm\n");
+	}else if(ble_state == BLE_STATE_DIS && alarm_on_off == 1){
+		qst_seconds = current_seconds + gParmeter.parameter_8[QST_UNNORMAL_WACKUP_TIM_INDEX].data*60;
+		APP_DEBUG("set unnormal power off time alarm\n");
+	}else if(ble_state == BLE_STATE_DIS && alarm_on_off == 2){
+		qst_seconds = current_seconds + gParmeter.parameter_8[QST_UNNORMAL_SLEEP_TIM_INDEX].data*60;
+		APP_DEBUG("set unnormal power up time alarm\n");
 	}
+	
+	Ql_MKTime2CalendarTime(qst_seconds, dateTime);
 
 	APP_DEBUG("alarm:year=%d,month=%d,day=%d,hour=%d,min=%d,sec=%d,power=%d\n",
 			   dateTime->year,dateTime->month,dateTime->day,dateTime->hour,dateTime->minute,dateTime->second,alarm_on_off);
@@ -620,25 +585,7 @@ void update_clk_alarm(ST_Time* dateTime)
 	gsm_up_time[1] = dateTime->minute;
 	gsm_up_time[2] = dateTime->second;
 	
-	if(alarm_on_off == 0){
-		if(gsm_wake_sleep)
-			iRet = RIL_Alarm_Add(dateTime, 1, 0);
-		else
-		{
-			iRet = RIL_Alarm_Add(dateTime, 0, 2);
-			if(iRet != RIL_AT_SUCCESS)
-			{
-				APP_ERROR("add alarm error ret:%d\n",iRet);
-				return;
-			}
-			APP_DEBUG("system will power down after 5s\n");
-			Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GSM_STATE, 0, 0);
-			Ql_Sleep(5000);
-			Ql_PowerDown(1);
-		}	
-	}else if(alarm_on_off == 1){
-		iRet = RIL_Alarm_Add(dateTime, 0, 0);
-	}else{
+	if(alarm_on_off == 2){
 		iRet = RIL_Alarm_Add(dateTime, 0, 2);
 		if(iRet != RIL_AT_SUCCESS)
 		{
@@ -649,6 +596,8 @@ void update_clk_alarm(ST_Time* dateTime)
 		Ql_OS_SendMessage(subtask_ble_id, MSG_ID_GSM_STATE, 0, 0);
 		Ql_Sleep(5000);
 		Ql_PowerDown(1);
+	}else{
+		iRet = RIL_Alarm_Add(dateTime, 0, 0);
 	}
 	
 	if(iRet != RIL_AT_SUCCESS)
