@@ -80,6 +80,10 @@ typedef enum {
 #define PAR_BLOCK_LEN          500
 #define PAR_STORED_FLAG        0xF5
 
+#define PERIODICTASKMASK_BIT_UPDATE_ALARM      0
+
+#define PERIODICTASKMASK_BIT_TIMER_STARTED     31
+
 /************************************************************************/
 /* Declarations common variable                                         */
 /************************************************************************/
@@ -93,6 +97,7 @@ extern u8  SrvADDR[MAX_SRV_LEN];
 extern u16 SrvPort;
 extern u8 ipAddress[4];
 extern volatile bool gMotional;
+extern u32 periodicTaskMask;
 
 /************************************************************************/
 /* Declarations for GPRS and TCP socket callback                        */

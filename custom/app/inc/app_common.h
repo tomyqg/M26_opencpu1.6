@@ -48,6 +48,9 @@ extern s8 hw_sw_version[2][4];
 #define GET_LACCI_TIMER_ID                 (TIMER_ID_USER_START + 107)
 #define GET_LACCI_TIMER_PERIOD             30000   //30s
 
+#define SOCKET_PERIODIC_TASK_TIMER_ID      (TIMER_ID_USER_START + 108)
+#define SOCKET_PERIODIC_TASK_TIMER_PERIOD  10000   //10s
+
 typedef enum { 
 	//gprs 
 	MSG_ID_GPRS_STATE = MSG_ID_USER_START+0x100,
