@@ -1545,11 +1545,19 @@ void App_Set_Sleep_mode(u8* pBuffer,u16 length)
 				{
 					//
 					APP_DEBUG("sleep now!!\n");
-					alarm_on_off = 2;
 					keep_wake = FALSE;
-					ST_Time datetime;
-					Ql_GetLocalTime(&datetime);
-					update_clk_alarm(&datetime);
+					if(ble_state == BLE_STATE_OK)
+                	{
+						APP_DEBUG("send msg to power off QST\n");
+						Ql_OS_SendMessage(subtask_ble_id, MSG_ID_POWER_OFF_GSM, 0, 0);
+                	}else if(ble_state == BLE_STATE_DIS){
+						//set power up time point,syste will power off after 5s
+						alarm_on_off = 2;
+						APP_DEBUG("set system power up alarm\n");
+						ST_Time datetime;
+						Ql_GetLocalTime(&datetime);
+						update_clk_alarm(&datetime);
+                	}
 					break;
 				}
 				case 3:
