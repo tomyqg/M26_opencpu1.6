@@ -1098,14 +1098,13 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 		}
 
 		//update alam
-		if(par_id == QST_NORMAL_ALARM || par_id == HWJ_SLEEP_TIME ||
-		   par_id == HWJ_WAKE_TIME    || par_id == HWJ_POWER_POLICY)
+		if(par_id == QST_UNNOMAL_SLEEP_INTERVAL || par_id == QST_UNNOMAL_WAKE_INTERVAL ||
+		   par_id == QST_NOMAL_WAKE_INTERVAL)
 		{
 			need_update_alarm = TRUE;
 		}
 
-		if(par_id == BLE_DOWN_HEART || par_id == BLE_UP_HEART ||
-		   par_id == QST_ADV_POLICY    || par_id == QST_ADV_LAST_TIME)
+		if(par_id == QST_UNNOMAL_SLEEP_INTERVAL || par_id == QST_UNNOMAL_TRIGGER)
 		{
 			need_update_alarm_to_ble = TRUE;
 		}
@@ -1139,8 +1138,6 @@ void App_Set_Parameter(u8* pBuffer, u16 length)
 	//update alam
 	if(need_update_alarm)
 	{
-		if(gParmeter.parameter_8[HWJ_SLEEP_WORKUP_POLICY_INDEX].data != 0)
-			alarm_on_off = 1;
 		ST_Time datetime;
 		Ql_GetLocalTime(&datetime);
 		update_clk_alarm(&datetime);

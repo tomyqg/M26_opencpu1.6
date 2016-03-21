@@ -627,12 +627,12 @@ s32 BLE_Send_Adv_Start(void)
 
 s32 BLE_Send_Parameter(void)
 {
-	u8 msg_buf[15];
-    u16 length = 15;
+	u8 msg_buf[24];
+    u16 length = 24;
     s32 ret;
  
     msg_buf[0] = TOBLE_SET_PAR_ID;
-    msg_buf[1] = 13;
+    msg_buf[1] = 22;
 	msg_buf[2] = 6;
 
     msg_buf[3]  = 0x01;
@@ -647,6 +647,15 @@ s32 BLE_Send_Parameter(void)
     msg_buf[12] = 0x04;
     msg_buf[13] = 0x01;
     msg_buf[14] = gParmeter.parameter_8[QST_ADV_LAST_TIME_INDEX].data;
+    msg_buf[15] = 0x05;
+    msg_buf[16] = 0x04;
+    msg_buf[17] = gParmeter.parameter_8[QST_UNNORMAL_SLEEP_TIM_INDEX].data >> 24;
+    msg_buf[18] = gParmeter.parameter_8[QST_UNNORMAL_SLEEP_TIM_INDEX].data >> 16;
+    msg_buf[19] = gParmeter.parameter_8[QST_UNNORMAL_SLEEP_TIM_INDEX].data >> 8;
+    msg_buf[20] = gParmeter.parameter_8[QST_UNNORMAL_SLEEP_TIM_INDEX].data;
+    msg_buf[21] = 0x06;
+    msg_buf[22] = 0x01;
+    msg_buf[23] = gParmeter.parameter_8[QST_UNNORMAL_WACKUP_POLICY_INDEX].data;
 	 
     //Send msg
     ret = Uart2BLE_Msg_Send(msg_buf,length,TRUE);
