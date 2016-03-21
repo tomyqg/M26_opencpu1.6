@@ -102,6 +102,9 @@ static ST_SOC_Callback callback_soc_func=
     Callback_Socket_Write
 };
 
+static void Timer_Handler_Periodic(u32 timerId, void* param);
+u32 periodicTaskMask = 0;
+
 /**************************************************************
 * the gprs sub task
 ***************************************************************/
@@ -133,6 +136,13 @@ void proc_subtask_gprs(s32 TaskId)
     if(ret <0)
     {
         APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",MOTIONAL_STATIC_TIMER_ID,ret);
+    }
+
+    //register a timer for periodic task
+    ret = Ql_Timer_Register(SOCKET_PERIODIC_TASK_TIMER_ID, Timer_Handler_Periodic, NULL);
+    if(ret <0)
+    {
+        APP_ERROR("\r\nfailed!!, Timer register: timer(%d) fail ,ret = %d\r\n",SOCKET_PERIODIC_TASK_TIMER_ID,ret);
     }
 
     //init gsensor
@@ -540,10 +550,21 @@ void update_clk_alarm(ST_Time* dateTime)
 		if(iRet == RIL_AT_SUCCESS)
 		{
 			APP_DEBUG("del alarm ok!!\n");
+			periodicTaskMask = CLE_BIT(periodicTaskMask,PERIODICTASKMASK_BIT_UPDATE_ALARM);
 			break;
 		} else {
 			APP_ERROR("del alarm error ret:%d\n",iRet);
 			Ql_Sleep(200*i);
+		}
+		if(i == 5)
+		{
+			periodicTaskMask = SET_BIT(periodicTaskMask,PERIODICTASKMASK_BIT_UPDATE_ALARM);
+			if(!(periodicTaskMask & BV(PERIODICTASKMASK_BIT_TIMER_STARTED)))
+			{
+				Ql_Timer_Start(SOCKET_PERIODIC_TASK_TIMER_ID,SOCKET_PERIODIC_TASK_TIMER_PERIOD,FALSE);
+				periodicTaskMask = SET_BIT(periodicTaskMask,PERIODICTASKMASK_BIT_TIMER_STARTED);
+			}
+			return;
 		}
 	}
 
@@ -596,6 +617,21 @@ void update_clk_alarm(ST_Time* dateTime)
 	{
 		APP_ERROR("add alarm error ret:%d\n",iRet);
 	}
+}
+
+void Timer_Handler_Periodic(u32 timerId, void* param)
+{
+    if(SOCKET_PERIODIC_TASK_TIMER_ID == timerId)
+    {
+		
+		periodicTaskMask = CLE_BIT(periodicTaskMask,PERIODICTASKMASK_BIT_TIMER_STARTED);
+		if(periodicTaskMask & BV(PERIODICTASKMASK_BIT_UPDATE_ALARM))
+		{
+			ST_Time datetime;
+			Ql_GetLocalTime(&datetime);
+			update_clk_alarm(&datetime);
+		}
+    }
 }
 
 #endif // __CUSTOMER_CODE__
