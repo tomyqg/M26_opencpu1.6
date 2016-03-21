@@ -381,6 +381,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
         {
         	APP_ERROR("RIL_SMS_SendSMS_Text FAIL! iResult:%d\r\n",iResult);
         }
+        APP_ERROR("%s:reboot gsm\n",__func__);
         Ql_Sleep(5000);
         Ql_Reset(0);
         return;
@@ -401,6 +402,7 @@ static void Parse_SMS_Data(const ST_RIL_SMS_DeliverParam *pDeliverTextInfo)
 
 		Ql_SecureData_Store(SRV_CONFIG_BLOCK, Parameter_Buffer, 1);
 
+		APP_ERROR("%s:reboot gsm\n",__func__);
         Ql_Sleep(5000);
         Ql_Reset(0);
         return;

@@ -223,7 +223,8 @@ void proc_subtask_gprs(s32 TaskId)
 					s32 ret = GPRS_TCP_Program();
 					if(ret != SOC_SUCCESS)
 					{
-						Ql_Sleep(100);
+						APP_ERROR("%s:reboot gsm\n",__func__);
+						Ql_Sleep(500);
 						Ql_Reset(0);
 					}
 				} else {
@@ -263,7 +264,8 @@ void proc_subtask_gprs(s32 TaskId)
 				s32 ret = GPRS_TCP_Program();
 				if(ret != SOC_SUCCESS)
 				{
-					Ql_Sleep(100);
+					APP_ERROR("%s:reboot gsm\n",__func__);
+					Ql_Sleep(500);
 					Ql_Reset(0);
 				}
 				break;
@@ -271,7 +273,8 @@ void proc_subtask_gprs(s32 TaskId)
 
             case MSG_ID_SRV_CHANGED:
             {
-				APP_DEBUG("msg: MSG_ID_SRV_CHANGED\n");
+				APP_ERROR("msg: MSG_ID_SRV_CHANGED\n");
+				APP_ERROR("%s:reboot gsm\n",__func__);
 			    Ql_Sleep(5000);
 			    Ql_Reset(0);
 				break;

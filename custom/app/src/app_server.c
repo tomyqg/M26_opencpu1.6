@@ -680,7 +680,7 @@ void Timer_Handler_HB(u32 timerId, void* param)
 			gRegister_Count = 0;
 			Ql_Timer_Stop(HB_TIMER_ID);
 			APP_ERROR("register server timeout for serveral times\r\n");
-			APP_DEBUG("%s:reboot after 1s\n",__func__);
+			APP_ERROR("%s:reboot after 1s\n",__func__);
 			Ql_Sleep(1000);
 			Ql_Reset(0);
 		}
@@ -1561,6 +1561,7 @@ void App_Set_Sleep_mode(u8* pBuffer,u16 length)
 				}
 				case 3:
 					//reset
+					APP_ERROR("%s:reboot gsm\n",__func__);
 					Ql_Sleep(500);
 					Ql_Reset(0);
 					break;
