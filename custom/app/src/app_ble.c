@@ -986,6 +986,8 @@ void Uart_BLE_Msg_Parse(u8* pBuffer, u16 length)
 				update_clk_alarm(&datetime);
 				//report to gprs task
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOST_UP, TRUE);
+				//power up gps
+				Ql_OS_SendMessage(subtask_gps_id, MSG_ID_GPS_ENV, MSG_ID_GPS_ENV_POWER_CONTORL, TRUE);
 			}
 			else if(ble_state == BLE_STATE_OK)
 			{
@@ -995,6 +997,8 @@ void Uart_BLE_Msg_Parse(u8* pBuffer, u16 length)
 				update_clk_alarm(&datetime);
 				//clean
 				Ql_OS_SendMessage(subtask_gprs_id, MSG_ID_ALARM_REP, ALARM_BIT_LOST_UP, FALSE);
+				//power off gps
+				Ql_OS_SendMessage(subtask_gps_id, MSG_ID_GPS_ENV, MSG_ID_GPS_ENV_POWER_CONTORL, FALSE);
 			}	
             break;  
 			

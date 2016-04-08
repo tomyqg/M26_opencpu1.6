@@ -89,6 +89,9 @@ void proc_subtask_gps(s32 TaskId)
 	s32 ret;
     
     APP_DEBUG("gps_subtask_entry,subtaskId = %d\n",TaskId);
+
+    // Initialize the GPIO pin
+    Ql_GPIO_Init(PINNAME_RTS, PINDIRECTION_OUT, PINLEVEL_LOW, PINPULLSEL_PULLDOWN);
     
     // Register & open UART port
     ret = Ql_UART_Register(GPS_UART_PORT, CallBack_UART_GPS, NULL);
@@ -148,6 +151,24 @@ void proc_subtask_gps(s32 TaskId)
 				{
 					APP_ERROR("\r\nfailed!!, Timer gps start fail ret=%d\r\n",ret);        
 				}
+                break;
+            }
+            case MSG_ID_GPS_ENV:
+            {
+                switch (subtask_msg.param1)
+            	{
+            		case MSG_ID_GPS_ENV_POWER_CONTORL:
+                		APP_DEBUG("gps power control: %d\r\n", subtask_msg.param2);
+                		if(subtask_msg.param2 == TRUE)
+                		{
+							//power up gps
+							Ql_GPIO_SetLevel(PINNAME_RTS, PINLEVEL_HIGH);
+                		}else{
+							//power off gps
+							Ql_GPIO_SetLevel(PINNAME_RTS, PINLEVEL_LOW);
+                		}
+                		break;
+                }	
                 break;
             }
 

@@ -1576,7 +1576,8 @@ void App_Set_Sleep_mode(u8* pBuffer,u16 length)
 					break;
 
 				case 5:
-					//
+					//power up gps
+					Ql_OS_SendMessage(subtask_gps_id, MSG_ID_GPS_ENV, MSG_ID_GPS_ENV_POWER_CONTORL, TRUE);
 					break;
 
 				default:
