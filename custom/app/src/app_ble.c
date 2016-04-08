@@ -219,6 +219,11 @@ void proc_subtask_ble(s32 TaskId)
 				BLE_Send_PowerOff_GSM();
                 break;
             }
+            case MSG_ID_BLE_START_ADV:
+            {
+				BLE_Send_Adv_Start();
+                break;
+            }
             default:
                 break;
         }

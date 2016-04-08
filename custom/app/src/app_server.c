@@ -1529,6 +1529,8 @@ void App_Set_Sleep_mode(u8* pBuffer,u16 length)
 			{
 				case 0:
 					//
+					APP_DEBUG("start to advertise!!!\n");
+					Ql_OS_SendMessage(subtask_ble_id, MSG_ID_BLE_START_ADV, 0, 0);
 					break;
 
 				case 1:
