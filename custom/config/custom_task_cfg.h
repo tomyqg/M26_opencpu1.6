@@ -54,7 +54,7 @@ TASK_ITEM(proc_main_task,       main_task_id,   5*1024, DEFAULT_VALUE1, DEFAULT_
 TASK_ITEM(proc_reserved1,       reserved1_id,   5*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
 TASK_ITEM(proc_reserved2,       reserved2_id,   5*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
 #ifdef __CUSTOMER_CODE__
-TASK_ITEM(proc_subtask_gprs,    subtask_gprs_id,    6*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
+TASK_ITEM(proc_subtask_gprs,    subtask_gprs_id,    10*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
 TASK_ITEM(proc_subtask_gps,     subtask_gps_id,     3*1024, DEFAULT_VALUE1, DEFAULT_VALUE2)
 TASK_ITEM(proc_subtask_ble,     subtask_ble_id,     3*1024,   DEFAULT_VALUE1, DEFAULT_VALUE2)
 TASK_ITEM(proc_subtask_sms,     subtask_sms_id,     3*1024,   DEFAULT_VALUE1, DEFAULT_VALUE2)
